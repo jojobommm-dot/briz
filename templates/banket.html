@@ -5,7 +5,7 @@
 {% block description %}Банкетный зал до {{ cafe.capacity }} гостей в Кировском районе Перми: пакеты от {{ packages[0].price }} ₽ за гостя, можно свой алкоголь, летняя веранда у Камы.{% endblock %}
 
 {% block content %}
-{{ page_banner("demo/hero-banket.jpg", "Банкеты", "Праздник у воды — от " ~ (packages[0].price|rub) ~ " за гостя",
+{{ page_banner("briz/hero-banket.webp", "Банкеты", "Праздник у воды — от " ~ (packages[0].price|rub) ~ " за гостя",
                "Один зал на " ~ cafe.capacity ~ " гостей, только ваша компания. Свой алкоголь можно, пробковый сбор уточним при заявке.") }}
 <section class="section section--tight">
   <div class="wrap">{{ facts_row(facts) }}</div>

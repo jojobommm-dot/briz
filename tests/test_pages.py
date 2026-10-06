@@ -1,6 +1,7 @@
 """Смоук-тест: страницы открываются, заявка на банкет проходит и проверяется."""
 
 import json
+import re
 from datetime import date, timedelta
 
 import pytest
@@ -100,5 +101,13 @@ def test_home_blocks(client):
     assert r.text.count('class="hero__slide') == 4
     assert "<h1" in r.text and r.text.count("<h1") == 1
     assert 'class="numbered__num">06<' in r.text
-    assert "Пельмени домашние" in r.text
-    assert client.get("/static/img/demo/hero-banket.jpg").status_code == 200
+    assert "Карбонара" in r.text
+    # Все картинки, на которые ссылается главная, на месте
+    for src in set(re.findall(r"/static/img/[\w/.-]+", r.text)):
+        assert client.get(src).status_code == 200, src
+
+
+def test_lunch_real_prices(client):
+    r = client.get("/obedy")
+    assert "370 ₽" in r.text and "390 ₽" in r.text
+    assert "до 11:00" in r.text

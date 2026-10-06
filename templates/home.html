@@ -53,12 +53,12 @@
     <div class="about">
       <div class="about__media">
         <div class="about__backdrop"></div>
-        <img src="/static/img/demo/chef.jpg" alt="Шеф-повар кафе" loading="lazy" width="900" height="900">
+        <img src="/static/img/briz/about-zal.webp" alt="Банкет в зале кафе «{{ cafe.name }}»" loading="lazy" width="800" height="800">
       </div>
       <div class="about__text">
         <h2 class="about__title">Кафе «{{ cafe.name }}»</h2>
         <p class="about__quote">Домашняя кухня и свой зал для праздника — без поездки в центр.</p>
-        <p>Мы готовим так, как готовят дома: пельмени лепим сами, борщ варим с утра, шашлык жарим на углях. Зал на {{ cafe.capacity }} гостей и летняя веранда у Камы — для дней рождения, юбилеев и свадеб.</p>
+        <p>Деревянный зал на {{ cafe.capacity }} гостей с круглыми столами, летняя веранда и мангал во дворе. Каждый день — новое меню обедов, по выходным — дни рождения, юбилеи и свадьбы.</p>
         {{ facts_row(facts) }}
         <a class="btn btn--primary" href="/banket#raschet">Рассчитать банкет {{ arrow() }}</a>
       </div>
@@ -100,7 +100,7 @@
 <section class="promo">
   <div class="wrap promo__grid">
     <div class="promo__media">
-      <img src="/static/img/demo/banket-long.jpg" alt="Банкетный стол" loading="lazy" width="1000" height="1500">
+      <img src="/static/img/briz/promo-banket.webp" alt="Банкетный стол в кафе «{{ cafe.name }}»" loading="lazy" width="900" height="1100">
     </div>
     <div class="promo__text">
       <span class="label">Банкеты</span>
@@ -124,11 +124,11 @@
     <div class="story__text">
       <span class="label">Обеды</span>
       <h2 class="story__title">Бизнес-ланч за {{ lunch.price|rub }}</h2>
-      <p>Салат, суп и горячее по будням {{ lunch.hours }}. Меню меняется каждый день: в понедельник борщ и котлета с пюре, в пятницу — щи и домашние пельмени. Без салата — {{ lunch.price_short|rub }}.</p>
+      <p>Салат, суп, второе и гарнир — ждём на обед с {{ lunch.since }}. Меню новое каждый день: в понедельник рассольник и мясные зразы, в пятницу — борщ и куриные оладьи. Без супа или салата — {{ lunch.price_short|rub }}.</p>
       <a class="btn btn--outline" href="/obedy">Меню на неделю</a>
     </div>
     <div class="story__media story__media--right">
-      <img src="/static/img/demo/borsch.jpg" alt="Борщ со сметаной" loading="lazy" width="1000" height="1333">
+      <img src="/static/img/briz/story-obed.webp" alt="Тёплый салат в кафе «{{ cafe.name }}»" loading="lazy" width="900" height="900">
     </div>
   </div>
 </section>
@@ -136,12 +136,12 @@
 <section class="story story--reverse">
   <div class="wrap story__grid">
     <div class="story__media story__media--left">
-      <img src="/static/img/demo/pelmeni-lepka.jpg" alt="Лепим пельмени" loading="lazy" width="1000" height="1499">
+      <img src="/static/img/briz/story-dostavka.webp" alt="Салаты для доставки обедов" loading="lazy" width="900" height="900">
     </div>
     <div class="story__text">
       <span class="label">Доставка</span>
       <h2 class="story__title">Обеды в офис и на производство</h2>
-      <p>Заказ до 11:00 — привезём к обеду. От {{ lunch.free_delivery_from }} порций доставка по Кировскому району бесплатная. Для организаций — оплата по счёту.</p>
+      <p>Заказ до {{ lunch.order_until }} — привезём к обеду. Полный комплекс с доставкой — {{ lunch.price_delivery|rub }}, можно брать отдельно суп, салат или второе. Для организаций — оплата по счёту.</p>
       <a class="btn btn--outline" href="tel:{{ cafe.phone }}">Заказать по телефону</a>
     </div>
   </div>

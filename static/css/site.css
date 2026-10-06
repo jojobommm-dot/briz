@@ -437,3 +437,10 @@ body:has(.total) .chat { bottom: 130px; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* --- таблица цен обедов --- */
+.prices { width: 100%; border-collapse: collapse; margin: 4px 0 20px; font-variant-numeric: tabular-nums; }
+.prices th { font-size: .8rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 0 0 8px; }
+.prices td { padding: 10px 0; border-top: 1px solid #e2e2e2; text-align: right; white-space: nowrap; }
+.prices td:first-child { text-align: left; white-space: normal; color: var(--ink); padding-right: 12px; }
+.prices td + td { padding-left: 16px; font-weight: 700; color: var(--green); }
