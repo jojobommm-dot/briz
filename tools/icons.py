@@ -13,10 +13,11 @@ from PIL import Image, ImageDraw
 BASE = Path(__file__).resolve().parent.parent
 OUT = BASE / "static" / "icons"
 
-GREEN = (94, 125, 69)
-WHITE = (255, 255, 255)
-# Вторая волна в SVG белая с прозрачностью .55 — на зелёном это вот такой цвет
-PALE = tuple(round(g + (255 - g) * 0.55) for g in GREEN)
+# Фон — тёмный, как шапка сайта; волны — золотом (стиль по эталону Restora)
+GREEN = (12, 15, 20)
+WHITE = (167, 137, 99)
+# Вторая волна приглушённая: золото на 55% поверх фона
+PALE = tuple(round(b + (g - b) * 0.55) for b, g in zip(GREEN, WHITE, strict=True))
 
 # Волна из sprite.svg в координатах 40×40: три кубические кривые Безье
 WAVE = [

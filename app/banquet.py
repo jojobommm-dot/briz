@@ -35,6 +35,13 @@ def normalize_phone(raw: str) -> str | None:
     return None
 
 
+def parse_date(raw: str) -> date | None:
+    try:
+        return date.fromisoformat(raw)
+    except ValueError:
+        return None
+
+
 def validate(form: dict[str, str], today: date | None = None) -> tuple[BanquetRequest | None, dict]:
     """Возвращает заявку или словарь «поле → что не так» для формы."""
     today = today or date.today()

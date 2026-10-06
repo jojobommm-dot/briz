@@ -1,4 +1,4 @@
-// Кафе «Бриз»: мобильное меню, слайдер, карусель блюд, кнопка чата,
+// Кафе «Бриз»: мобильное меню, слайдер, меню недели, кнопка чата,
 // калькулятор банкета, разделы меню.
 "use strict";
 
@@ -15,54 +15,37 @@
     });
   }
 
-  // --- слайдер первого экрана ---
+  // --- слайдер первого экрана: чёрточки внизу, автопрокрутка, свайп ---
   const slider = document.querySelector("[data-slider]");
   if (slider) {
     const slides = [...slider.querySelectorAll(".hero__slide")];
-    const progress = slider.querySelector("[data-progress]");
-    const current = slider.querySelector("[data-current]");
-    const SLIDE_MS = 6500;
-    slider.style.setProperty("--slide-ms", SLIDE_MS + "ms");
+    const dots = [...slider.querySelectorAll("[data-go]")];
+    const SLIDE_MS = 7000;
     let index = 0;
     let timer = null;
 
     const show = (i) => {
-      slides[index].classList.remove("is-active");
-      slides[index].setAttribute("aria-hidden", "true");
-      slides[index].querySelectorAll("a").forEach((a) => a.setAttribute("tabindex", "-1"));
+      const prev = slides[index];
+      prev.classList.remove("is-active");
+      prev.setAttribute("aria-hidden", "true");
+      prev.querySelectorAll("a").forEach((a) => a.setAttribute("tabindex", "-1"));
+      dots[index].classList.remove("is-active");
       index = (i + slides.length) % slides.length;
       slides[index].classList.add("is-active");
       slides[index].removeAttribute("aria-hidden");
       slides[index].querySelectorAll("a").forEach((a) => a.removeAttribute("tabindex"));
-      current.textContent = String(index + 1).padStart(2, "0");
-      restartProgress();
-    };
-    // Полоса прогресса перезапускается вместе с таймером
-    const restartProgress = () => {
-      progress.classList.remove("is-running");
-      void progress.offsetWidth;
-      if (timer !== null) progress.classList.add("is-running");
+      dots[index].classList.add("is-active");
     };
     const play = () => {
       if (reducedMotion || slides.length < 2) return;
       clearInterval(timer);
       timer = setInterval(() => show(index + 1), SLIDE_MS);
-      restartProgress();
     };
-    const pause = () => {
-      clearInterval(timer);
-      timer = null;
-      progress.classList.remove("is-running");
-    };
+    const pause = () => { clearInterval(timer); timer = null; };
 
-    slider.querySelector("[data-next]").addEventListener("click", () => { show(index + 1); play(); });
-    slider.querySelector("[data-prev]").addEventListener("click", () => { show(index - 1); play(); });
-    slider.addEventListener("mouseenter", pause);
-    slider.addEventListener("mouseleave", play);
+    dots.forEach((d) => d.addEventListener("click", () => { show(Number(d.dataset.go)); play(); }));
     slider.addEventListener("focusin", pause);
     slider.addEventListener("focusout", play);
-
-    // Свайп на телефоне
     let startX = null;
     slider.addEventListener("touchstart", (e) => { startX = e.touches[0].clientX; }, { passive: true });
     slider.addEventListener("touchend", (e) => {
@@ -75,18 +58,35 @@
     play();
   }
 
-  // --- карусель блюд ---
-  const track = document.querySelector("[data-track]");
-  if (track) {
-    const step = () => (track.firstElementChild ? track.firstElementChild.offsetWidth + 24 : 300);
-    document.querySelector("[data-track-next]")?.addEventListener("click", () => {
-      const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4;
-      track.scrollTo({ left: atEnd ? 0 : track.scrollLeft + step(), behavior: "smooth" });
-    });
-    document.querySelector("[data-track-prev]")?.addEventListener("click", () => {
-      track.scrollBy({ left: -step(), behavior: "smooth" });
-    });
+  // --- меню недели: стрелки, счётчик 01/05 и полоса ---
+  const week = document.querySelector("[data-week]");
+  if (week) {
+    const slides = [...week.querySelectorAll(".week__slide")];
+    const current = week.querySelector("[data-week-current]");
+    const bar = week.querySelector("[data-week-bar]");
+    // Открываем на сегодняшнем дне недели (пн–пт), в выходные — на понедельнике
+    const today = new Date().getDay();  // 0 — воскресенье
+    let index = today >= 1 && today <= slides.length ? today - 1 : 0;
+    const show = (i) => {
+      slides.forEach((s, k) => {
+        s.classList.toggle("is-active", k === i);
+        if (k === i) s.removeAttribute("aria-hidden"); else s.setAttribute("aria-hidden", "true");
+      });
+      index = i;
+      current.textContent = String(i + 1).padStart(2, "0");
+      bar.style.width = `${((i + 1) / slides.length) * 100}%`;
+    };
+    week.querySelector("[data-week-prev]").addEventListener("click", () => show((index - 1 + slides.length) % slides.length));
+    week.querySelector("[data-week-next]").addEventListener("click", () => show((index + 1) % slides.length));
+    show(index);
   }
+
+  // Прошедшие даты в календарях не предлагаем
+  document.querySelectorAll("[data-min-today]").forEach((el) => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    el.min = d.toISOString().slice(0, 10);
+  });
 
   // --- кнопка чата (сам чат — шаг 4) ---
   const chat = document.querySelector("[data-chat]");

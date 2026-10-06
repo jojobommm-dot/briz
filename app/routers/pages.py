@@ -11,10 +11,12 @@ from ..config import settings
 from ..content import (
     BANQUET_FACTS,
     BANQUET_PACKAGES,
+    CAFE,
+    GALLERY,
     HERO_SLIDES,
     LUNCH,
     MENU,
-    SERVICES,
+    WEEK_IMAGES,
     popular_dishes,
 )
 from ..templating import asset, templates
@@ -30,11 +32,13 @@ async def home(request: Request):
         "home.html",
         {
             "slides": HERO_SLIDES,
-            "services": SERVICES,
             "popular": popular_dishes(),
             "packages": BANQUET_PACKAGES,
             "facts": BANQUET_FACTS,
             "lunch": LUNCH,
+            "week": list(zip(LUNCH["week"], WEEK_IMAGES, strict=True)),
+            "menu": MENU,
+            "gallery": GALLERY,
             "nav": "home",
         },
     )
@@ -61,9 +65,16 @@ def _banket_page(request: Request, form: dict | None = None, errors: dict | None
 
 
 @router.get("/banket", response_class=HTMLResponse)
-async def banket(request: Request, paket: str = ""):
-    # ?paket=svadba с главной — сразу отмечаем нужный пакет
-    form = {"package": paket} if paket in banquet.PACKAGE_SLUGS else {}
+async def banket(request: Request, paket: str = "", date: str = "", guests: str = ""):
+    # С главной приходят ?paket=svadba&date=2026-11-14&guests=25 — подставляем в форму,
+    # но только то, что похоже на правду: остальное гость введёт сам
+    form = {}
+    if paket in banquet.PACKAGE_SLUGS:
+        form["package"] = paket
+    if banquet.parse_date(date):
+        form["event_date"] = date
+    if guests.isdigit() and 1 <= int(guests) <= CAFE["capacity"]:
+        form["guests"] = guests
     return _banket_page(request, form)
 
 

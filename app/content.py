@@ -263,26 +263,20 @@ HERO_SLIDES = [
 ]
 
 
-@dataclass(frozen=True)
-class Service:
-    label: str
-    title: str
-    href: str
-    image: str
+# Слайдер «Меню недели» на главной: фото на каждый день из LUNCH["week"]
+WEEK_IMAGES = [f"briz/week-{i}.webp" for i in range(1, 6)]
 
-
-SERVICES = [
-    Service("Банкеты", "Дни рождения и юбилеи до 35 гостей", "/banket", "briz/thumb-banket.webp"),
-    Service("Обеды", "Комплексный обед за 370 ₽ с 12:00", "/obedy", "briz/thumb-obed.webp"),
-    Service("Доставка", "Обеды в офис: заказ до 11:00", "/obedy", "briz/thumb-dostavka.webp"),
-    Service(
-        "Мангал", "Шашлык из свинины и курицы на углях", "/menu#shashlyk", "briz/thumb-mangal.webp"
-    ),
-    Service(
-        "Банкеты",
-        "Свадьба под ключ на берегу Камы",
-        "/banket?paket=svadba#raschet",
-        "briz/thumb-svadba.webp",
-    ),
-    Service("Кейтеринг", "Фуршеты и выездное обслуживание", "/kontakty", "briz/thumb-furshet.webp"),
-]
+# Мозаика галереи: широкое, два средних, четыре маленьких — как в эталоне
+GALLERY = {
+    "wide": ("briz/gal-wide.webp", "Шашлык на мангале у кафе"),
+    "half": [
+        ("briz/gal-hall.webp", "Банкетный зал с круглыми столами"),
+        ("briz/gal-teal.webp", "Стол в бирюзовом зале"),
+    ],
+    "quarter": [
+        ("briz/gal-veranda.webp", "Летняя веранда"),
+        ("briz/gal-mangal.webp", "Шашлык из курицы"),
+        ("briz/gal-table.webp", "Закуски к банкету"),
+        ("briz/gal-pasta.webp", "Паста карбонара"),
+    ],
+}

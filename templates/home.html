@@ -1,149 +1,185 @@
 {% extends "_base.html" %}
-{% from "_macros.html" import facts_row, arrow %}
+{% from "_macros.html" import frame_btn, heading, menu_item, squiggle %}
 
 {% block head %}<link rel="preload" as="image" href="/static/img/{{ slides[0].image }}">{% endblock %}
 
 {% block content %}
-{# Первый экран: слайды с фото, как в эталоне — заголовок, текст, полоса прогресса 01/04 #}
+{# 1. Первый экран: слайды на всю высоту, золотая надпись, заголовок, кнопка в рамке, чёрточки-переключатели #}
 <section class="hero" data-slider aria-roledescription="карусель" aria-label="Кафе «{{ cafe.name }}»">
   {% for s in slides %}
   <div class="hero__slide{% if loop.first %} is-active{% endif %}" style="--bg: url('/static/img/{{ s.image }}')"
        role="group" aria-roledescription="слайд" aria-label="{{ loop.index }} из {{ slides|length }}" {% if not loop.first %}aria-hidden="true"{% endif %}>
     <div class="wrap hero__inner">
+      <p class="eyebrow hero__eyebrow">{{ cafe.tagline }}</p>
       {% if loop.first %}<h1 class="hero__title">{{ s.title }}</h1>{% else %}<p class="hero__title">{{ s.title }}</p>{% endif %}
       <p class="hero__text">{{ s.text }}</p>
-      <a class="btn btn--primary btn--lg" href="{{ s.href }}" {% if not loop.first %}tabindex="-1"{% endif %}>{{ s.cta }} {{ arrow() }}</a>
+      <a class="frame-btn" href="{{ s.href }}" {% if not loop.first %}tabindex="-1"{% endif %}><span>{{ s.cta }}</span></a>
     </div>
   </div>
   {% endfor %}
-  <div class="wrap hero__controls">
-    <div class="hero__progress"><span data-progress></span></div>
-    <div class="hero__count"><span data-current>01</span>/{{ '%02d'|format(slides|length) }}</div>
-    <button class="circle-btn circle-btn--light" type="button" data-prev aria-label="Предыдущий слайд">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#chevron-left"></use></svg>
-    </button>
-    <button class="circle-btn circle-btn--light" type="button" data-next aria-label="Следующий слайд">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#chevron-right"></use></svg>
-    </button>
+  <div class="hero__dots" role="tablist" aria-label="Слайды">
+    {% for s in slides %}<button type="button" class="hero__dot{% if loop.first %} is-active{% endif %}" data-go="{{ loop.index0 }}" aria-label="Слайд {{ loop.index }}"></button>{% endfor %}
   </div>
 </section>
 
-{# Нумерованный список, как «Latest Blog» в эталоне #}
-<section class="section">
+{# 2. О кафе: тёмный блок, по центру заголовок и текст, ниже «натюрморт» из круглых фото #}
+<section class="about">
   <div class="wrap">
-    <h2 class="section__title">Чем мы можем помочь</h2>
-    <ol class="numbered">
-      {% for s in services %}
-      <li class="numbered__item">
-        <span class="numbered__num">{{ '%02d'|format(loop.index) }}</span>
-        <a class="numbered__thumb" href="{{ s.href }}" tabindex="-1" aria-hidden="true"><img src="/static/img/{{ s.image }}" alt="" loading="lazy" width="120" height="120"></a>
-        <div>
-          <span class="label">{{ s.label }}</span>
-          <a class="numbered__title" href="{{ s.href }}">{{ s.title }}</a>
-        </div>
-      </li>
-      {% endfor %}
-    </ol>
+    {{ heading("О «Бризе»", "Место для вкусных встреч", light=true) }}
+    <p class="about__text">Уютное кафе в Кировском районе, у Камы: деревянный зал на {{ cafe.capacity }} гостей с круглыми столами, летняя веранда и мангал во дворе. Каждый будний день — новое меню обедов, по выходным — дни рождения, юбилеи и свадьбы.</p>
+  </div>
+  <div class="still" aria-hidden="true">
+    <img class="still__main" src="/static/img/briz/dish-salat-kurica.webp" alt="" width="600" height="600" loading="lazy">
+    <img class="still__a" src="/static/img/briz/dish-caprese.webp" alt="" width="600" height="600" loading="lazy">
+    <img class="still__b" src="/static/img/briz/dish-sup-tykva.webp" alt="" width="600" height="600" loading="lazy">
+    <img class="still__c" src="/static/img/briz/dish-bolognese.webp" alt="" width="600" height="600" loading="lazy">
+    <img class="still__d" src="/static/img/briz/dish-carbonara.webp" alt="" width="600" height="600" loading="lazy">
   </div>
 </section>
 
-{# Блок «о нас» со срезанным углом, как блок шефа в эталоне #}
-<section class="section section--flush">
+{# 3. Меню: слева и справа цены обедов, по центру круглое фото; ниже раскрывающиеся разделы основного меню #}
+<section class="section menu-block">
   <div class="wrap">
-    <div class="about">
-      <div class="about__media">
-        <div class="about__backdrop"></div>
-        <img src="/static/img/briz/about-zal.webp" alt="Банкет в зале кафе «{{ cafe.name }}»" loading="lazy" width="800" height="800">
+    {{ heading("Наше меню", "Обеды и меню кафе") }}
+    <div class="menu3">
+      <div class="menu3__col">
+        <details class="cat" open>
+          <summary class="cat__title">Обед в кафе</summary>
+          {% for what, cafe_price, _ in lunch.prices %}{{ menu_item(what, cafe_price, "Салат, суп, второе и гарнир" if loop.first else "") }}{% endfor %}
+        </details>
       </div>
-      <div class="about__text">
-        <h2 class="about__title">Кафе «{{ cafe.name }}»</h2>
-        <p class="about__quote">Домашняя кухня и свой зал для праздника — без поездки в центр.</p>
-        <p>Деревянный зал на {{ cafe.capacity }} гостей с круглыми столами, летняя веранда и мангал во дворе. Каждый день — новое меню обедов, по выходным — дни рождения, юбилеи и свадьбы.</p>
-        {{ facts_row(facts) }}
-        <a class="btn btn--primary" href="/banket#raschet">Рассчитать банкет {{ arrow() }}</a>
+      <div class="menu3__center">
+        <img class="menu3__photo" src="/static/img/briz/round-obed.webp" alt="Комплексный обед кафе «{{ cafe.name }}»" width="700" height="700" loading="lazy">
+        <p class="menu3__note">Меню обедов новое каждый день. В кафе ждём с {{ lunch.since }}, заказы на доставку принимаем до {{ lunch.order_until }}.</p>
+      </div>
+      <div class="menu3__col">
+        <details class="cat" open>
+          <summary class="cat__title">С доставкой</summary>
+          {% for what, _, delivery_price in lunch.prices %}{{ menu_item(what, delivery_price, "Привезём в офис к обеду" if loop.first else "") }}{% endfor %}
+        </details>
       </div>
     </div>
-  </div>
-</section>
-
-{# Карусель блюд, как «Featured Posts» #}
-<section class="section">
-  <div class="wrap">
-    <div class="section__bar">
-      <h2 class="section__title">Гости заказывают чаще всего</h2>
-      <div class="section__arrows">
-        <button class="circle-btn" type="button" data-track-prev aria-label="Назад">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#chevron-left"></use></svg>
-        </button>
-        <button class="circle-btn" type="button" data-track-next aria-label="Вперёд">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#chevron-right"></use></svg>
-        </button>
-      </div>
-    </div>
-    <div class="track" data-track>
-      {% for cat, d in popular %}
-      <a class="dish-card" href="/menu">
-        <div class="dish-card__img">
-          <img src="/static/img/{{ d.image }}" alt="{{ d.name }}" loading="lazy" width="600" height="600">
-          <span class="dish-card__notch"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#chevron-right"></use></svg></span>
-        </div>
-        <span class="label">{{ cat }}</span>
-        <span class="dish-card__name">{{ d.name }}</span>
-        <span class="dish-card__price">{{ d.price|rub }}</span>
-      </a>
+    <div class="menu3__more">
+      {% for c in menu %}
+      <details class="cat">
+        <summary class="cat__title">{{ c.title }}</summary>
+        {% for d in c.dishes %}{{ menu_item(d.name, d.price, d.note or d.weight) }}{% endfor %}
+      </details>
       {% endfor %}
     </div>
+    <div class="center">{{ frame_btn("/menu", "Всё меню", "frame-btn--dark") }}</div>
   </div>
 </section>
 
-{# Промо банкетов, как блок книги в эталоне #}
-<section class="promo">
-  <div class="wrap promo__grid">
-    <div class="promo__media">
-      <img src="/static/img/briz/promo-banket.webp" alt="Банкетный стол в кафе «{{ cafe.name }}»" loading="lazy" width="900" height="1100">
+{# 4. Банкеты: тёмный блок с золотым значком, две колонки с пунктиром, большая тарелка у правого края #}
+<section class="dark-menu">
+  <img class="dark-menu__plate" src="/static/img/briz/round-shashlyk.webp" alt="" width="900" height="900" loading="lazy" aria-hidden="true">
+  <div class="wrap">
+    <div class="dark-menu__head">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><use href="/static/icons/sprite.svg#cloche"></use></svg>
+      <h2>Банкеты</h2>
     </div>
-    <div class="promo__text">
-      <span class="label">Банкеты</span>
-      <h2 class="promo__title">Банкет от {{ packages[0].price|rub }} за гостя — всё уже включено</h2>
-      <ul class="promo__pkgs">
-        {% for p in packages %}
-        <li><span>{{ p.title }}</span><b>{{ p.price|rub }}</b></li>
-        {% endfor %}
-      </ul>
-      <div class="btn-row">
-        <a class="btn btn--outline" href="/banket">Смотреть пакеты</a>
-        <a class="btn btn--primary" href="/banket#raschet">Рассчитать {{ arrow() }}</a>
+    <div class="dark-menu__cols">
+      <div>
+        <h3 class="subhead">Банкетные пакеты</h3>
+        {% for p in packages %}{{ menu_item(p.title, p.price, p.includes|join(", ") ~ " — за гостя") }}{% endfor %}
+      </div>
+      <div>
+        <h3 class="subhead">Любимое у гостей</h3>
+        {% for cat, d in popular[:4] %}{{ menu_item(d.name, d.price, d.note or cat) }}{% endfor %}
       </div>
     </div>
+    {{ frame_btn("/banket#raschet", "Рассчитать банкет") }}
   </div>
 </section>
 
-{# Две статьи-разворота, как в конце эталона #}
-<section class="story">
-  <div class="wrap story__grid">
-    <div class="story__text">
-      <span class="label">Обеды</span>
-      <h2 class="story__title">Бизнес-ланч за {{ lunch.price|rub }}</h2>
-      <p>Салат, суп, второе и гарнир — ждём на обед с {{ lunch.since }}. Меню новое каждый день: в понедельник рассольник и мясные зразы, в пятницу — борщ и куриные оладьи. Без супа или салата — {{ lunch.price_short|rub }}.</p>
-      <a class="btn btn--outline" href="/obedy">Меню на неделю</a>
+{# 5. Меню недели: фото слева, справа день и блюда с ценами «в кафе / с доставкой», счётчик 01/05 #}
+<section class="section week-block">
+  <div class="wrap">{{ heading("Меню недели", "Обеды на каждый день") }}</div>
+  <div class="week" data-week>
+    <div class="week__track">
+      {% for (day, salad, soup, main, side), img in week %}
+      <div class="week__slide{% if loop.first %} is-active{% endif %}" {% if not loop.first %}aria-hidden="true"{% endif %}>
+        <div class="week__media"><img src="/static/img/{{ img }}" alt="Обед в кафе «{{ cafe.name }}»" width="900" height="760" loading="lazy"></div>
+        <div class="week__body">
+          <div class="week__day">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><use href="/static/icons/sprite.svg#bowl"></use></svg>
+            <h3>{{ day }}</h3>
+          </div>
+          {{ menu_item(salad, lunch.prices[4][1], "Салат", lunch.prices[4][2], "с доставкой") }}
+          {{ menu_item(soup, lunch.prices[3][1], "Суп", lunch.prices[3][2], "с доставкой") }}
+          {{ menu_item(main, lunch.prices[2][1], "Второе, гарнир — " ~ side|lower, lunch.prices[2][2], "с доставкой") }}
+          <p class="week__legend"><span class="gold">●</span> в кафе &nbsp; <span class="muted">●</span> с доставкой · весь комплекс — {{ lunch.price|rub }} / {{ lunch.price_delivery|rub }}</p>
+        </div>
+      </div>
+      {% endfor %}
     </div>
-    <div class="story__media story__media--right">
-      <img src="/static/img/briz/story-obed.webp" alt="Тёплый салат в кафе «{{ cafe.name }}»" loading="lazy" width="900" height="900">
+    <div class="week__nav">
+      <button type="button" class="week__arrow" data-week-prev aria-label="Предыдущий день"><svg viewBox="0 0 32 16" aria-hidden="true"><use href="/static/icons/sprite.svg#long-left"></use></svg></button>
+      <button type="button" class="week__arrow" data-week-next aria-label="Следующий день"><svg viewBox="0 0 32 16" aria-hidden="true"><use href="/static/icons/sprite.svg#long-right"></use></svg></button>
+      <span class="week__count"><span data-week-current>01</span>/{{ '%02d'|format(week|length) }}</span>
+      <span class="week__bar"><span data-week-bar style="width: {{ 100 / week|length }}%"></span></span>
     </div>
   </div>
 </section>
 
-<section class="story story--reverse">
-  <div class="wrap story__grid">
-    <div class="story__media story__media--left">
-      <img src="/static/img/briz/story-dostavka.webp" alt="Салаты для доставки обедов" loading="lazy" width="900" height="900">
+{# 6. Галерея: широкое фото, два средних, четыре маленьких #}
+<section class="gallery" id="galereya">
+  <div class="wrap">{{ heading("Галерея", "Зал, веранда и кухня") }}</div>
+  <div class="gallery__grid">
+    <figure class="g g--wide"><img src="/static/img/{{ gallery.wide[0] }}" alt="{{ gallery.wide[1] }}" loading="lazy" width="1600" height="560"></figure>
+    {% for src, alt in gallery.half %}<figure class="g g--half"><img src="/static/img/{{ src }}" alt="{{ alt }}" loading="lazy" width="800" height="760"></figure>{% endfor %}
+    {% for src, alt in gallery.quarter %}<figure class="g g--quarter"><img src="/static/img/{{ src }}" alt="{{ alt }}" loading="lazy" width="420" height="440"></figure>{% endfor %}
+  </div>
+  <div class="center gallery__more">
+    <a class="frame-btn frame-btn--dark" href="{{ cafe.vk }}" target="_blank" rel="noopener"><span>Все фото во ВКонтакте</span></a>
+  </div>
+</section>
+
+{# 7. Часы работы в двойной рамке, над ними волна #}
+<section class="section schedule-block">
+  <div class="wrap">
+    <div class="center">{{ squiggle() }}</div>
+    {{ heading("Банкеты и праздники", "Ждём компании в нашем зале") }}
+    <div class="schedule">
+      <span class="schedule__label">Часы работы</span>
+      {% for days, time in cafe.hours %}
+      <div class="schedule__row">
+        <p class="schedule__days">{{ days }}</p>
+        <p class="schedule__time">{{ time }}</p>
+      </div>
+      {% endfor %}
     </div>
-    <div class="story__text">
-      <span class="label">Доставка</span>
-      <h2 class="story__title">Обеды в офис и на производство</h2>
-      <p>Заказ до {{ lunch.order_until }} — привезём к обеду. Полный комплекс с доставкой — {{ lunch.price_delivery|rub }}, можно брать отдельно суп, салат или второе. Для организаций — оплата по счёту.</p>
-      <a class="btn btn--outline" href="tel:{{ cafe.phone }}">Заказать по телефону</a>
-    </div>
+  </div>
+</section>
+
+{# 8. Заявка на банкет: тёмное размытое фото зала, поля в золотой рамке #}
+<section class="book">
+  <div class="wrap">
+    {{ heading("Заявка на банкет", "Забронируйте дату", light=true) }}
+    <form class="book__form" action="/banket#raschet" method="get">
+      <label class="book__field">
+        <span class="visually-hidden">Дата праздника</span>
+        <input type="date" name="date" aria-label="Дата праздника" data-min-today>
+      </label>
+      <label class="book__field book__field--select">
+        <span class="visually-hidden">Гостей</span>
+        <select name="guests" aria-label="Сколько гостей">
+          {% for n in [10, 15, 20, 25, 30, 35] %}<option value="{{ n }}" {% if n == 20 %}selected{% endif %}>{{ n }} гостей</option>{% endfor %}
+        </select>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#chevron-down"></use></svg>
+      </label>
+      <label class="book__field book__field--select">
+        <span class="visually-hidden">Пакет</span>
+        <select name="paket" aria-label="Банкетный пакет">
+          {% for p in packages %}<option value="{{ p.slug }}" {% if p.slug == 'prazdnik' %}selected{% endif %}>{{ p.title }} — {{ p.price|rub }}</option>{% endfor %}
+        </select>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#chevron-down"></use></svg>
+      </label>
+      <div class="book__submit">
+        <button class="frame-btn frame-btn--gold" type="submit"><span>Рассчитать</span></button>
+      </div>
+    </form>
   </div>
 </section>
 {% endblock %}

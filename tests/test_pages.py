@@ -100,7 +100,8 @@ def test_home_blocks(client):
     # Слайдер, нумерованный список услуг и карусель блюд из content.py
     assert r.text.count('class="hero__slide') == 4
     assert "<h1" in r.text and r.text.count("<h1") == 1
-    assert 'class="numbered__num">06<' in r.text
+    assert r.text.count('class="week__slide') == 5
+    assert 'id="galereya"' in r.text
     assert "Карбонара" in r.text
     # Все картинки, на которые ссылается главная, на месте
     for src in set(re.findall(r"/static/img/[\w/.-]+", r.text)):
@@ -135,3 +136,13 @@ def test_pwa_files(client):
     home = client.get("/").text
     assert 'rel="manifest" href="/manifest.webmanifest"' in home
     assert "apple-touch-icon" in home
+
+
+def test_banquet_prefill_from_home_form(client):
+    r = client.get("/banket?date=2030-05-20&guests=25&paket=svadba")
+    assert 'value="2030-05-20"' in r.text
+    assert 'value="25"' in r.text
+    assert 'value="svadba" data-price="2100" checked' in r.text
+    # Мусор в адресе не попадает в форму
+    r = client.get("/banket?date=zavtra&guests=500")
+    assert 'value="zavtra"' not in r.text and 'value="500"' not in r.text

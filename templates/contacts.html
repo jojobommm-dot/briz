@@ -1,7 +1,7 @@
 {% extends "_base.html" %}
+{% from "_macros.html" import page_banner %}
 {% block title %}Контакты и проезд — кафе «{{ cafe.name }}», {{ cafe.city }}{% endblock %}
 
-{% from "_macros.html" import page_banner %}
 {% block content %}
 {{ page_banner("briz/hero-veranda.webp", "Контакты", cafe.address, cafe.city ~ ", " ~ cafe.district ~ ". Парковка на " ~ cafe.parking ~ " машин у входа.") }}
 
@@ -9,15 +9,15 @@
   <div class="wrap split split--top">
     <div class="contact-list">
       <div>
-        <div class="muted">Телефон</div>
+        <p class="eyebrow">Телефон</p>
         <a class="contact-big" href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a>
       </div>
       <div>
-        <div class="muted">Часы работы</div>
+        <p class="eyebrow">Часы работы</p>
         {% for days, time in cafe.hours %}<p>{{ days }}: <b>{{ time }}</b></p>{% endfor %}
       </div>
       <div>
-        <div class="muted">Соцсети</div>
+        <p class="eyebrow">Соцсети</p>
         <p><a href="{{ cafe.vk }}" target="_blank" rel="noopener">ВКонтакте</a></p>
       </div>
     </div>

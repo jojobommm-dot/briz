@@ -1,3 +1,38 @@
+{# Кнопка в двойной рамке, как в эталоне: вторая рамка — псевдоэлемент #}
+{% macro frame_btn(href, text, cls='') %}<a class="frame-btn {{ cls }}" href="{{ href }}"><span>{{ text }}</span></a>{% endmacro %}
+
+{% macro heading(eyebrow, title, light=false, tag='h2') %}
+<div class="heading{% if light %} heading--light{% endif %}">
+  <p class="eyebrow">{{ eyebrow }}</p>
+  <{{ tag }} class="heading__title">{{ title }}</{{ tag }}>
+</div>
+{% endmacro %}
+
+{# Строка меню: название — пунктир — цена, ниже описание #}
+{% macro menu_item(name, price, desc='', price2=none, price2_label='') %}
+<div class="mi">
+  <div class="mi__row">
+    <span class="mi__name">{{ name }}</span>
+    <span class="mi__dots" aria-hidden="true"></span>
+    <span class="mi__price">{{ price|rub }}</span>
+    {% if price2 is not none %}<span class="mi__price2" title="{{ price2_label }}">{{ price2|rub }}</span>{% endif %}
+  </div>
+  {% if desc %}<p class="mi__desc">{{ desc }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro squiggle() %}<svg class="squiggle" viewBox="0 0 190 12" aria-hidden="true"><use href="/static/icons/sprite.svg#squiggle"></use></svg>{% endmacro %}
+
+{% macro page_banner(image, eyebrow, title, lead='') %}
+<section class="banner" style="--bg: url('/static/img/{{ image }}')">
+  <div class="wrap banner__inner">
+    <p class="eyebrow">{{ eyebrow }}</p>
+    <h1 class="banner__title">{{ title }}</h1>
+    {% if lead %}<p class="banner__lead">{{ lead }}</p>{% endif %}
+  </div>
+</section>
+{% endmacro %}
+
 {% macro package_card(p, selectable=false, checked=false) %}
 <{{ 'label' if selectable else 'article' }} class="pkg{% if p.slug == 'prazdnik' %} pkg--accent{% endif %}">
   {% if selectable %}<input class="pkg__radio" type="radio" name="package" value="{{ p.slug }}" data-price="{{ p.price }}" {% if checked %}checked{% endif %}>{% endif %}
@@ -8,7 +43,6 @@
     {% for item in p.includes %}<li><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#check"></use></svg>{{ item }}</li>{% endfor %}
   </ul>
   {% if p.note %}<p class="pkg__note">{{ p.note }}</p>{% endif %}
-  {% if not selectable %}<a class="btn btn--outline btn--block" href="/banket?paket={{ p.slug }}#raschet">Рассчитать</a>{% endif %}
 </{{ 'label' if selectable else 'article' }}>
 {% endmacro %}
 
@@ -16,16 +50,6 @@
 <ul class="facts">
   {% for big, small in facts %}<li><strong>{{ big }}</strong><span>{{ small }}</span></li>{% endfor %}
 </ul>
-{% endmacro %}
-
-{% macro page_banner(image, eyebrow, title, lead='') %}
-<section class="banner" style="--bg: url('/static/img/{{ image }}')">
-  <div class="wrap banner__inner">
-    <p class="eyebrow eyebrow--light">{{ eyebrow }}</p>
-    <h1>{{ title }}</h1>
-    {% if lead %}<p class="banner__lead">{{ lead }}</p>{% endif %}
-  </div>
-</section>
 {% endmacro %}
 
 {% macro arrow() %}<svg class="i-arrow" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#arrow"></use></svg>{% endmacro %}
