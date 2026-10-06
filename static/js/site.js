@@ -167,4 +167,55 @@
       if (section) observer.observe(section);
     });
   }
+  // --- PWA: service worker и предложение установить приложение ---
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js")
+        .then(() => console.log("[briz] service worker зарегистрирован"))
+        .catch((err) => console.warn("[briz] service worker не зарегистрирован", err));
+    });
+  }
+
+  const install = document.querySelector("[data-install]");
+  if (install) {
+    const DISMISS_KEY = "briz-install-dismissed";
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+    // localStorage в приватном режиме может бросить исключение — тогда просто показываем
+    const dismissedRecently = () => {
+      try { return Date.now() - Number(localStorage.getItem(DISMISS_KEY) || 0) < 14 * 864e5; } catch { return false; }
+    };
+    const hide = (remember) => {
+      install.hidden = true;
+      if (remember) { try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch { /* ничего */ } }
+    };
+    install.querySelector("[data-install-close]").addEventListener("click", () => hide(true));
+
+    if (!standalone && !dismissedRecently()) {
+      // Android и Chrome на компьютере: браузер сам предлагает установку, мы ловим момент
+      let deferred = null;
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferred = e;
+        setTimeout(() => { install.hidden = false; }, 4000);  // не с порога, а когда гость осмотрелся
+      });
+      install.querySelector("[data-install-btn]").addEventListener("click", async () => {
+        if (!deferred) return hide(true);
+        deferred.prompt();
+        const { outcome } = await deferred.userChoice;
+        deferred = null;
+        hide(outcome !== "accepted");
+      });
+      window.addEventListener("appinstalled", () => hide(false));
+
+      // iPhone/iPad в Safari: кнопки установки нет, показываем подсказку
+      const ua = navigator.userAgent;
+      const isIOS = /iPhone|iPad|iPod/.test(ua) || (ua.includes("Macintosh") && "ontouchend" in document);
+      const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|YaBrowser/.test(ua);
+      if (isIOS && isSafari) {
+        install.querySelector("[data-install-hint]").textContent = "Нажмите «Поделиться», затем «На экран Домой»";
+        install.querySelector("[data-install-btn]").textContent = "Понятно";
+        setTimeout(() => { install.hidden = false; }, 4000);
+      }
+    }
+  }
 })();

@@ -1,9 +1,10 @@
 """Публичные страницы сайта."""
 
+import hashlib
 import logging
 
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse, RedirectResponse
 
 from .. import banquet
 from ..config import settings
@@ -16,7 +17,7 @@ from ..content import (
     SERVICES,
     popular_dishes,
 )
-from ..templating import templates
+from ..templating import asset, templates
 
 router = APIRouter()
 log = logging.getLogger("briz")
@@ -99,3 +100,45 @@ async def robots():
     if settings.debug:
         return "User-agent: *\nDisallow: /\n"
     return f"User-agent: *\nAllow: /\nSitemap: {settings.base_url}/sitemap.xml\n"
+
+
+# --- PWA ---
+
+# Файлы оболочки: без них установленное приложение не откроется без сети
+_SHELL_ASSETS = ["css/site.css", "js/site.js", "icons/sprite.svg", "icons/icon-192.png"]
+_SHELL_PAGES = ["/", "/menu", "/obedy", "/kontakty", "/offline"]
+
+
+def _sw_version() -> str:
+    """Версия кеша = отпечаток времени правки оболочки и самого воркера."""
+    files = [settings.static_root / a for a in _SHELL_ASSETS]
+    files += [settings.static_root / "manifest.webmanifest", settings.templates_root / "sw.js"]
+    stamp = "|".join(str(f.stat().st_mtime_ns) for f in files if f.exists())
+    return hashlib.sha1(stamp.encode()).hexdigest()[:10]
+
+
+@router.get("/sw.js")
+async def service_worker(request: Request):
+    # С корня, а не из /static: воркер управляет только адресами ниже своего
+    return templates.TemplateResponse(
+        request,
+        "sw.js",
+        {"version": _sw_version(), "precache": _SHELL_PAGES + [asset(a) for a in _SHELL_ASSETS]},
+        media_type="application/javascript",
+        # Браузер должен всегда спрашивать свежий воркер, иначе обновления застрянут
+        headers={"Cache-Control": "no-cache"},
+    )
+
+
+@router.get("/manifest.webmanifest")
+async def manifest():
+    return FileResponse(
+        settings.static_root / "manifest.webmanifest",
+        media_type="application/manifest+json",
+        headers={"Cache-Control": "no-cache"},
+    )
+
+
+@router.get("/offline", response_class=HTMLResponse)
+async def offline(request: Request):
+    return templates.TemplateResponse(request, "offline.html", {"nav": ""})

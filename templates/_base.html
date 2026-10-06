@@ -2,12 +2,19 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block title %}{{ cafe.name }} — {{ cafe.tagline|lower }}, {{ cafe.city }}{% endblock %}</title>
   <meta name="description" content="{% block description %}Кафе «{{ cafe.name }}» в Перми: банкеты до {{ cafe.capacity }} гостей на берегу Камы, бизнес-ланчи и обеды с доставкой. {{ cafe.address }}.{% endblock %}">
   <meta name="theme-color" content="#5e7d45">
   <link rel="icon" href="{{ asset('icons/icon.svg') }}" type="image/svg+xml">
-  <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+  <link rel="icon" href="{{ asset('icons/favicon-32.png') }}" sizes="32x32" type="image/png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  {# iPhone: иконка на экране «Домой», имя под ней и полноэкранный режим #}
+  <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
+  <meta name="apple-mobile-web-app-title" content="{{ cafe.name }}">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Roboto:wght@400;500;700&display=swap">
@@ -89,6 +96,18 @@
       </div>
     </div>
   </footer>
+
+  {# Предложение установить приложение. Android/Chrome — своя кнопка установки,
+     iPhone — подсказка «Поделиться → На экран Домой» (кнопки установки там нет) #}
+  <div class="install" data-install hidden>
+    <img class="install__icon" src="{{ asset('icons/icon-192.png') }}" alt="" width="48" height="48">
+    <div class="install__text">
+      <strong>Приложение «{{ cafe.name }}»</strong>
+      <span data-install-hint>Меню, обеды и заказ — в одно касание с экрана телефона</span>
+    </div>
+    <button class="btn btn--primary install__btn" type="button" data-install-btn>Установить</button>
+    <button class="install__close" type="button" data-install-close aria-label="Не сейчас">×</button>
+  </div>
 
   {# Чат появится на шаге 4. Пока кнопка ведёт к живым каналам связи #}
   <div class="chat" data-chat>

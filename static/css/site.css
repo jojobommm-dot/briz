@@ -444,3 +444,27 @@ body:has(.total) .chat { bottom: 130px; }
 .prices td { padding: 10px 0; border-top: 1px solid #e2e2e2; text-align: right; white-space: nowrap; }
 .prices td:first-child { text-align: left; white-space: normal; color: var(--ink); padding-right: 12px; }
 .prices td + td { padding-left: 16px; font-weight: 700; color: var(--green); }
+
+/* --- PWA: плашка установки и отступы под «чёлку» iPhone --- */
+.install {
+  position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 40;
+  display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 14px;
+  background: var(--white); box-shadow: 0 16px 40px rgba(0,0,0,.2); border-top: 3px solid var(--green);
+  max-width: 520px; margin: 0 auto;
+}
+.install[hidden] { display: none; }
+.install__icon { width: 48px; height: 48px; flex: none; border-radius: 12px; }
+.install__text { display: flex; flex-direction: column; line-height: 1.35; font-size: .88rem; min-width: 0; }
+.install__text strong { font-family: var(--serif); font-size: 1.05rem; color: var(--ink); }
+.install__btn { min-height: 40px; padding: 0 16px; font-size: .82rem; flex: none; margin-left: auto; }
+.install__close { border: 0; background: none; font-size: 1.5rem; line-height: 1; color: var(--muted); cursor: pointer; padding: 4px; flex: none; }
+/* Пока висит плашка, кнопку чата поднимаем над ней */
+body:has(.install:not([hidden])) .chat { bottom: calc(100px + env(safe-area-inset-bottom)); }
+.chat { bottom: calc(16px + env(safe-area-inset-bottom)); right: calc(16px + env(safe-area-inset-right)); }
+.btn-row--center { justify-content: center; margin-top: 20px; }
+
+/* Установленное приложение: без тестовой плашки сверху и с отступом под статус-бар */
+@media (display-mode: standalone) {
+  .devbar { display: none; }
+  .header { padding-top: env(safe-area-inset-top); }
+}

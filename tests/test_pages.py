@@ -111,3 +111,27 @@ def test_lunch_real_prices(client):
     r = client.get("/obedy")
     assert "370 ₽" in r.text and "390 ₽" in r.text
     assert "до 11:00" in r.text
+
+
+def test_pwa_files(client):
+    sw = client.get("/sw.js")
+    assert sw.status_code == 200
+    assert sw.headers["content-type"].startswith("application/javascript")
+    assert sw.headers["cache-control"] == "no-cache"
+    assert '"/offline"' in sw.text and "/static/css/site.css?v=" in sw.text
+
+    m = client.get("/manifest.webmanifest")
+    assert m.headers["content-type"].startswith("application/manifest+json")
+    manifest = m.json()
+    assert manifest["display"] == "standalone" and manifest["start_url"].startswith("/")
+    # Всё, на что ссылается манифест, отдаётся
+    files = [i["src"] for i in manifest["icons"]] + [s["src"] for s in manifest["screenshots"]]
+    files += [i["src"] for sc in manifest["shortcuts"] for i in sc["icons"]]
+    for src in files:
+        assert client.get(src).status_code == 200, src
+    assert any(i.get("purpose") == "maskable" for i in manifest["icons"])
+
+    assert client.get("/offline").status_code == 200
+    home = client.get("/").text
+    assert 'rel="manifest" href="/manifest.webmanifest"' in home
+    assert "apple-touch-icon" in home

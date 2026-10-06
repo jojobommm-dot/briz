@@ -18,7 +18,7 @@ def _file_version(name: str) -> str:
         return "0"
 
 
-def _asset(name: str) -> str:
+def asset(name: str) -> str:
     """Адрес файла из static с меткой правки, чтобы браузер не показывал
     вчерашний стиль из кеша. Имя относительно static/: asset("css/site.css")."""
     return f"/static/{name}?v={_file_version(name)}"
@@ -37,7 +37,7 @@ def _rub(v: int) -> str:
     return f"{v:,}".replace(",", " ") + " ₽"
 
 
-templates.env.globals["asset"] = _asset
+templates.env.globals["asset"] = asset
 templates.env.globals["cafe"] = CAFE
 templates.env.globals["debug"] = settings.debug
 templates.env.globals["base_url"] = settings.base_url
