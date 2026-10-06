@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{{ cafe.name }} — {{ cafe.tagline|lower }}, {{ cafe.city }}{% endblock %}</title>
   <meta name="description" content="{% block description %}Кафе «{{ cafe.name }}» в Перми: банкеты до {{ cafe.capacity }} гостей на берегу Камы, бизнес-ланчи и обеды с доставкой. {{ cafe.address }}.{% endblock %}">
-  <meta name="theme-color" content="#0e6b70">
+  <meta name="theme-color" content="#5e7d45">
   <link rel="icon" href="{{ asset('icons/icon.svg') }}" type="image/svg+xml">
   <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Roboto:wght@400;500;700&display=swap">
   <link rel="stylesheet" href="{{ asset('css/site.css') }}">
   {% block head %}{% endblock %}
 </head>
@@ -26,9 +26,10 @@
         <span class="logo__text">{{ cafe.name }}</span>
       </a>
       <nav class="nav" id="nav" aria-label="Разделы">
+        <a href="/" {% if nav == 'home' %}aria-current="page"{% endif %}>Главная</a>
         <a href="/banket" {% if nav == 'banket' %}aria-current="page"{% endif %}>Банкеты</a>
         <a href="/menu" {% if nav == 'menu' %}aria-current="page"{% endif %}>Меню</a>
-        <a href="/obedy" {% if nav == 'obedy' %}aria-current="page"{% endif %}>Обеды и доставка</a>
+        <a href="/obedy" {% if nav == 'obedy' %}aria-current="page"{% endif %}>Обеды</a>
         <a href="/kontakty" {% if nav == 'kontakty' %}aria-current="page"{% endif %}>Контакты</a>
         <a class="nav__phone" href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a>
       </nav>
@@ -44,17 +45,47 @@
   </main>
 
   <footer class="footer">
-    <div class="wrap footer__grid">
-      <div>
-        <div class="footer__name">Кафе «{{ cafe.name }}»</div>
-        <p>{{ cafe.city }}, {{ cafe.address }}<br>{{ cafe.district }}</p>
+    <div class="wrap">
+      <div class="footer__top">
+        <a class="logo" href="/" aria-label="{{ cafe.name }} — на главную">
+          <svg class="logo__mark" viewBox="0 0 40 40" aria-hidden="true"><use href="/static/icons/sprite.svg#wave"></use></svg>
+          <span class="logo__text">{{ cafe.name }}</span>
+        </a>
+        <p class="footer__quote">Заходите на обед — возвращайтесь на праздник. Мы рядом, на берегу Камы.</p>
       </div>
-      <div>
-        {% for days, time in cafe.hours %}<p><span class="muted">{{ days }}</span> {{ time }}</p>{% endfor %}
-      </div>
-      <div>
-        <p><a href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a></p>
-        <p><a href="{{ cafe.vk }}" target="_blank" rel="noopener">ВКонтакте</a></p>
+      <div class="footer__grid">
+        <div>
+          <h3>Кафе «{{ cafe.name }}»</h3>
+          <p class="footer__small">© 2026 Кафе «{{ cafe.name }}», {{ cafe.city }}</p>
+          <div class="socials">
+            <a href="{{ cafe.vk }}" target="_blank" rel="noopener" aria-label="ВКонтакте">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#vk"></use></svg>
+            </a>
+            <a href="tel:{{ cafe.phone }}" aria-label="Позвонить">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#phone"></use></svg>
+            </a>
+          </div>
+        </div>
+        <div>
+          <h3>Связаться</h3>
+          <p class="footer__big"><a href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a></p>
+          <p>{{ cafe.city }}, {{ cafe.address }}</p>
+          {% for days, time in cafe.hours %}<p class="footer__small">{{ days }}: {{ time }}</p>{% endfor %}
+        </div>
+        <div>
+          <h3>Разделы</h3>
+          <ul class="footer__links">
+            <li><a href="/banket">Банкеты</a></li>
+            <li><a href="/menu">Меню</a></li>
+            <li><a href="/obedy">Обеды</a></li>
+            <li><a href="/kontakty">Контакты</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3>Остались вопросы?</h3>
+          <p>Напишите нам — ответим и подскажем со свободной датой и меню.</p>
+          <button class="btn btn--primary btn--block" type="button" data-chat-open>Задать вопрос</button>
+        </div>
       </div>
     </div>
   </footer>
@@ -72,7 +103,7 @@
       </div>
       <p class="chat__lead">Скоро здесь можно будет написать нам и получить ответ сразу. Пока — так:</p>
       <a class="btn btn--primary btn--block" href="tel:{{ cafe.phone }}">Позвонить {{ cafe.phone|phone }}</a>
-      <a class="btn btn--ghost btn--block" href="{{ cafe.vk }}" target="_blank" rel="noopener">Написать во ВКонтакте</a>
+      <a class="btn btn--outline btn--block" href="{{ cafe.vk }}" target="_blank" rel="noopener">Написать во ВКонтакте</a>
     </div>
   </div>
 

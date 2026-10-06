@@ -1,16 +1,11 @@
 {% extends "_base.html" %}
 {% block title %}Контакты и проезд — кафе «{{ cafe.name }}», {{ cafe.city }}{% endblock %}
 
+{% from "_macros.html" import page_banner %}
 {% block content %}
-<section class="pagehead">
-  <div class="wrap">
-    <p class="eyebrow">Контакты</p>
-    <h1>{{ cafe.address }}</h1>
-    <p class="lead">{{ cafe.city }}, {{ cafe.district }}. Парковка на {{ cafe.parking }} машин у входа.</p>
-  </div>
-</section>
+{{ page_banner("demo/hero-zal.jpg", "Контакты", cafe.address, cafe.city ~ ", " ~ cafe.district ~ ". Парковка на " ~ cafe.parking ~ " машин у входа.") }}
 
-<section class="section section--tight">
+<section class="section">
   <div class="wrap split split--top">
     <div class="contact-list">
       <div>

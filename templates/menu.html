@@ -2,14 +2,9 @@
 {% block title %}Меню — кафе «{{ cafe.name }}», {{ cafe.city }}{% endblock %}
 {% block description %}Меню кафе «{{ cafe.name }}»: салаты, супы, горячее, шашлык, десерты. Цены и вес блюд.{% endblock %}
 
+{% from "_macros.html" import page_banner %}
 {% block content %}
-<section class="pagehead">
-  <div class="wrap">
-    <p class="eyebrow">Меню</p>
-    <h1>Домашняя кухня и шашлык</h1>
-    <p class="lead">Готовим сами, порции честные. Любое блюдо можно заказать с собой.</p>
-  </div>
-</section>
+{{ page_banner("demo/hero-shashlik.jpg", "Меню", "Домашняя кухня и шашлык", "Готовим сами, порции честные. Любое блюдо можно заказать с собой.") }}
 
 <nav class="chips" aria-label="Разделы меню" data-chips>
   <div class="wrap chips__row">

@@ -8,7 +8,7 @@
     {% for item in p.includes %}<li><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#check"></use></svg>{{ item }}</li>{% endfor %}
   </ul>
   {% if p.note %}<p class="pkg__note">{{ p.note }}</p>{% endif %}
-  {% if not selectable %}<a class="btn btn--ghost btn--block" href="/banket?paket={{ p.slug }}#raschet">Рассчитать</a>{% endif %}
+  {% if not selectable %}<a class="btn btn--outline btn--block" href="/banket?paket={{ p.slug }}#raschet">Рассчитать</a>{% endif %}
 </{{ 'label' if selectable else 'article' }}>
 {% endmacro %}
 
@@ -18,22 +18,14 @@
 </ul>
 {% endmacro %}
 
-{% macro hero_scene() %}
-{# Рисунок вместо фото, пока кафе не пришлёт свои: Кама, дальний берег, солнце #}
-<svg class="scene" viewBox="0 0 600 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-  <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe2b8"/><stop offset="1" stop-color="#f6c79a"/></linearGradient>
-    <linearGradient id="river" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a8a8e"/><stop offset="1" stop-color="#0b4f54"/></linearGradient>
-  </defs>
-  <rect width="600" height="420" fill="url(#sky)"/>
-  <circle cx="420" cy="170" r="58" fill="#fff4dc"/>
-  <path d="M0 220c80-30 150-38 230-20s170 10 230-12 100-16 140-6v60H0z" fill="#7aa58a"/>
-  <path d="M0 238c90-18 170-20 260-8s180 6 250-6 70-8 90-4v40H0z" fill="#5b8c72"/>
-  <rect y="250" width="600" height="170" fill="url(#river)"/>
-  <g fill="none" stroke="#fff" stroke-linecap="round" opacity=".5" stroke-width="3">
-    <path d="M330 280c20-6 40-6 60 0"/><path d="M400 300c26-8 52-8 78 0"/><path d="M360 330c30-8 60-8 90 0"/>
-    <path d="M60 300c22-6 44-6 66 0"/><path d="M120 350c30-8 60-8 90 0"/><path d="M450 370c26-7 52-7 78 0"/>
-  </g>
-  <path d="M0 348c70-16 140-12 200 14 26 12 44 34 52 58H0z" fill="#e9d7b8"/>
-</svg>
+{% macro page_banner(image, eyebrow, title, lead='') %}
+<section class="banner" style="--bg: url('/static/img/{{ image }}')">
+  <div class="wrap banner__inner">
+    <p class="eyebrow eyebrow--light">{{ eyebrow }}</p>
+    <h1>{{ title }}</h1>
+    {% if lead %}<p class="banner__lead">{{ lead }}</p>{% endif %}
+  </div>
+</section>
 {% endmacro %}
+
+{% macro arrow() %}<svg class="i-arrow" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#arrow"></use></svg>{% endmacro %}

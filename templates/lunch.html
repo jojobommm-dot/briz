@@ -2,16 +2,11 @@
 {% block title %}Бизнес-ланч и доставка обедов — кафе «{{ cafe.name }}», {{ cafe.city }}{% endblock %}
 {% block description %}Бизнес-ланч за {{ lunch.price }} ₽ в Кировском районе Перми. Меню на неделю, доставка обедов в офис.{% endblock %}
 
+{% from "_macros.html" import page_banner %}
 {% block content %}
-<section class="pagehead">
-  <div class="wrap">
-    <p class="eyebrow">Обеды и доставка</p>
-    <h1>Бизнес-ланч за {{ lunch.price|rub }}</h1>
-    <p class="lead">Салат, суп и горячее по будням {{ lunch.hours }}. Без салата — {{ lunch.price_short|rub }}.</p>
-  </div>
-</section>
+{{ page_banner("demo/hero-borsch.jpg", "Обеды и доставка", "Бизнес-ланч за " ~ (lunch.price|rub), "Салат, суп и горячее по будням " ~ lunch.hours ~ ". Без салата — " ~ (lunch.price_short|rub) ~ ".") }}
 
-<section class="section section--tight">
+<section class="section">
   <div class="wrap split split--top">
     <div>
       <h2>Меню недели</h2>

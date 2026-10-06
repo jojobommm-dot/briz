@@ -7,7 +7,15 @@ from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 
 from .. import banquet
 from ..config import settings
-from ..content import BANQUET_FACTS, BANQUET_PACKAGES, LUNCH, MENU
+from ..content import (
+    BANQUET_FACTS,
+    BANQUET_PACKAGES,
+    HERO_SLIDES,
+    LUNCH,
+    MENU,
+    SERVICES,
+    popular_dishes,
+)
 from ..templating import templates
 
 router = APIRouter()
@@ -19,7 +27,15 @@ async def home(request: Request):
     return templates.TemplateResponse(
         request,
         "home.html",
-        {"packages": BANQUET_PACKAGES, "facts": BANQUET_FACTS, "lunch": LUNCH, "nav": "home"},
+        {
+            "slides": HERO_SLIDES,
+            "services": SERVICES,
+            "popular": popular_dishes(),
+            "packages": BANQUET_PACKAGES,
+            "facts": BANQUET_FACTS,
+            "lunch": LUNCH,
+            "nav": "home",
+        },
     )
 
 

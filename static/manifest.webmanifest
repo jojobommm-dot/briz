@@ -3,8 +3,8 @@
   "short_name": "Бриз",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#fbf7f0",
-  "theme_color": "#0e6b70",
+  "background_color": "#ffffff",
+  "theme_color": "#5e7d45",
   "lang": "ru",
   "icons": [
     { "src": "/static/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }

@@ -92,3 +92,13 @@ def test_past_date_rejected():
     req, errors = banquet.validate(_good_form(event_date="2020-01-01"))
     assert req is None
     assert errors["event_date"] == "Эта дата уже прошла"
+
+
+def test_home_blocks(client):
+    r = client.get("/")
+    # Слайдер, нумерованный список услуг и карусель блюд из content.py
+    assert r.text.count('class="hero__slide') == 4
+    assert "<h1" in r.text and r.text.count("<h1") == 1
+    assert 'class="numbered__num">06<' in r.text
+    assert "Пельмени домашние" in r.text
+    assert client.get("/static/img/demo/hero-banket.jpg").status_code == 200

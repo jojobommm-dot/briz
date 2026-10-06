@@ -1,7 +1,10 @@
-// Кафе «Бриз»: мобильное меню, кнопка чата, калькулятор банкета, разделы меню.
+// Кафе «Бриз»: мобильное меню, слайдер, карусель блюд, кнопка чата,
+// калькулятор банкета, разделы меню.
 "use strict";
 
 (function () {
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   // --- мобильное меню ---
   const burger = document.querySelector(".burger");
   const nav = document.getElementById("nav");
@@ -9,6 +12,79 @@
     burger.addEventListener("click", () => {
       const open = nav.classList.toggle("is-open");
       burger.setAttribute("aria-expanded", String(open));
+    });
+  }
+
+  // --- слайдер первого экрана ---
+  const slider = document.querySelector("[data-slider]");
+  if (slider) {
+    const slides = [...slider.querySelectorAll(".hero__slide")];
+    const progress = slider.querySelector("[data-progress]");
+    const current = slider.querySelector("[data-current]");
+    const SLIDE_MS = 6500;
+    slider.style.setProperty("--slide-ms", SLIDE_MS + "ms");
+    let index = 0;
+    let timer = null;
+
+    const show = (i) => {
+      slides[index].classList.remove("is-active");
+      slides[index].setAttribute("aria-hidden", "true");
+      slides[index].querySelectorAll("a").forEach((a) => a.setAttribute("tabindex", "-1"));
+      index = (i + slides.length) % slides.length;
+      slides[index].classList.add("is-active");
+      slides[index].removeAttribute("aria-hidden");
+      slides[index].querySelectorAll("a").forEach((a) => a.removeAttribute("tabindex"));
+      current.textContent = String(index + 1).padStart(2, "0");
+      restartProgress();
+    };
+    // Полоса прогресса перезапускается вместе с таймером
+    const restartProgress = () => {
+      progress.classList.remove("is-running");
+      void progress.offsetWidth;
+      if (timer !== null) progress.classList.add("is-running");
+    };
+    const play = () => {
+      if (reducedMotion || slides.length < 2) return;
+      clearInterval(timer);
+      timer = setInterval(() => show(index + 1), SLIDE_MS);
+      restartProgress();
+    };
+    const pause = () => {
+      clearInterval(timer);
+      timer = null;
+      progress.classList.remove("is-running");
+    };
+
+    slider.querySelector("[data-next]").addEventListener("click", () => { show(index + 1); play(); });
+    slider.querySelector("[data-prev]").addEventListener("click", () => { show(index - 1); play(); });
+    slider.addEventListener("mouseenter", pause);
+    slider.addEventListener("mouseleave", play);
+    slider.addEventListener("focusin", pause);
+    slider.addEventListener("focusout", play);
+
+    // Свайп на телефоне
+    let startX = null;
+    slider.addEventListener("touchstart", (e) => { startX = e.touches[0].clientX; }, { passive: true });
+    slider.addEventListener("touchend", (e) => {
+      if (startX === null) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 50) { show(index + (dx < 0 ? 1 : -1)); play(); }
+      startX = null;
+    });
+    document.addEventListener("visibilitychange", () => (document.hidden ? pause() : play()));
+    play();
+  }
+
+  // --- карусель блюд ---
+  const track = document.querySelector("[data-track]");
+  if (track) {
+    const step = () => (track.firstElementChild ? track.firstElementChild.offsetWidth + 24 : 300);
+    document.querySelector("[data-track-next]")?.addEventListener("click", () => {
+      const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4;
+      track.scrollTo({ left: atEnd ? 0 : track.scrollLeft + step(), behavior: "smooth" });
+    });
+    document.querySelector("[data-track-prev]")?.addEventListener("click", () => {
+      track.scrollBy({ left: -step(), behavior: "smooth" });
     });
   }
 
@@ -23,6 +99,7 @@
     };
     toggle.addEventListener("click", () => setOpen(panel.hidden));
     chat.querySelector(".chat__close").addEventListener("click", () => setOpen(false));
+    document.querySelectorAll("[data-chat-open]").forEach((btn) => btn.addEventListener("click", () => setOpen(true)));
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") setOpen(false); });
   }
 
