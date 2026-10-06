@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Бриз — знак">
+  <defs>
+    <clipPath id="bz-round"><circle cx="200" cy="200" r="168"/></clipPath>
+    <linearGradient id="bz-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b4f6c"/>
+      <stop offset=".62" stop-color="#1b93bf"/>
+      <stop offset="1" stop-color="#5cc6e8"/>
+    </linearGradient>
+    <radialGradient id="bz-moon-glow">
+      <stop offset=".55" stop-color="#bff0ff" stop-opacity=".9"/>
+      <stop offset="1" stop-color="#bff0ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="bz-ring-glow">
+      <stop offset=".86" stop-color="#4fd2ff" stop-opacity="0"/>
+      <stop offset=".93" stop-color="#4fd2ff" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#4fd2ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- подсветка вокруг круга, как у кругов на стене зала -->
+  <circle cx="200" cy="200" r="196" fill="url(#bz-ring-glow)"/>
+
+  <g clip-path="url(#bz-round)">
+    <!-- небо -->
+    <rect width="400" height="400" fill="url(#bz-sky)"/>
+    <!-- луна: светящийся круг -->
+    <circle cx="280" cy="122" r="44" fill="url(#bz-moon-glow)"/>
+    <circle cx="280" cy="122" r="25" fill="#eefbff"/>
+    <!-- дальний берег -->
+    <path d="M30 222 C70 206 104 212 140 204 C178 196 214 214 252 206 C292 198 330 210 372 202 L372 230 L30 230Z" fill="#0d4a63"/>
+    <!-- река: волны, как панели на стене -->
+    <rect x="0" y="226" width="400" height="174" fill="#1583ad"/>
+    <path d="M0 238 C34 230 66 246 100 238 S166 230 200 238 S266 246 300 238 S366 230 400 238 L400 252 C366 244 334 258 300 250 S234 242 200 250 S134 258 100 250 S34 244 0 252Z" fill="#7fd8f5"/>
+    <path d="M0 262 C34 254 66 270 100 262 S166 254 200 262 S266 270 300 262 S366 254 400 262 L400 274 C366 266 334 280 300 272 S234 264 200 272 S134 280 100 272 S34 266 0 274Z" fill="#45b8e0"/>
+    <!-- лунная дорожка -->
+    <g stroke="#eefbff" stroke-linecap="round" opacity=".85">
+      <path d="M262 236 h36" stroke-width="4"/>
+      <path d="M268 248 h24" stroke-width="3.5"/>
+      <path d="M258 260 h44" stroke-width="3"/>
+      <path d="M270 274 h20" stroke-width="3"/>
+      <path d="M262 288 h32" stroke-width="2.5"/>
+    </g>
+
+    <!-- стол террасы -->
+    <rect x="0" y="300" width="400" height="100" fill="#2a1f1a"/>
+    <rect x="0" y="300" width="400" height="6" fill="#6b5241"/>
+
+    <!-- девушка со спины -->
+    <g fill="#2a1f1a">
+      <ellipse cx="165" cy="172" rx="17" ry="20"/>
+      <circle cx="163" cy="149" r="10.5"/>
+      <path d="M158 188 L172 188 L173 204 C182 212 196 214 204 222 C212 232 208 246 204 258 C200 272 202 288 208 300 L118 300 C124 288 126 272 122 258 C118 246 116 230 124 222 C132 214 148 212 157 204Z"/>
+    </g>
+    <g fill="none" stroke="#2a1f1a" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M200 226 Q224 254 236 290" stroke-width="15"/>
+      <path d="M236 290 Q241 266 250 248" stroke-width="11"/>
+    </g>
+    <ellipse cx="251" cy="244" rx="6.5" ry="7.5" fill="#2a1f1a"/>
+
+    <!-- шарф на ветру — волна, как в названии -->
+    <path d="M176 197 C174 208 160 211 151 204 C139 206 127 202 115 194 C103 186 91 188 81 196 C87 182 103 176 119 182 C131 187 141 192 151 193 C157 189 170 189 176 197Z" fill="#7fd8f5"/>
+
+    <!-- бокал -->
+    <g fill="none" stroke="#eefbff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M239 198 L263 198 C264 214 259 224 251 224 C243 224 238 214 239 198Z"/>
+      <path d="M251 224 L251 238"/>
+    </g>
+    <path d="M240.4 209 L261.6 209 C260.4 218 256.5 222 251 222 C245.5 222 241.6 218 240.4 209Z" fill="#e8b15a"/>
+  </g>
+
+  <!-- рамка круга -->
+  <circle cx="200" cy="200" r="168" fill="none" stroke="#eefbff" stroke-width="3"/>
+</svg>
