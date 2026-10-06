@@ -1,0 +1,13 @@
+{% extends "_base.html" %}
+{% block title %}Заявка принята — кафе «{{ cafe.name }}»{% endblock %}
+{% block content %}
+<section class="pagehead pagehead--center">
+  <div class="wrap narrow">
+    <div class="done-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#check"></use></svg></div>
+    <h1>Заявка принята</h1>
+    <p class="lead">Перезвоним в течение часа в рабочее время, подтвердим дату и обсудим меню.</p>
+    <p>Если не хотите ждать — позвоните сами: <a href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a></p>
+    <a class="btn btn--ghost" href="/">На главную</a>
+  </div>
+</section>
+{% endblock %}

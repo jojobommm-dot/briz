@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ cafe.name }} — {{ cafe.tagline|lower }}, {{ cafe.city }}{% endblock %}</title>
+  <meta name="description" content="{% block description %}Кафе «{{ cafe.name }}» в Перми: банкеты до {{ cafe.capacity }} гостей на берегу Камы, бизнес-ланчи и обеды с доставкой. {{ cafe.address }}.{% endblock %}">
+  <meta name="theme-color" content="#0e6b70">
+  <link rel="icon" href="{{ asset('icons/icon.svg') }}" type="image/svg+xml">
+  <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="{{ asset('css/site.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  {% if debug %}
+  <div class="devbar">Тестовая версия: блюда, цены и фото — заглушки</div>
+  {% endif %}
+
+  <header class="header">
+    <div class="wrap header__row">
+      <a class="logo" href="/" aria-label="{{ cafe.name }} — на главную">
+        <svg class="logo__mark" viewBox="0 0 40 40" aria-hidden="true"><use href="/static/icons/sprite.svg#wave"></use></svg>
+        <span class="logo__text">{{ cafe.name }}</span>
+      </a>
+      <nav class="nav" id="nav" aria-label="Разделы">
+        <a href="/banket" {% if nav == 'banket' %}aria-current="page"{% endif %}>Банкеты</a>
+        <a href="/menu" {% if nav == 'menu' %}aria-current="page"{% endif %}>Меню</a>
+        <a href="/obedy" {% if nav == 'obedy' %}aria-current="page"{% endif %}>Обеды и доставка</a>
+        <a href="/kontakty" {% if nav == 'kontakty' %}aria-current="page"{% endif %}>Контакты</a>
+        <a class="nav__phone" href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a>
+      </nav>
+      <a class="header__phone" href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a>
+      <button class="burger" type="button" aria-controls="nav" aria-expanded="false" aria-label="Меню">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__grid">
+      <div>
+        <div class="footer__name">Кафе «{{ cafe.name }}»</div>
+        <p>{{ cafe.city }}, {{ cafe.address }}<br>{{ cafe.district }}</p>
+      </div>
+      <div>
+        {% for days, time in cafe.hours %}<p><span class="muted">{{ days }}</span> {{ time }}</p>{% endfor %}
+      </div>
+      <div>
+        <p><a href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a></p>
+        <p><a href="{{ cafe.vk }}" target="_blank" rel="noopener">ВКонтакте</a></p>
+      </div>
+    </div>
+  </footer>
+
+  {# Чат появится на шаге 4. Пока кнопка ведёт к живым каналам связи #}
+  <div class="chat" data-chat>
+    <button class="chat__toggle" type="button" aria-expanded="false" aria-controls="chat-panel">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#chat"></use></svg>
+      <span>Задать вопрос</span>
+    </button>
+    <div class="chat__panel" id="chat-panel" hidden>
+      <div class="chat__head">
+        <strong>Есть вопрос?</strong>
+        <button class="chat__close" type="button" aria-label="Закрыть">×</button>
+      </div>
+      <p class="chat__lead">Скоро здесь можно будет написать нам и получить ответ сразу. Пока — так:</p>
+      <a class="btn btn--primary btn--block" href="tel:{{ cafe.phone }}">Позвонить {{ cafe.phone|phone }}</a>
+      <a class="btn btn--ghost btn--block" href="{{ cafe.vk }}" target="_blank" rel="noopener">Написать во ВКонтакте</a>
+    </div>
+  </div>
+
+  <script src="{{ asset('js/site.js') }}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

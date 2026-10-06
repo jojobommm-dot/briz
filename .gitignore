@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+.env
+*.log
+.pytest_cache/
+.ruff_cache/
+
+# Заявки и прочее, что пишет работающий сайт
+data/
+
+# Claude Code (личные настройки)
+.claude/settings.local.json

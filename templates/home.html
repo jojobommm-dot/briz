@@ -1,0 +1,88 @@
+{% extends "_base.html" %}
+{% from "_macros.html" import package_card, facts_row, hero_scene %}
+
+{% block content %}
+<section class="hero">
+  <div class="wrap hero__grid">
+    <div class="hero__text">
+      <p class="eyebrow">{{ cafe.district }}</p>
+      <h1>Кафе на&nbsp;берегу Камы</h1>
+      <p class="lead">Банкеты до {{ cafe.capacity }} гостей, обеды с доставкой и домашняя кухня. Своё место для праздника — без поездки в центр.</p>
+      <div class="hero__cta">
+        <a class="btn btn--primary" href="/banket#raschet">Рассчитать банкет</a>
+        <a class="btn btn--ghost" href="/obedy">Обеды на неделю</a>
+      </div>
+    </div>
+    <div class="hero__art">{{ hero_scene() }}</div>
+  </div>
+  <div class="wrap">{{ facts_row(facts) }}</div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="cards3">
+      <a class="card" href="/banket">
+        <span class="card__kicker">от {{ packages[0].price|rub }} за гостя</span>
+        <h2 class="card__title">Банкеты</h2>
+        <p>Дни рождения, юбилеи, свадьбы и поминальные обеды. Можно со своим алкоголем.</p>
+        <span class="card__more">Пакеты и свободные даты <svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#arrow"></use></svg></span>
+      </a>
+      <a class="card" href="/obedy">
+        <span class="card__kicker">бизнес-ланч {{ lunch.price|rub }}</span>
+        <h2 class="card__title">Обеды и доставка</h2>
+        <p>Меню на каждый день недели. Привезём в офис или на производство.</p>
+        <span class="card__more">Меню недели <svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#arrow"></use></svg></span>
+      </a>
+      <a class="card" href="/menu">
+        <span class="card__kicker">русская и европейская кухня</span>
+        <h2 class="card__title">Меню</h2>
+        <p>Пельмени, супы, горячее и шашлык на мангале.</p>
+        <span class="card__more">Смотреть меню <svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#arrow"></use></svg></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="section section--sand">
+  <div class="wrap">
+    <div class="section__head">
+      <h2>Банкетные пакеты</h2>
+      <p>Цена за гостя, всё уже включено. Точное меню подберём вместе.</p>
+    </div>
+    <div class="pkgs">
+      {% for p in packages %}{{ package_card(p) }}{% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap split">
+    <div>
+      <h2>Обед за {{ lunch.price|rub }}</h2>
+      <p class="lead">Салат, суп и горячее. По будням {{ lunch.hours }} в зале, с доставкой — по предзаказу.</p>
+      <p>От {{ lunch.free_delivery_from }} обедов везём в офис бесплатно.</p>
+      <a class="btn btn--primary" href="/obedy">Меню на неделю</a>
+    </div>
+    <ol class="week">
+      {% for day, soup, main, salad in lunch.week %}
+      <li><span class="week__day">{{ day }}</span><span>{{ soup }} · {{ main }} · {{ salad }}</span></li>
+      {% endfor %}
+    </ol>
+  </div>
+</section>
+
+<section class="section section--sea">
+  <div class="wrap split">
+    <div>
+      <h2>Как нас найти</h2>
+      <p class="lead">{{ cafe.city }}, {{ cafe.address }}</p>
+      <p>{{ cafe.district }}. Парковка на {{ cafe.parking }} машин у входа.</p>
+      {% for days, time in cafe.hours %}<p><span class="muted-light">{{ days }}</span> {{ time }}</p>{% endfor %}
+    </div>
+    <div class="split__cta">
+      <a class="btn btn--light" href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a>
+      <a class="btn btn--outline-light" href="/kontakty">Карта и проезд</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

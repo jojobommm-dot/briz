@@ -1,0 +1,12 @@
+{% extends "_base.html" %}
+{% block title %}{{ text }} — кафе «{{ cafe.name }}»{% endblock %}
+{% block content %}
+<section class="pagehead pagehead--center">
+  <div class="wrap narrow">
+    <p class="eyebrow">Ошибка {{ code }}</p>
+    <h1>{{ text }}</h1>
+    <p class="lead">Возможно, ссылка устарела. Начните с главной или позвоните нам.</p>
+    <a class="btn btn--primary" href="/">На главную</a>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "_base.html" %}
+{% block title %}Бизнес-ланч и доставка обедов — кафе «{{ cafe.name }}», {{ cafe.city }}{% endblock %}
+{% block description %}Бизнес-ланч за {{ lunch.price }} ₽ в Кировском районе Перми. Меню на неделю, доставка обедов в офис.{% endblock %}
+
+{% block content %}
+<section class="pagehead">
+  <div class="wrap">
+    <p class="eyebrow">Обеды и доставка</p>
+    <h1>Бизнес-ланч за {{ lunch.price|rub }}</h1>
+    <p class="lead">Салат, суп и горячее по будням {{ lunch.hours }}. Без салата — {{ lunch.price_short|rub }}.</p>
+  </div>
+</section>
+
+<section class="section section--tight">
+  <div class="wrap split split--top">
+    <div>
+      <h2>Меню недели</h2>
+      <ol class="week week--full">
+        {% for day, soup, main, salad in lunch.week %}
+        <li>
+          <span class="week__day">{{ day }}</span>
+          <span><b>Суп:</b> {{ soup }}</span>
+          <span><b>Горячее:</b> {{ main }}</span>
+          <span><b>Салат:</b> {{ salad }}</span>
+        </li>
+        {% endfor %}
+      </ol>
+    </div>
+    <aside class="note-card">
+      <h2>Доставка в офис</h2>
+      <ul class="plain">
+        <li>От {{ lunch.free_delivery_from }} обедов — бесплатно по Кировскому району</li>
+        <li>Заказ до 11:00 — привезём к обеду</li>
+        <li>Оплата наличными, картой или по счёту для организаций</li>
+      </ul>
+      <a class="btn btn--primary btn--block" href="tel:{{ cafe.phone }}">Заказать по телефону</a>
+      <p class="field__hint">Онлайн-заказ с оплатой на сайте появится скоро.</p>
+    </aside>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,94 @@
+"""Смоук-тест: страницы открываются, заявка на банкет проходит и проверяется."""
+
+import json
+from datetime import date, timedelta
+
+import pytest
+from fastapi.testclient import TestClient
+
+from app import banquet
+from app.config import settings
+from app.main import app
+
+
+@pytest.fixture
+def client(tmp_path, monkeypatch):
+    monkeypatch.setattr(settings, "data_root", tmp_path)
+    return TestClient(app)
+
+
+@pytest.mark.parametrize(
+    "path", ["/", "/menu", "/banket", "/obedy", "/kontakty", "/banket/spasibo"]
+)
+def test_pages_open(client, path):
+    r = client.get(path)
+    assert r.status_code == 200
+    assert "Бриз" in r.text
+
+
+def test_static_and_health(client):
+    assert client.get("/healthz").json() == {"ok": True}
+    assert client.get("/static/css/site.css").status_code == 200
+    assert client.get("/static/manifest.webmanifest").status_code == 200
+
+
+def test_404_page(client):
+    r = client.get("/net-takoy")
+    assert r.status_code == 404
+    assert "Такой страницы нет" in r.text
+
+
+def test_package_preselected_from_link(client):
+    r = client.get("/banket?paket=svadba")
+    assert 'value="svadba" data-price="2100" checked' in r.text
+
+
+def _good_form(**over):
+    form = {
+        "name": "Ольга",
+        "phone": "8 (912) 345-67-89",
+        "event_date": (date.today() + timedelta(days=30)).isoformat(),
+        "guests": "25",
+        "package": "prazdnik",
+        "comment": "Юбилей",
+    }
+    form.update(over)
+    return form
+
+
+def test_banquet_request_saved(client, tmp_path):
+    r = client.post("/banket/zayavka", data=_good_form(), follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"] == "/banket/spasibo"
+    saved = json.loads((tmp_path / "banquet_requests.jsonl").read_text(encoding="utf-8"))
+    assert saved["phone"] == "+79123456789"
+    assert saved["guests"] == 25
+
+
+def test_banquet_request_errors_keep_input(client, tmp_path):
+    r = client.post("/banket/zayavka", data=_good_form(phone="123", guests="99"))
+    assert r.status_code == 422
+    assert "Нужен номер" in r.text
+    assert "от 1 до 35 гостей" in r.text
+    assert 'value="Ольга"' in r.text
+    assert not (tmp_path / "banquet_requests.jsonl").exists()
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("+7 912 345-67-89", "+79123456789"),
+        ("89123456789", "+79123456789"),
+        ("9123456789", "+79123456789"),
+        ("12345", None),
+        ("59123456789", None),
+    ],
+)
+def test_normalize_phone(raw, expected):
+    assert banquet.normalize_phone(raw) == expected
+
+
+def test_past_date_rejected():
+    req, errors = banquet.validate(_good_form(event_date="2020-01-01"))
+    assert req is None
+    assert errors["event_date"] == "Эта дата уже прошла"

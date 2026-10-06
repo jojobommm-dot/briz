@@ -1,0 +1,13 @@
+# Проверка и форматирование: ruff check app/ tests/ && ruff format app/ tests/
+line-length = 100
+target-version = "py311"
+
+[lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = [
+    "E501",  # длину строк держит форматер, дублировать проверку незачем
+    "B008",  # Depends(...)/Form(...) в аргументах — так устроен FastAPI
+]
+
+[format]
+quote-style = "double"

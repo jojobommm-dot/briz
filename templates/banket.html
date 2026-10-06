@@ -1,0 +1,81 @@
+{% extends "_base.html" %}
+{% from "_macros.html" import package_card, facts_row %}
+
+{% block title %}Банкеты на берегу Камы — кафе «{{ cafe.name }}», {{ cafe.city }}{% endblock %}
+{% block description %}Банкетный зал до {{ cafe.capacity }} гостей в Кировском районе Перми: пакеты от {{ packages[0].price }} ₽ за гостя, можно свой алкоголь, летняя веранда у Камы.{% endblock %}
+
+{% block content %}
+<section class="pagehead">
+  <div class="wrap">
+    <p class="eyebrow">Банкеты</p>
+    <h1>Праздник у воды — от {{ packages[0].price|rub }} за гостя</h1>
+    <p class="lead">Один зал на {{ cafe.capacity }} гостей, только ваша компания. Свой алкоголь можно, пробковый сбор уточним при заявке.</p>
+    {{ facts_row(facts) }}
+  </div>
+</section>
+
+<section class="section" id="raschet">
+  <div class="wrap">
+    <form class="calc" method="post" action="/banket/zayavka" novalidate data-calc>
+      <div class="calc__step">
+        <h2><span class="step">1</span> Выберите пакет</h2>
+        {% if errors.package %}<p class="field__error">{{ errors.package }}</p>{% endif %}
+        <div class="pkgs">
+          {% for p in packages %}
+            {{ package_card(p, selectable=true, checked=(form.package or 'prazdnik') == p.slug) }}
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="calc__grid">
+        <div class="calc__step">
+          <h2><span class="step">2</span> Гости и дата</h2>
+          <div class="field">
+            <label for="guests">Сколько гостей</label>
+            <div class="stepper">
+              <button type="button" data-step="-1" aria-label="Меньше">−</button>
+              <input id="guests" name="guests" type="number" inputmode="numeric" min="1" max="{{ cafe.capacity }}" value="{{ form.guests or 20 }}" required>
+              <button type="button" data-step="1" aria-label="Больше">+</button>
+            </div>
+            {% if errors.guests %}<p class="field__error">{{ errors.guests }}</p>{% endif %}
+          </div>
+          <div class="field">
+            <label for="event_date">Дата праздника</label>
+            <input id="event_date" name="event_date" type="date" value="{{ form.event_date or '' }}" required>
+            {% if errors.event_date %}<p class="field__error">{{ errors.event_date }}</p>{% endif %}
+            <p class="field__hint">Свободна ли дата — подтвердим звонком. Календарь занятых дат появится скоро.</p>
+          </div>
+        </div>
+
+        <div class="calc__step">
+          <h2><span class="step">3</span> Контакты</h2>
+          <div class="field">
+            <label for="name">Как к вам обращаться</label>
+            <input id="name" name="name" type="text" autocomplete="name" maxlength="80" value="{{ form.name or '' }}" required>
+            {% if errors.name %}<p class="field__error">{{ errors.name }}</p>{% endif %}
+          </div>
+          <div class="field">
+            <label for="phone">Телефон</label>
+            <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="8 912 345-67-89" value="{{ form.phone or '' }}" required>
+            {% if errors.phone %}<p class="field__error">{{ errors.phone }}</p>{% endif %}
+          </div>
+          <div class="field">
+            <label for="comment">Пожелания <span class="muted">— необязательно</span></label>
+            <textarea id="comment" name="comment" rows="3" maxlength="1000" placeholder="Повод, детское меню, торт, музыка…">{{ form.comment or '' }}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="total" aria-live="polite">
+        <div>
+          <div class="total__label">Примерная сумма</div>
+          <div class="total__sum" data-total>—</div>
+          <div class="total__hint" data-total-hint>Без алкоголя и дополнительных услуг</div>
+        </div>
+        <button class="btn btn--primary btn--lg" type="submit">Оставить заявку</button>
+      </div>
+      <p class="consent">Нажимая кнопку, вы соглашаетесь, что мы перезвоним по указанному номеру. Данные нужны только для связи по заявке.</p>
+    </form>
+  </div>
+</section>
+{% endblock %}

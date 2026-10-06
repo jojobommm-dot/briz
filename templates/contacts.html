@@ -1,0 +1,36 @@
+{% extends "_base.html" %}
+{% block title %}Контакты и проезд — кафе «{{ cafe.name }}», {{ cafe.city }}{% endblock %}
+
+{% block content %}
+<section class="pagehead">
+  <div class="wrap">
+    <p class="eyebrow">Контакты</p>
+    <h1>{{ cafe.address }}</h1>
+    <p class="lead">{{ cafe.city }}, {{ cafe.district }}. Парковка на {{ cafe.parking }} машин у входа.</p>
+  </div>
+</section>
+
+<section class="section section--tight">
+  <div class="wrap split split--top">
+    <div class="contact-list">
+      <div>
+        <div class="muted">Телефон</div>
+        <a class="contact-big" href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a>
+      </div>
+      <div>
+        <div class="muted">Часы работы</div>
+        {% for days, time in cafe.hours %}<p>{{ days }}: <b>{{ time }}</b></p>{% endfor %}
+      </div>
+      <div>
+        <div class="muted">Соцсети</div>
+        <p><a href="{{ cafe.vk }}" target="_blank" rel="noopener">ВКонтакте</a></p>
+      </div>
+    </div>
+    <div class="map">
+      <iframe title="Кафе «{{ cafe.name }}» на карте"
+              src="https://yandex.ru/map-widget/v1/?text={{ (cafe.city ~ ', ' ~ cafe.address)|urlencode }}&amp;z=16"
+              loading="lazy" allowfullscreen></iframe>
+    </div>
+  </div>
+</section>
+{% endblock %}
