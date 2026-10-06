@@ -32,6 +32,12 @@
   --paper: #f3f6f7;
   --white: #fff;
   --serif: "Cormorant Garamond", Georgia, serif;
+  --poster: "Oswald", "Arial Narrow", sans-serif;  /* узкие плакатные акценты */
+  --kraft: #d9cbb0;        /* крафт-бумага, как у винилового яблока */
+  --kraft-light: #ece4d4;
+  --cream: #ecdcbc;        /* кремовые буквы «VODKA ONLY» */
+  --dust: #a9b8c1;         /* пыльная лазурь */
+  --vinyl: #141414;
   --sans: "Raleway", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
   --header-h: 80px;
 }
@@ -175,7 +181,7 @@ input, select, textarea, button { font: inherit; color: inherit; }
 .about__text { max-width: 800px; margin: 0 auto; text-align: center; color: var(--text-dark); font-size: 1.05rem; line-height: 2; }
 /* Натюрморт: большая тарелка по центру уходит за нижний край, вокруг — маленькие */
 .still { position: relative; height: clamp(300px, 46vw, 560px); margin-top: 60px; }
-.still img { position: absolute; border-radius: 50%; object-fit: cover; box-shadow: 0 30px 60px rgba(0,0,0,.55); }
+.still > img { position: absolute; border-radius: 50%; object-fit: cover; box-shadow: 0 30px 60px rgba(0,0,0,.55); }
 .still__main { width: clamp(280px, 34vw, 480px); left: 50%; top: 0; transform: translateX(-50%); }
 .still__a { width: clamp(90px, 11vw, 170px); left: 8%; top: 18%; }
 .still__b { width: clamp(80px, 9vw, 140px); left: 22%; top: 62%; }
@@ -503,7 +509,7 @@ body:has(.install:not([hidden])) .chat { bottom: calc(100px + env(safe-area-inse
 .footer__logo { width: 210px; margin-bottom: 34px; }
 
 /* --- фирменный приём логотипа: круг со светящимся контуром --- */
-.still img, .menu3__photo, .dark-menu__plate {
+.still > img, .menu3__photo, .dark-menu__plate {
   box-shadow: 0 0 0 3px var(--moon), 0 0 0 9px rgba(79, 210, 255, .18), 0 0 46px 6px rgba(79, 210, 255, .42), 0 30px 60px rgba(0, 0, 0, .45);
 }
 .menu3__photo { box-shadow: 0 0 0 3px var(--white), 0 0 0 9px rgba(27, 147, 191, .16), 0 0 40px 4px rgba(27, 147, 191, .3), 0 30px 50px rgba(8, 47, 64, .2); }
@@ -527,3 +533,71 @@ body:has(.install:not([hidden])) .chat { bottom: calc(100px + env(safe-area-inse
   .total__sum { font-size: 1.7rem; }
   .total .frame-btn { min-height: 44px; padding: 0 18px; font-size: .95rem; flex: none; }
 }
+
+
+/* ================= Ретро-печать: зерно, крафт, винил ================= */
+
+/* Бумажное зерно поверх всего сайта (tools/texture.py). Клики проходят сквозь */
+body::after {
+  content: ""; position: fixed; inset: 0; z-index: 90; pointer-events: none;
+  background: url("/static/img/grain.png") repeat; background-size: 256px;
+}
+
+/* Крафтовые секции: меню и часы работы — как бумага конверта пластинки */
+.menu-block, .schedule-block { background-color: var(--kraft-light); }
+.schedule__label { background: var(--kraft-light); }
+.menu-block .mi__dots { border-color: #a99d86; }
+.menu-block .mi__desc, .menu3__note { color: #6b6255; }
+
+/* Плакатный шрифт: крупные короткие слова */
+.dark-menu__head h2, .week__day h3, .week__count, .facts strong {
+  font-family: var(--poster); font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+}
+.dark-menu__head h2 { font-size: clamp(2.4rem, 5vw, 3.6rem); color: var(--cream); letter-spacing: .03em; line-height: 1; }
+.week__day h3 { font-size: 2.1rem; color: var(--river); }
+.week__count { font-size: 3rem; color: var(--ink); }
+.facts strong { font-size: 1.7rem; color: var(--river); }
+
+/* Контурные «пилюли», как «℗ 2026» и «D.R.A.A» на яблоке */
+.pills { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.pill {
+  display: inline-flex; align-items: center; padding: 3px 14px 2px; border: 1.5px solid currentColor; border-radius: 999px;
+  font-family: var(--poster); font-weight: 500; font-size: .82rem; letter-spacing: .12em; text-transform: uppercase; line-height: 1.6;
+}
+.hero__pills { margin-top: 34px; color: var(--cream); opacity: .9; }
+.hero__slide.is-active .hero__pills { animation: rise 1s .4s both; }
+
+/* Текст по кругу */
+.ring { position: absolute; inset: -13%; pointer-events: none; transform-origin: 50% 50%; animation: spin 60s linear infinite; }
+.ring svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.ring text { font-family: var(--poster); font-weight: 500; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; fill: currentColor; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.ringed { position: relative; width: min(380px, 78%); margin: 50px auto 70px; color: var(--ink); }
+.ringed .menu3__photo { width: 100%; margin: 0; }
+
+/* Виниловая пластинка */
+.vinyl { position: relative; width: 100%; aspect-ratio: 1; color: var(--cream); }
+.vinyl__ring { inset: -11%; animation-direction: reverse; z-index: 1; }
+.vinyl__disc {
+  position: absolute; inset: 0; border-radius: 50%;
+  background:
+    radial-gradient(circle, transparent 0 31%, rgba(0,0,0,.6) 31.5%, transparent 33%),
+    repeating-radial-gradient(circle, #111 0 1.2px, #1f1f1f 1.2px 2.6px, #161616 2.6px 3.4px);
+  box-shadow: 0 0 0 4px var(--vinyl), 0 0 0 7px rgba(236, 220, 188, .25), 0 40px 70px rgba(0,0,0,.6);
+  animation: spin 9s linear infinite;
+}
+.vinyl__label { position: absolute; inset: 27%; width: 46%; height: 46%; border-radius: 50%; }
+.vinyl__hole { position: absolute; left: 50%; top: 50%; width: 3.6%; aspect-ratio: 1; border-radius: 50%; background: var(--kraft); transform: translate(-50%, -50%); box-shadow: inset 0 1px 2px rgba(0,0,0,.6); }
+/* Блик не крутится вместе с пластинкой — поэтому отдельным слоем */
+.vinyl__sheen {
+  position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(from 20deg, transparent 0 6%, rgba(255,255,255,.13) 11%, transparent 17%, transparent 50%, rgba(255,255,255,.09) 56%, transparent 63%);
+  -webkit-mask: radial-gradient(circle, transparent 0 32%, #000 33%); mask: radial-gradient(circle, transparent 0 32%, #000 33%);
+}
+.still__main { position: absolute; width: clamp(240px, 30vw, 420px); left: 50%; top: 40px; transform: translateX(-50%); }
+.still { height: clamp(380px, 50vw, 620px); }
+@media (max-width: 700px) { .still__main { top: 50px; } }
+
+@media (prefers-reduced-motion: reduce) { .ring, .vinyl__disc { animation: none; } }
+/* На телефоне вокруг пластинки тесно: тарелки наезжают на кольцо текста — оставляем одну пластинку */
+@media (max-width: 700px) { .still > img { display: none; } .still { height: 420px; } .still__main { width: 250px; top: 40px; } }

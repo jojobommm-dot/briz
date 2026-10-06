@@ -53,3 +53,32 @@
 {% endmacro %}
 
 {% macro arrow() %}<svg class="i-arrow" viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#arrow"></use></svg>{% endmacro %}
+
+{# Текст по кругу, как надписи по краю винилового яблока. Окружность r=88 в
+   квадрате 200×200, длина ≈ 553 — textLength растягивает текст ровно на круг.
+   id нужен уникальный: на странице может быть несколько колец #}
+{% macro ring_text(text, id, cls='') %}
+{# Крутится обёртка, а не сам svg: у svg центр поворота по умолчанию в углу #}
+<div class="ring {{ cls }}" aria-hidden="true">
+  <svg viewBox="0 0 200 200">
+    <defs><path id="ring-{{ id }}" d="M100,100 m-88,0 a88,88 0 1,1 176,0 a88,88 0 1,1 -176,0"/></defs>
+    <text><textPath href="#ring-{{ id }}" textLength="550" lengthAdjust="spacing">{{ text }}</textPath></text>
+  </svg>
+</div>
+{% endmacro %}
+
+{# Виниловая пластинка: бороздки крутятся, блик стоит на месте, на яблоке — знак «Бриза» #}
+{% macro vinyl(ring, id='vinyl') %}
+<div class="vinyl">
+  {{ ring_text(ring, id, 'vinyl__ring') }}
+  <div class="vinyl__disc">
+    <img class="vinyl__label" src="/static/img/logo/briz-mark.svg" alt="" width="200" height="200" loading="lazy">
+    <span class="vinyl__hole"></span>
+  </div>
+  <span class="vinyl__sheen" aria-hidden="true"></span>
+</div>
+{% endmacro %}
+
+{% macro pills(items, cls='') %}
+<ul class="pills {{ cls }}">{% for it in items %}<li class="pill">{{ it }}</li>{% endfor %}</ul>
+{% endmacro %}
