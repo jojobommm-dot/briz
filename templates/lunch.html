@@ -26,7 +26,7 @@
       <p class="eyebrow">Цены</p>
       <h2>В кафе и с доставкой</h2>
       {% for what, cafe_price, delivery_price in lunch.prices %}{{ menu_item(what, cafe_price, "", delivery_price, "с доставкой") }}{% endfor %}
-      <p class="mi__desc"><span class="gold">●</span> в кафе &nbsp; ● с доставкой</p>
+      <p class="mi__desc"><span class="price-color">●</span> в кафе &nbsp; ● с доставкой</p>
       <ul class="plain">
         <li>Заказ на доставку — до {{ lunch.order_until }}, привезём к обеду</li>
         <li>В кафе ждём на обед с {{ lunch.since }}</li>

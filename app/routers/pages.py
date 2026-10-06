@@ -116,7 +116,13 @@ async def robots():
 # --- PWA ---
 
 # Файлы оболочки: без них установленное приложение не откроется без сети
-_SHELL_ASSETS = ["css/site.css", "js/site.js", "icons/sprite.svg", "icons/icon-192.png"]
+_SHELL_ASSETS = [
+    "css/site.css",
+    "js/site.js",
+    "icons/sprite.svg",
+    "icons/icon-192.png",
+    "img/logo/briz-mark.svg",
+]
 _SHELL_PAGES = ["/", "/menu", "/obedy", "/kontakty", "/offline"]
 
 

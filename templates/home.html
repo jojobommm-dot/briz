@@ -25,6 +25,7 @@
 {# 2. О кафе: тёмный блок, по центру заголовок и текст, ниже «натюрморт» из круглых фото #}
 <section class="about">
   <div class="wrap">
+    <img class="about__mark" src="/static/img/logo/briz-mark.svg" alt="" width="120" height="120" loading="lazy">
     {{ heading("О «Бризе»", "Место для вкусных встреч", light=true) }}
     <p class="about__text">Уютное кафе в Кировском районе, у Камы: деревянный зал на {{ cafe.capacity }} гостей с круглыми столами, летняя веранда и мангал во дворе. Каждый будний день — новое меню обедов, по выходным — дни рождения, юбилеи и свадьбы.</p>
   </div>
@@ -109,7 +110,7 @@
           {{ menu_item(salad, lunch.prices[4][1], "Салат", lunch.prices[4][2], "с доставкой") }}
           {{ menu_item(soup, lunch.prices[3][1], "Суп", lunch.prices[3][2], "с доставкой") }}
           {{ menu_item(main, lunch.prices[2][1], "Второе, гарнир — " ~ side|lower, lunch.prices[2][2], "с доставкой") }}
-          <p class="week__legend"><span class="gold">●</span> в кафе &nbsp; <span class="muted">●</span> с доставкой · весь комплекс — {{ lunch.price|rub }} / {{ lunch.price_delivery|rub }}</p>
+          <p class="week__legend"><span class="price-color">●</span> в кафе &nbsp; <span class="muted">●</span> с доставкой · весь комплекс — {{ lunch.price|rub }} / {{ lunch.price_delivery|rub }}</p>
         </div>
       </div>
       {% endfor %}
@@ -177,7 +178,7 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#chevron-down"></use></svg>
       </label>
       <div class="book__submit">
-        <button class="frame-btn frame-btn--gold" type="submit"><span>Рассчитать</span></button>
+        <button class="frame-btn frame-btn--glow" type="submit"><span>Рассчитать</span></button>
       </div>
     </form>
   </div>
