@@ -1,0 +1,117 @@
+{% extends "_base.html" %}
+{% from "_macros.html" import page_banner, heading, pills, ring_text, frame_btn %}
+{% block title %}Выездной кейтеринг — кафе «{{ cafe.name }}», {{ cafe.city }}{% endblock %}
+{% block description %}Выездной кейтеринг кафе «{{ cafe.name }}» в Перми: фуршеты, банкеты на выезде, шашлык с мангала и обеды для команды. Заявка онлайн.{% endblock %}
+
+{% block content %}
+{{ page_banner("briz/kt-banner.webp", "Кейтеринг", "Праздник там, где удобно вам",
+               "Фуршет в офисе, застолье на даче, шашлык на природе — готовим на своей кухне и привозим к нужному часу.") }}
+
+{# Плакатный заголовок в духе винилового яблока + фото с текстом по кругу #}
+<section class="section kt-intro">
+  <div class="wrap kt-intro__grid">
+    <div>
+      <h2 class="poster"><span>Выездной</span><span>кейтеринг</span></h2>
+      <p class="kt-intro__text">Привезём блюда «Бриза» туда, где проходит ваш праздник: домой, в офис, на базу отдыха или в арендованный зал. Меню подберём под повод, стоимость посчитаем под число гостей.</p>
+      {{ pills(["Пермь и пригород", "от " ~ guests_min ~ " гостей", "Мангал на выезде"], "kt-intro__pills") }}
+      <div class="kt-intro__cta">{{ frame_btn("#zayavka", "Оставить заявку", "frame-btn--dark") }}</div>
+    </div>
+    <div class="ringed kt-intro__photo">
+      <img class="menu3__photo" src="/static/img/briz/kt-trays.webp" alt="Подносы с закусками для фуршета" width="800" height="800" loading="lazy">
+      {{ ring_text("Фуршет • Банкет на выезде • Шашлык • Обеды для команды •", "kt") }}
+    </div>
+  </div>
+</section>
+
+{# Форматы #}
+<section class="section kt-formats">
+  <div class="wrap">
+    {{ heading("Форматы", "Что привезём") }}
+    <div class="kt-cards">
+      {% for f in formats %}
+      <article class="kt-card">
+        <div class="kt-card__img">
+          <img src="/static/img/{{ f.image }}" alt="{{ f.title }}" width="700" height="700" loading="lazy">
+          <span class="kt-card__num">{{ '%02d'|format(loop.index) }}</span>
+        </div>
+        <h3 class="kt-card__title">{{ f.title }}</h3>
+        <p class="kt-card__text">{{ f.text }}</p>
+        {{ pills(f.tags, "kt-card__tags") }}
+        <a class="kt-card__link" href="/keytering?format={{ f.slug }}#zayavka">Заказать →</a>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{# Как работаем: тёмный блок, крупные плакатные цифры #}
+<section class="kt-steps">
+  <div class="wrap">
+    {{ heading("Как мы работаем", "От заявки до стола", light=true) }}
+    <ol class="kt-steps__list">
+      {% for title, text in steps %}
+      <li class="kt-step">
+        <span class="kt-step__num">{{ '%02d'|format(loop.index) }}</span>
+        <h3 class="kt-step__title">{{ title }}</h3>
+        <p>{{ text }}</p>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+</section>
+
+{# Заявка #}
+<section class="section kt-form-block" id="zayavka">
+  <div class="wrap narrow-form">
+    {{ heading("Заявка", "Рассчитаем ваш кейтеринг") }}
+    <form class="kt-form" method="post" action="/keytering/zayavka" novalidate>
+      <fieldset class="field kt-form__formats">
+        <legend>Формат</legend>
+        <div class="choices">
+          {% for f in formats %}
+          <label class="choice">
+            <input type="radio" name="format" value="{{ f.slug }}" {% if (form.format or 'furshet') == f.slug %}checked{% endif %}>
+            <span>{{ f.title }}</span>
+          </label>
+          {% endfor %}
+        </div>
+        {% if errors.format %}<p class="field__error">{{ errors.format }}</p>{% endif %}
+      </fieldset>
+
+      <div class="kt-form__grid">
+        <div class="field">
+          <label for="event_date">Дата</label>
+          <input id="event_date" name="event_date" type="date" value="{{ form.event_date or '' }}" data-min-today required>
+          {% if errors.event_date %}<p class="field__error">{{ errors.event_date }}</p>{% endif %}
+        </div>
+        <div class="field">
+          <label for="guests">Гостей</label>
+          <input id="guests" name="guests" type="number" inputmode="numeric" min="{{ guests_min }}" max="{{ guests_max }}" value="{{ form.guests or 20 }}" required>
+          {% if errors.guests %}<p class="field__error">{{ errors.guests }}</p>{% endif %}
+        </div>
+        <div class="field kt-form__wide">
+          <label for="place">Куда привезти</label>
+          <input id="place" name="place" type="text" maxlength="200" placeholder="Адрес, база отдыха, офис…" value="{{ form.place or '' }}" required>
+          {% if errors.place %}<p class="field__error">{{ errors.place }}</p>{% endif %}
+        </div>
+        <div class="field">
+          <label for="name">Как к вам обращаться</label>
+          <input id="name" name="name" type="text" autocomplete="name" maxlength="80" value="{{ form.name or '' }}" required>
+          {% if errors.name %}<p class="field__error">{{ errors.name }}</p>{% endif %}
+        </div>
+        <div class="field">
+          <label for="phone">Телефон</label>
+          <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="8 912 345-67-89" value="{{ form.phone or '' }}" required>
+          {% if errors.phone %}<p class="field__error">{{ errors.phone }}</p>{% endif %}
+        </div>
+        <div class="field kt-form__wide">
+          <label for="comment">Пожелания <span class="muted">— необязательно</span></label>
+          <textarea id="comment" name="comment" rows="3" maxlength="1000" placeholder="Повод, время, нужна ли посуда и сервировка…">{{ form.comment or '' }}</textarea>
+        </div>
+      </div>
+      <div class="center"><button class="frame-btn frame-btn--dark" type="submit"><span>Отправить заявку</span></button></div>
+      <p class="consent center">Перезвоним по указанному номеру, чтобы уточнить детали и посчитать стоимость.</p>
+    </form>
+  </div>
+</section>
+{% endblock %}

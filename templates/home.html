@@ -97,6 +97,23 @@
   </div>
 </section>
 
+{# Выездной кейтеринг: плакатный заголовок на крафте, фото подносов с текстом по кругу #}
+<section class="section kt-teaser">
+  <div class="wrap kt-intro__grid">
+    <div class="ringed kt-intro__photo">
+      <img class="menu3__photo" src="/static/img/briz/kt-furshet.webp" alt="Фуршетные закуски на подносах" width="700" height="700" loading="lazy">
+      {{ ring_text("Фуршет • Банкет на выезде • Шашлык • Обеды для команды •", "kt-home") }}
+    </div>
+    <div>
+      <p class="eyebrow">Кейтеринг</p>
+      <h2 class="poster"><span>Выездной</span><span>кейтеринг</span></h2>
+      <p class="kt-intro__text">Привезём блюда «Бриза» домой, в офис, на базу отдыха или на природу — с мангалом. Меню и стоимость рассчитаем под ваш праздник.</p>
+      {{ pills(catering|map(attribute="title")|list, "kt-intro__pills") }}
+      <div class="kt-intro__cta">{{ frame_btn("/keytering", "Подробнее о кейтеринге", "frame-btn--dark") }}</div>
+    </div>
+  </div>
+</section>
+
 {# 5. Меню недели: фото слева, справа день и блюда с ценами «в кафе / с доставкой», счётчик 01/05 #}
 <section class="section week-block">
   <div class="wrap">{{ heading("Меню недели", "Обеды на каждый день") }}</div>

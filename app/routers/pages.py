@@ -6,12 +6,14 @@ import logging
 from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse, RedirectResponse
 
-from .. import banquet
+from .. import banquet, catering
 from ..config import settings
 from ..content import (
     BANQUET_FACTS,
     BANQUET_PACKAGES,
     CAFE,
+    CATERING_FORMATS,
+    CATERING_STEPS,
     GALLERY,
     HERO_SLIDES,
     LUNCH,
@@ -39,6 +41,7 @@ async def home(request: Request):
             "week": list(zip(LUNCH["week"], WEEK_IMAGES, strict=True)),
             "menu": MENU,
             "gallery": GALLERY,
+            "catering": CATERING_FORMATS,
             "nav": "home",
         },
     )
@@ -92,7 +95,60 @@ async def banket_request(request: Request):
 
 @router.get("/banket/spasibo", response_class=HTMLResponse)
 async def banket_thanks(request: Request):
-    return templates.TemplateResponse(request, "banket_thanks.html", {"nav": "banket"})
+    return templates.TemplateResponse(
+        request,
+        "thanks.html",
+        {
+            "nav": "banket",
+            "lead": "Перезвоним в течение часа в рабочее время, подтвердим дату и обсудим меню.",
+        },
+    )
+
+
+def _keytering_page(request: Request, form: dict | None = None, errors: dict | None = None):
+    return templates.TemplateResponse(
+        request,
+        "keytering.html",
+        {
+            "formats": CATERING_FORMATS,
+            "steps": CATERING_STEPS,
+            "form": form or {},
+            "errors": errors or {},
+            "guests_min": catering.GUESTS_MIN,
+            "guests_max": catering.GUESTS_MAX,
+            "nav": "keytering",
+        },
+        status_code=422 if errors else 200,
+    )
+
+
+@router.get("/keytering", response_class=HTMLResponse)
+async def keytering(request: Request, format: str = ""):
+    # ?format=shashlyk с карточки формата — сразу отмечаем его в заявке
+    return _keytering_page(request, {"format": format} if format in catering.FORMAT_SLUGS else {})
+
+
+@router.post("/keytering/zayavka")
+async def keytering_request(request: Request):
+    form = {k: str(v) for k, v in (await request.form()).items()}
+    req, errors = catering.validate(form)
+    if req is None:
+        return _keytering_page(request, form, errors)
+    catering.save(req)
+    log.info("Заявка на кейтеринг: %s, %s гостей, %s", req.event_date, req.guests, req.format)
+    return RedirectResponse("/keytering/spasibo", status_code=303)
+
+
+@router.get("/keytering/spasibo", response_class=HTMLResponse)
+async def keytering_thanks(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "thanks.html",
+        {
+            "nav": "keytering",
+            "lead": "Перезвоним в рабочее время, уточним формат и место и посчитаем стоимость.",
+        },
+    )
 
 
 @router.get("/obedy", response_class=HTMLResponse)

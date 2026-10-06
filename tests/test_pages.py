@@ -146,3 +146,33 @@ def test_banquet_prefill_from_home_form(client):
     # Мусор в адресе не попадает в форму
     r = client.get("/banket?date=zavtra&guests=500")
     assert 'value="zavtra"' not in r.text and 'value="500"' not in r.text
+
+
+def test_keytering_page_and_request(client, tmp_path):
+    r = client.get("/keytering?format=shashlyk")
+    assert r.status_code == 200
+    assert 'value="shashlyk" checked' in r.text
+    assert "Выездной" in r.text
+
+    good = {
+        "format": "furshet",
+        "event_date": (date.today() + timedelta(days=10)).isoformat(),
+        "guests": "40",
+        "place": "Пермь, ул. Кировоградская, 1, офис",
+        "name": "Андрей",
+        "phone": "+7 912 000-11-22",
+        "comment": "",
+    }
+    r = client.post("/keytering/zayavka", data=good, follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/keytering/spasibo"
+    saved = json.loads((tmp_path / "catering_requests.jsonl").read_text(encoding="utf-8"))
+    assert saved["guests"] == 40 and saved["phone"] == "+79120001122"
+    assert client.get("/keytering/spasibo").status_code == 200
+
+    r = client.post("/keytering/zayavka", data={**good, "guests": "2", "place": ""})
+    assert r.status_code == 422
+    assert "от 5 до 500 гостей" in r.text and "Куда привезти" in r.text
+
+
+def test_nav_has_keytering(client):
+    assert 'href="/keytering"' in client.get("/").text

@@ -143,7 +143,8 @@ input, select, textarea, button { font: inherit; color: inherit; }
 .nav a { padding: 14px 0; font-size: .95rem; font-weight: 700; text-transform: uppercase; color: var(--white); border-bottom: 1px solid rgba(255,255,255,.06); }
 .nav a:hover, .nav a[aria-current="page"] { color: var(--accent); }
 .nav__phone { color: var(--accent) !important; border-bottom: 0 !important; }
-@media (min-width: 1100px) {
+/* В шапке шесть пунктов и кнопка: ниже 1200 px им тесно — сворачиваем в бургер */
+@media (min-width: 1200px) {
   .burger, .nav__phone { display: none; }
   .header__cta { display: inline-flex; }
   .nav { position: static; display: flex; flex-direction: row; gap: 30px; padding: 0; background: none; border: 0; margin-right: auto; }
@@ -601,3 +602,55 @@ body::after {
 @media (prefers-reduced-motion: reduce) { .ring, .vinyl__disc { animation: none; } }
 /* На телефоне вокруг пластинки тесно: тарелки наезжают на кольцо текста — оставляем одну пластинку */
 @media (max-width: 700px) { .still > img { display: none; } .still { height: 420px; } .still__main { width: 250px; top: 40px; } }
+
+/* ================= Выездной кейтеринг ================= */
+/* Плакатный заголовок в две строки, как «VODKA ONLY» */
+.poster { display: flex; flex-direction: column; margin: 0 0 26px; font-family: var(--poster); font-weight: 600; text-transform: uppercase; line-height: .92; letter-spacing: .01em; color: var(--ink); }
+.poster span:first-child { font-size: clamp(2.6rem, 6vw, 4.4rem); color: var(--river); }
+.poster span:last-child { font-size: clamp(3.2rem, 8.6vw, 6.4rem); }
+.kt-intro__grid { display: grid; gap: 60px; align-items: center; }
+@media (min-width: 900px) { .kt-intro__grid { grid-template-columns: 1.1fr 1fr; gap: 100px; } .kt-teaser .kt-intro__grid { grid-template-columns: 1fr 1.1fr; } }
+.kt-intro__text { font-size: 1.08rem; color: var(--text); max-width: 560px; }
+.kt-intro__pills { margin: 26px 0 40px; color: var(--ink); }
+.kt-intro__cta .frame-btn { margin: 7px 9px; }
+.kt-intro__photo { width: min(440px, 76%); margin: 40px auto; }
+.kt-teaser { background-color: var(--kraft-light); }
+.kt-teaser .menu3__photo, .kt-intro .menu3__photo { box-shadow: 0 0 0 4px var(--vinyl), 0 0 0 10px rgba(21,131,173,.14), 0 30px 50px rgba(8,47,64,.25); }
+
+.kt-formats { background-color: var(--kraft-light); }
+.kt-cards { display: grid; gap: 40px 30px; }
+@media (min-width: 700px) { .kt-cards { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1100px) { .kt-cards { grid-template-columns: repeat(4, 1fr); } }
+.kt-card { display: flex; flex-direction: column; }
+.kt-card__img { position: relative; aspect-ratio: 1; overflow: hidden; margin-bottom: 24px; }
+.kt-card__img img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s; }
+.kt-card:hover .kt-card__img img { transform: scale(1.05); }
+.kt-card__num { position: absolute; left: 14px; bottom: 6px; font-family: var(--poster); font-weight: 600; font-size: 3.4rem; line-height: 1; color: var(--cream); text-shadow: 0 2px 12px rgba(0,0,0,.5); }
+.kt-card__title { font-size: 1.8rem; margin-bottom: .3em; }
+.kt-card__text { color: var(--text); flex: 1; }
+.kt-card__tags { margin-bottom: 18px; color: var(--river); }
+.kt-card__tags .pill { font-size: .72rem; }
+.kt-card__link { font-family: var(--poster); font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--river); }
+.kt-card__link:hover { color: var(--ink); }
+
+.kt-steps { padding: 90px 0; background: radial-gradient(ellipse 70% 80% at 50% 0%, #0f6a8c 0%, var(--dark) 70%); color: var(--text-dark); --accent: var(--glow); }
+@media (min-width: 900px) { .kt-steps { padding: 130px 0; } }
+.kt-steps__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 40px; }
+@media (min-width: 800px) { .kt-steps__list { grid-template-columns: repeat(4, 1fr); gap: 50px; } }
+.kt-step { border-top: 1px solid rgba(127,216,245,.3); padding-top: 22px; }
+.kt-step__num { display: block; font-family: var(--poster); font-weight: 600; font-size: 4rem; line-height: 1; color: var(--cream); margin-bottom: 16px; }
+.kt-step__title { font-size: 1.7rem; color: var(--white); margin-bottom: .3em; }
+.kt-step p { margin: 0; }
+
+.narrow-form { max-width: 920px; }
+.kt-form__grid { display: grid; gap: 0 30px; }
+@media (min-width: 700px) { .kt-form__grid { grid-template-columns: 1fr 1fr; } .kt-form__wide { grid-column: 1 / -1; } }
+.kt-form .consent { margin: 18px 0 0; }
+.kt-form__formats { border: 0; padding: 0; margin: 0 0 30px; }
+.kt-form__formats legend { display: block; font-size: .8rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-deep); margin-bottom: 12px; padding: 0; }
+.choices { display: flex; flex-wrap: wrap; gap: 12px; }
+.choice { position: relative; cursor: pointer; }
+.choice input { position: absolute; opacity: 0; }
+.choice span { display: inline-block; padding: 9px 20px 8px; border: 1.5px solid var(--ink); border-radius: 999px; font-family: var(--poster); font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--ink); transition: background .2s, color .2s; }
+.choice input:checked + span { background: var(--ink); color: var(--cream); }
+.choice input:focus-visible + span { outline: 2px solid var(--river); outline-offset: 3px; }
