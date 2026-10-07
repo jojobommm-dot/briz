@@ -579,30 +579,10 @@ body::after {
 /* Фарфоровая тарелка: обод с лазурными полосками, блюдо в углублении */
 .plate { position: relative; width: 100%; aspect-ratio: 1; color: var(--cream); }
 .plate__ring { inset: -12%; animation-direction: reverse; z-index: 1; }
-.plate__dish {
-  position: absolute; inset: 0; border-radius: 50%;
-  background:
-    radial-gradient(circle, transparent 0 60.5%, rgba(0, 30, 45, .16) 61.5%, transparent 65%),
-    radial-gradient(circle at 38% 30%, #ffffff 0, #f6f8f9 34%, #e2e9ec 70%, #cbd5da 100%);
-  box-shadow: 0 50px 80px rgba(0, 0, 0, .55), 0 12px 24px rgba(0, 0, 0, .3),
-              inset 0 -8px 18px rgba(0, 30, 45, .2), inset 0 6px 12px rgba(255, 255, 255, .9);
-  animation: spin 80s linear infinite;
-}
-/* Две полоски по ободу — цвет реки с логотипа */
-.plate__dish::before, .plate__dish::after { content: ""; position: absolute; border-radius: 50%; pointer-events: none; }
-.plate__dish::before { inset: 4.5%; border: 2px solid rgba(21, 131, 173, .75); }
-.plate__dish::after { inset: 7.2%; border: 1px solid rgba(21, 131, 173, .45); }
-.plate__food { position: absolute; inset: 20%; border-radius: 50%; overflow: hidden; }
-/* Фото блюда снято на своей тарелке — увеличиваем, чтобы в углублении была только еда */
-.plate__food img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.45); }
-.plate__food::after { content: ""; position: absolute; inset: 0; border-radius: 50%; box-shadow: inset 0 8px 16px rgba(0, 0, 0, .35), inset 0 -3px 8px rgba(255, 255, 255, .35); }
-/* Глянцевый блик фарфора не крутится вместе с тарелкой */
-.plate__sheen {
-  position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(ellipse 38% 22% at 32% 18%, rgba(255, 255, 255, .7), transparent 70%),
-              conic-gradient(from 200deg, transparent 0 8%, rgba(255, 255, 255, .25) 13%, transparent 19%, transparent 100%);
-  -webkit-mask: radial-gradient(circle, transparent 0 62%, #000 63%); mask: radial-gradient(circle, transparent 0 62%, #000 63%);
-}
+.plate__dish { position: absolute; inset: 0; animation: spin 80s linear infinite; }
+.plate__photo { width: 100%; height: 100%; border-radius: 50%; filter: drop-shadow(0 40px 50px rgba(0, 0, 0, .55)) drop-shadow(0 10px 14px rgba(0, 0, 0, .35)); }
+/* Логотип ложится в плоское дно тарелки, внутрь второго кольца */
+.plate__logo { position: absolute; inset: 23%; width: 54%; height: 54%; filter: drop-shadow(0 4px 10px rgba(0, 20, 30, .45)); }
 .plate__fork, .plate__knife { position: absolute; top: 2%; width: 8.5%; height: 96%; filter: drop-shadow(0 18px 18px rgba(0, 0, 0, .45)); }
 .plate__fork { left: -31%; }
 .plate__knife { right: -31%; }
