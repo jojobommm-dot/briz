@@ -6,6 +6,7 @@ from fastapi.templating import Jinja2Templates
 
 from .config import settings
 from .content import CAFE
+from .security import CUSTOMER_COOKIE, CUSTOMER_DAYS, read_session
 
 templates = Jinja2Templates(directory=settings.templates_root)
 
@@ -37,7 +38,13 @@ def _rub(v: int) -> str:
     return f"{v:,}".replace(",", " ") + " ₽"
 
 
+def _customer_logged_in(request) -> bool:
+    """Шапке: «Кабинет» или «Войти». Только подпись куки, без похода в базу."""
+    return read_session(request.cookies.get(CUSTOMER_COOKIE), "c", CUSTOMER_DAYS) is not None
+
+
 templates.env.globals["asset"] = asset
+templates.env.globals["customer_logged_in"] = _customer_logged_in
 templates.env.globals["cafe"] = CAFE
 templates.env.globals["debug"] = settings.debug
 templates.env.globals["base_url"] = settings.base_url

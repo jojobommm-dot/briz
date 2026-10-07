@@ -8,8 +8,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .. import lunch_order as lo
+from ..auth import current_customer
 from ..database import get_session
-from ..models import STATUSES, Order, OrderItem
+from ..models import STATUSES, Customer, Order, OrderItem
 from ..templating import templates
 
 router = APIRouter()
@@ -53,7 +54,11 @@ async def order_page(request: Request):
 
 
 @router.post("/api/orders")
-async def create_order(request: Request, session: AsyncSession = Depends(get_session)):
+async def create_order(
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+    customer: Customer | None = Depends(current_customer),
+):
     try:
         payload = await request.json()
     except ValueError:
@@ -89,6 +94,13 @@ async def create_order(request: Request, session: AsyncSession = Depends(get_ses
             for o, qty in draft.items
         ],
     )
+    if customer is not None:
+        # Заказ — в историю кабинета, адрес — в сохранённые
+        order.customer_id = customer.id
+        if draft.mode == "delivery":
+            from .cabinet import remember_address
+
+            await remember_address(session, customer, draft.address, now)
     session.add(order)
     await session.commit()
     log.info("Заказ обеда №%s: %s, %s, %s ₽", order.id, order.day, order.mode, order.total)

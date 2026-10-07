@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 
-from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy import ForeignKey, String, Text, desc
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -27,6 +27,54 @@ FLOW = {
 }
 
 
+class Customer(Base):
+    """Гость с личным кабинетом. Вход по телефону и паролю."""
+
+    __tablename__ = "customers"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    phone: Mapped[str] = mapped_column(String(16), unique=True, index=True)  # +7XXXXXXXXXX
+    name: Mapped[str] = mapped_column(String(80))
+    password_hash: Mapped[str] = mapped_column(String(200))
+    created_at: Mapped[datetime]
+
+    addresses: Mapped[list["Address"]] = relationship(
+        back_populates="customer",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        order_by=lambda: desc(Address.last_used),
+    )
+
+
+class Address(Base):
+    """Адреса доставки гостя: последний использованный — первым."""
+
+    __tablename__ = "addresses"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    customer_id: Mapped[int] = mapped_column(
+        ForeignKey("customers.id", ondelete="CASCADE"), index=True
+    )
+    text: Mapped[str] = mapped_column(String(200))
+    last_used: Mapped[datetime]
+
+    customer: Mapped[Customer] = relationship(back_populates="addresses")
+
+
+class Staff(Base):
+    """Сотрудник кафе с доступом к /manage."""
+
+    __tablename__ = "staff"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    login: Mapped[str] = mapped_column(String(40), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(80))
+    password_hash: Mapped[str] = mapped_column(String(200))
+    role: Mapped[str] = mapped_column(String(16), default="manager")
+    is_active: Mapped[bool] = mapped_column(default=True)
+    created_at: Mapped[datetime]
+
+
 class Order(Base):
     __tablename__ = "orders"
 
@@ -43,6 +91,12 @@ class Order(Base):
     address: Mapped[str] = mapped_column(String(200), default="")
     comment: Mapped[str] = mapped_column(Text, default="")
     total: Mapped[int]
+    # Заказ гостя с кабинетом; заказы без входа — None
+    # Mapped[int] + nullable, а не Mapped[int | None]: SQLAlchemy 2.0.36 на Python 3.14
+    # не разбирает объединения типов в аннотациях
+    customer_id: Mapped[int] = mapped_column(
+        ForeignKey("customers.id", ondelete="SET NULL"), index=True, nullable=True, default=None
+    )
 
     items: Mapped[list["OrderItem"]] = relationship(
         back_populates="order",

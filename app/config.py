@@ -33,8 +33,11 @@ class Settings(BaseSettings):
     # «сегодня» и «заказ до 11:00»
     timezone: str = "Asia/Yekaterinburg"
 
-    # --- панель менеджера (/manage) ---
-    # Пусто — панель выключена. Вход по логину и паролю (HTTP Basic)
+    # --- вход: гости и сотрудники ---
+    # Подпись кук сессий. На сервере обязательно своя: openssl rand -hex 32
+    secret_key: str = "dev-only-change-me"
+    # Первый менеджер: если сотрудников в базе нет, при запуске создаётся
+    # этот логин с этим паролем. Остальных — tools/staff.py
     manage_user: str = "manager"
     manage_password: str = ""
 

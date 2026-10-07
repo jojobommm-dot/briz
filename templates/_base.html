@@ -42,9 +42,11 @@
         <a href="/keytering" {% if nav == 'keytering' %}aria-current="page"{% endif %}>Кейтеринг</a>
         <a href="/#galereya">Галерея</a>
         <a href="/kontakty" {% if nav == 'kontakty' %}aria-current="page"{% endif %}>Контакты</a>
+        <a class="nav__cab" href="/kabinet" {% if nav == 'kabinet' %}aria-current="page"{% endif %}>{% if customer_logged_in(request) %}Кабинет{% else %}Войти{% endif %}</a>
         <a class="nav__order" href="/zakaz" {% if nav == 'zakaz' %}aria-current="page"{% endif %}>Заказать обед</a>
         <a class="nav__phone" href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a>
       </nav>
+      <a class="header__cab" href="/kabinet">{% if customer_logged_in(request) %}Кабинет{% else %}Войти{% endif %}</a>
       <a class="frame-btn frame-btn--sm header__cta" href="/zakaz"><span>Заказать обед</span></a>
       <button class="burger" type="button" aria-controls="nav" aria-expanded="false" aria-label="Меню">
         <span></span><span></span><span></span>
@@ -76,6 +78,7 @@
             <li><a href="/kontakty">Контакты</a></li>
             <li><a href="/banket#raschet">Заявка на банкет</a></li>
             <li><a href="/zakaz">Заказать обед</a></li>
+            <li><a href="/kabinet">Личный кабинет</a></li>
             <li><button type="button" class="linklike" data-chat-open>Задать вопрос</button></li>
           </ul>
         </div>

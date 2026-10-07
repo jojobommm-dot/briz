@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Вход для сотрудников — «{{ cafe.name }}»</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="{{ asset('icons/icon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Raleway:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="{{ asset('css/manage.css') }}">
+</head>
+<body class="m-login-page">
+  <form class="m-login" method="post" action="/manage/vhod">
+    <img src="/static/img/logo/briz-mark.svg" alt="" width="88" height="88">
+    <h1>Вход для сотрудников</h1>
+    {% if error %}<p class="m-error">{{ error }}</p>{% endif %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <label>Логин<input name="login" autocomplete="username" value="{{ login }}" autofocus required></label>
+    <label>Пароль<input name="password" type="password" autocomplete="current-password" required></label>
+    <button class="m-btn" type="submit">Войти</button>
+  </form>
+</body>
+</html>

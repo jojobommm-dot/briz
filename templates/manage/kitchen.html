@@ -1,0 +1,86 @@
+{% extends "manage/_base.html" %}
+{% block title %}Кухня {{ day.strftime('%d.%m') }}{% endblock %}
+
+{% block content %}
+<div class="m-page-head">
+  <h1>Что готовить · {{ day.strftime('%d.%m') }}</h1>
+  <p>Заказов: <b>{{ sheet.orders }}</b>{% if sheet.waiting %} · <span class="is-hot">{{ sheet.waiting }} ещё не приняты</span> — тоже посчитаны{% endif %}. Отменённые не входят.</p>
+</div>
+
+{% if not sheet.orders %}
+<p class="m-empty">На этот день заказов нет — готовить по заказам нечего.</p>
+{% else %}
+
+{# 1. Главное: блюда — сколько порций, сколько по весу, сколько осталось #}
+<section class="m-card">
+  <h2>Блюда дня</h2>
+  <div class="m-table-wrap">
+  <table class="m-table">
+    <thead>
+      <tr>
+        <th>Блюдо</th><th class="num">Порций</th><th class="num">Выход</th><th class="num">Осталось</th><th class="num">Отдано</th>
+        <th class="num">Доставка</th><th class="num">Самовывоз</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in sheet.rows %}
+      <tr>
+        <td><span class="m-part">{{ r.label }}</span><b>{{ r.dish }}</b><small>{{ r.portion }} {{ r.unit }} на порцию</small></td>
+        <td class="num big">{{ r.total }}</td>
+        <td class="num">{{ r.amount }}</td>
+        <td class="num {% if r.left %}is-hot{% endif %}">{{ r.left }}</td>
+        <td class="num">{{ r.sent }}</td>
+        <td class="num">{{ r.delivery }}</td>
+        <td class="num">{{ r.pickup }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="m-note">Выход порции — нормы комплексного обеда по умолчанию (app/content.py → LUNCH["portions"]). Сверьте с технологическими картами кафе.</p>
+</section>
+
+{# 2. К какому времени: по слотам #}
+<section class="m-card">
+  <h2>К какому времени</h2>
+  <div class="m-table-wrap">
+  <table class="m-table">
+    <thead><tr><th>Блюдо</th>{% for t in sheet.times %}<th class="num">к {{ t }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for r in sheet.rows %}
+      <tr><td><span class="m-part">{{ r.label }}</span>{{ r.dish }}</td>{% for t in sheet.times %}<td class="num">{{ r.by_time[t] or '·' }}</td>{% endfor %}</tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+{# 3. Если заказали то-то — из чего это складывается #}
+<section class="m-card">
+  <h2>Из чего складываются заказы</h2>
+  <ul class="m-combos">
+    {% for c in sheet.combos %}
+    <li>
+      <div class="m-combo__head"><b>{{ c.title }}</b><span class="m-combo__qty">× {{ c.qty }}</span>
+        <small>доставка {{ c.delivery }} · самовывоз {{ c.pickup }}</small></div>
+      <div class="m-combo__parts">
+        {% for part in c.parts %}<span><i>{{ part }}</i>{{ c.dishes[loop.index0] }} <b>× {{ c.qty }}</b></span>{% endfor %}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+{# 4. Упаковка #}
+<section class="m-card">
+  <h2>Упаковка</h2>
+  <div class="m-summary m-summary--tight">
+    <div><span>Контейнеры для супа</span><b>{{ sheet.packaging.soup }}</b></div>
+    <div><span>Контейнеры для салата</span><b>{{ sheet.packaging.salad }}</b></div>
+    <div><span>Контейнеры для второго с гарниром</span><b>{{ sheet.packaging.main }}</b></div>
+    <div><span>Наборы приборов</span><b>{{ sheet.packaging.cutlery }}</b></div>
+    <div><span>Пакеты (по заказу)</span><b>{{ sheet.packaging.bags }}</b></div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

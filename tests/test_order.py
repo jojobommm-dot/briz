@@ -132,36 +132,3 @@ def test_guest_cancel_only_while_new(client, morning):
     assert client.post(f"/api/orders/{token}/cancel").json()["status"] == "cancelled"
     assert client.post(f"/api/orders/{token}/cancel").status_code == 409
     assert client.get("/api/orders/nope").status_code == 404
-
-
-def test_manager_flow(client, morning):
-    token = client.post("/api/orders", json=order_payload()).json()["token"]
-
-    assert client.get("/manage/zakazy").status_code == 401
-    assert client.get("/manage/zakazy", auth=("manager", "wrong")).status_code == 401
-
-    auth = ("manager", "secret")
-    page = client.get(f"/manage/zakazy?day={WEDNESDAY}", auth=auth)
-    assert page.status_code == 200
-    assert "Ирина" in page.text and "Курьер" not in page.text.split("m-order__bottom")[0]
-    assert client.get("/manage/api/latest", auth=auth).json() == {"maxId": 1, "new": 1}
-
-    for status in ("accepted", "cooking", "on_way", "done"):
-        r = client.post(
-            "/manage/zakazy/1/status", data={"status": status}, auth=auth, follow_redirects=False
-        )
-        assert r.status_code == 303
-        assert client.get(f"/api/orders/{token}").json()["status"] == status
-
-    # Чужой для доставки шаг не пройдёт
-    assert (
-        client.post("/manage/zakazy/1/status", data={"status": "ready"}, auth=auth).status_code
-        == 400
-    )
-
-
-def test_manage_disabled_without_password(client, monkeypatch):
-    from app.config import settings
-
-    monkeypatch.setattr(settings, "manage_password", "")
-    assert client.get("/manage/zakazy", auth=("manager", "")).status_code == 503

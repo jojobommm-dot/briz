@@ -1,0 +1,87 @@
+{% extends "_base.html" %}
+{% block title %}Личный кабинет — кафе «{{ cafe.name }}»{% endblock %}
+
+{% macro order_card(o) %}
+<li class="co">
+  <a class="co__main" href="/zakaz/{{ o.token }}">
+    <span class="co__num">№{{ o.number }}</span>
+    <span class="co__when">{{ o.dayLabel }} · {{ o.slot }} · {{ o.modeLabel|lower }}</span>
+    <span class="co__what">{% for it in o['items'] %}{{ it.title }}{% if it.qty > 1 %} × {{ it.qty }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}</span>
+  </a>
+  <span class="mine__status mine__status--{{ o.status }}">{{ o.statusLabel }}</span>
+  <span class="co__sum">{{ o.total|rub }}</span>
+  <a class="opt__add co__repeat" href="/zakaz?repeat={{ o.token }}">Повторить</a>
+</li>
+{% endmacro %}
+
+{% block content %}
+<section class="app" data-cabinet>
+  <div class="app__head">
+    <div class="wrap cab-head">
+      <div>
+        <p class="eyebrow">Личный кабинет</p>
+        <h1 class="poster app__title"><span>Здравствуйте,</span><span>{{ customer.name }}</span></h1>
+        <p class="app__note">{{ customer.phone|phone }}</p>
+      </div>
+      <ul class="cab-stats">
+        <li><b>{{ stats.count }}</b><span>заказов</span></li>
+        <li><b>{{ stats.spent|rub }}</b><span>на обеды</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="wrap app__body">
+    <div class="cab-cta"><a class="cartbar__btn" href="/zakaz">Заказать обед</a></div>
+
+    {% if active %}
+    <h2 class="subhead">Сейчас в работе</h2>
+    <ul class="co-list">{% for o in active %}{{ order_card(o) }}{% endfor %}</ul>
+    {% endif %}
+
+    <h2 class="subhead">История заказов</h2>
+    {% if past %}
+    <ul class="co-list">{% for o in past %}{{ order_card(o) }}{% endfor %}</ul>
+    {% elif not active %}
+    <p class="muted">Заказов пока нет. Первый обед — <a href="/zakaz">здесь</a>.</p>
+    {% else %}
+    <p class="muted">Завершённые заказы появятся здесь.</p>
+    {% endif %}
+
+    <div class="cab-grid">
+      <section id="adresa" class="cab-box">
+        <h2 class="subhead">Адреса доставки</h2>
+        {% if customer.addresses %}
+        <ul class="cab-addr">
+          {% for a in customer.addresses %}
+          <li>
+            <span>{{ a.text }}</span>
+            <form method="post" action="/kabinet/adres/{{ a.id }}/udalit"><button class="linklike" aria-label="Удалить адрес">Удалить</button></form>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="muted">Адрес сохранится сам после первой доставки.</p>
+        {% endif %}
+      </section>
+
+      <section id="profil" class="cab-box">
+        <h2 class="subhead">Профиль</h2>
+        {% set notes = {'profile': 'Имя сохранено', 'password': 'Пароль изменён', 'bad-password': 'Старый пароль не подошёл', 'short-password': 'Новый пароль — от 6 символов'} %}
+        {% if saved in notes %}<p class="cab-note {% if 'password' in saved and saved != 'password' %}cab-note--bad{% endif %}">{{ notes[saved] }}</p>{% endif %}
+        <form method="post" action="/kabinet/profil" class="cab-form">
+          <div class="field"><label for="c-name">Имя</label><input id="c-name" name="name" value="{{ customer.name }}" maxlength="80"></div>
+          <button class="opt__add" type="submit">Сохранить</button>
+        </form>
+        <form method="post" action="/kabinet/parol" class="cab-form">
+          <div class="field"><label for="c-old">Старый пароль</label><input id="c-old" name="old" type="password" autocomplete="current-password"></div>
+          <div class="field"><label for="c-new">Новый пароль</label><input id="c-new" name="new" type="password" autocomplete="new-password" minlength="6"></div>
+          <button class="opt__add" type="submit">Сменить пароль</button>
+        </form>
+        <form method="post" action="/kabinet/vyhod"><button class="linklike cab-logout" type="submit">Выйти из кабинета</button></form>
+      </section>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}<script src="{{ asset('js/order.js') }}" defer></script>{% endblock %}

@@ -70,6 +70,14 @@ def menu_for(day: date) -> dict | None:
     return {"salad": salad, "soup": soup, "main": f"{main}, {side.lower()}"}
 
 
+def dishes_for(day: date) -> dict | None:
+    """Блюда дня по отдельности, гарнир — отдельно от второго (для кухни)."""
+    if day.weekday() >= len(LUNCH["week"]):
+        return None
+    _, salad, soup, main, side = LUNCH["week"][day.weekday()]
+    return {"salad": salad, "soup": soup, "main": main, "side": side}
+
+
 def details(option: Option, day: date) -> str:
     menu = menu_for(day) or {}
     return " · ".join(menu[p] for p in option.parts if p in menu)

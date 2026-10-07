@@ -6,15 +6,17 @@
 
 import logging
 from contextlib import asynccontextmanager
+from urllib.parse import quote
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from .auth import LoginRequired
 from .config import settings
 from .database import dispose, init_db
-from .routers import manage, order, pages
+from .routers import cabinet, manage, order, pages
 from .templating import templates
 
 logging.basicConfig(
@@ -36,6 +38,8 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory=settings.static_root), name="static")
 app.include_router(pages.router)
 app.include_router(order.router)
+app.include_router(cabinet.router)
+app.include_router(manage.public)
 app.include_router(manage.router)
 
 
@@ -44,12 +48,17 @@ async def healthz():
     return {"ok": True}
 
 
+@app.exception_handler(LoginRequired)
+async def login_required(request: Request, exc: LoginRequired):
+    # Опрос со страницы после истечения сессии — не перенаправлять, а честно сказать 401
+    if "/api/" in request.url.path:
+        return JSONResponse({"error": "Нужно войти"}, status_code=401)
+    return RedirectResponse(f"{exc.login_url}?next={quote(exc.next_url)}", status_code=303)
+
+
 @app.exception_handler(StarletteHTTPException)
 async def http_error(request: Request, exc: StarletteHTTPException):
     text = "Такой страницы нет" if exc.status_code == 404 else "Что-то пошло не так"
-    # Вход в панель менеджера: браузеру нужен заголовок WWW-Authenticate, иначе нет окна входа
-    if exc.status_code in (401, 503):
-        return HTMLResponse(str(exc.detail), status_code=exc.status_code, headers=exc.headers)
     # API отвечает JSON-ом, а не страницей
     if request.url.path.startswith("/api/"):
         return JSONResponse({"error": text}, status_code=exc.status_code)

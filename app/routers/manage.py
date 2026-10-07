@@ -1,92 +1,199 @@
-"""Рабочее место менеджера: заказы обедов на день, статусы, сводка для кухни.
+"""Кабинет менеджера: заказы на день, лист для кухни, лист для курьера.
 
-Вход — HTTP Basic (логин и пароль из .env: MANAGE_USER, MANAGE_PASSWORD).
-Нормальные учётки сотрудников появятся вместе с админкой; пока менеджер один.
+Вход — по логину и паролю сотрудника (таблица staff). Первый менеджер
+создаётся при запуске из MANAGE_USER/MANAGE_PASSWORD, остальные — tools/staff.py.
 """
 
-import secrets
 from collections import Counter
 from datetime import date
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import kitchen
 from .. import lunch_order as lo
-from ..config import settings
+from ..auth import current_staff, login_staff, logout, require_staff
 from ..database import get_session
-from ..models import STATUSES, Order
+from ..models import STATUSES, Order, Staff
+from ..security import STAFF_COOKIE, login_throttle, verify_password
 from ..templating import templates
 
-# В заголовках HTTP только латиница — realm без кириллицы
-basic = HTTPBasic(realm="briz")
+public = APIRouter(prefix="/manage")
+router = APIRouter(prefix="/manage")
 
 
-def manager(creds: HTTPBasicCredentials = Depends(basic)) -> str:
-    if not settings.manage_password:
-        raise HTTPException(503, "Панель выключена: задайте MANAGE_PASSWORD в .env")
-    ok_user = secrets.compare_digest(creds.username.encode(), settings.manage_user.encode())
-    ok_pass = secrets.compare_digest(creds.password.encode(), settings.manage_password.encode())
-    if not (ok_user and ok_pass):
-        raise HTTPException(401, headers={"WWW-Authenticate": 'Basic realm="briz"'})
-    return creds.username
+def _safe_next(url: str) -> str:
+    return url if url.startswith("/manage") else "/manage/zakazy"
 
 
-router = APIRouter(prefix="/manage", dependencies=[Depends(manager)])
+def _pick_day(day: str) -> tuple[date, date]:
+    today = lo.now_local().date()
+    try:
+        return (date.fromisoformat(day) if day else today), today
+    except ValueError:
+        return today, today
+
+
+async def _orders_for(session: AsyncSession, day: date) -> list[Order]:
+    return list(
+        (
+            await session.scalars(select(Order).where(Order.day == day).order_by(Order.id.desc()))
+        ).all()
+    )
+
+
+def _ctx(staff: Staff, tab: str, day: date, today: date, **extra) -> dict:
+    return {
+        "tab": tab,
+        "day": day,
+        "today": today,
+        "days": [d["date"] for d in lo.order_days(lo.now_local())],
+        "staff": staff,
+        "statuses": STATUSES,
+        "modes": lo.MODES,
+        **extra,
+    }
+
+
+# ---------- вход ----------
+
+
+@public.get("/vhod", response_class=HTMLResponse)
+async def login_page(request: Request, next: str = "/manage/zakazy", staff=Depends(current_staff)):
+    if staff:
+        return RedirectResponse(_safe_next(next), status_code=303)
+    return templates.TemplateResponse(
+        request, "manage/login.html", {"next": _safe_next(next), "error": "", "login": ""}
+    )
+
+
+@public.post("/vhod")
+async def login(
+    request: Request,
+    login: str = Form(""),
+    password: str = Form(""),
+    next: str = Form("/manage/zakazy"),
+    session: AsyncSession = Depends(get_session),
+):
+    key = f"s:{login.strip().lower()}"
+    ctx = {"next": _safe_next(next), "login": login}
+    if login_throttle.blocked(key):
+        ctx["error"] = "Слишком много попыток. Подождите 15 минут."
+        return templates.TemplateResponse(request, "manage/login.html", ctx, status_code=429)
+    staff = await session.scalar(select(Staff).where(Staff.login == login.strip().lower()))
+    if staff is None or not staff.is_active or not verify_password(password, staff.password_hash):
+        login_throttle.fail(key)
+        ctx["error"] = "Неверный логин или пароль"
+        return templates.TemplateResponse(request, "manage/login.html", ctx, status_code=401)
+    login_throttle.reset(key)
+    response = RedirectResponse(_safe_next(next), status_code=303)
+    login_staff(response, staff)
+    return response
+
+
+@public.post("/vyhod")
+async def do_logout():
+    response = RedirectResponse("/manage/vhod", status_code=303)
+    logout(response, STAFF_COOKIE)
+    return response
+
+
+# ---------- разделы ----------
 
 
 @router.get("")
-async def manage_root():
+async def manage_root(staff: Staff = Depends(require_staff)):
     return RedirectResponse("/manage/zakazy", status_code=303)
 
 
 @router.get("/zakazy", response_class=HTMLResponse)
-async def orders(request: Request, day: str = "", session: AsyncSession = Depends(get_session)):
-    today = lo.now_local().date()
-    try:
-        chosen = date.fromisoformat(day) if day else today
-    except ValueError:
-        chosen = today
-
-    rows = (
-        await session.scalars(select(Order).where(Order.day == chosen).order_by(Order.id.desc()))
-    ).all()
+async def orders(
+    request: Request,
+    day: str = "",
+    staff: Staff = Depends(require_staff),
+    session: AsyncSession = Depends(get_session),
+):
+    chosen, today = _pick_day(day)
+    rows = await _orders_for(session, chosen)
     active = [o for o in rows if o.status != "cancelled"]
-
-    # Сводка для кухни: сколько каких блюд готовить на день
-    kitchen = Counter()
-    for o in active:
-        for it in o.items:
-            for part in lo.OPTIONS_BY_KIND[it.kind].parts if it.kind in lo.OPTIONS_BY_KIND else ():
-                kitchen[part] += it.qty
-    menu = lo.menu_for(chosen) or {}
-
     return templates.TemplateResponse(
         request,
         "manage/orders.html",
-        {
-            "orders": rows,
-            "day": chosen,
-            "today": today,
-            "days": [d["date"] for d in lo.order_days(lo.now_local())],
-            "kitchen": [
-                (menu.get(p, p), kitchen[p], label)
-                for p, label in (("salad", "Салат"), ("soup", "Суп"), ("main", "Второе"))
-            ],  # fmt: skip
-            "revenue": sum(o.total for o in active),
-            "counts": Counter(o.status for o in rows),
-            "statuses": STATUSES,
-            "max_id": max((o.id for o in rows), default=0),
-            "modes": lo.MODES,
-        },
+        _ctx(
+            staff,
+            "zakazy",
+            chosen,
+            today,
+            orders=rows,
+            sheet=kitchen.build(rows, chosen),
+            revenue=sum(o.total for o in active),
+            counts=Counter(o.status for o in rows),
+            max_id=max((o.id for o in rows), default=0),
+        ),
+    )
+
+
+@router.get("/kuhnya", response_class=HTMLResponse)
+async def kitchen_page(
+    request: Request,
+    day: str = "",
+    staff: Staff = Depends(require_staff),
+    session: AsyncSession = Depends(get_session),
+):
+    chosen, today = _pick_day(day)
+    rows = await _orders_for(session, chosen)
+    return templates.TemplateResponse(
+        request,
+        "manage/kitchen.html",
+        _ctx(
+            staff,
+            "kuhnya",
+            chosen,
+            today,
+            sheet=kitchen.build(rows, chosen),
+            max_id=max((o.id for o in rows), default=0),
+        ),  # fmt: skip
+    )
+
+
+@router.get("/dostavka", response_class=HTMLResponse)
+async def delivery_page(
+    request: Request,
+    day: str = "",
+    staff: Staff = Depends(require_staff),
+    session: AsyncSession = Depends(get_session),
+):
+    chosen, today = _pick_day(day)
+    rows = [o for o in await _orders_for(session, chosen) if o.status != "cancelled"]
+    rows.sort(key=lambda o: (kitchen.slot_start(o.slot), o.mode, o.id))
+    groups: dict[str, list[Order]] = {}
+    for o in rows:
+        groups.setdefault(f"{kitchen.slot_start(o.slot)} · {lo.MODES[o.mode]}", []).append(o)
+    return templates.TemplateResponse(
+        request,
+        "manage/delivery.html",
+        _ctx(
+            staff,
+            "dostavka",
+            chosen,
+            today,
+            groups=groups,
+            to_collect=sum(o.total for o in rows if o.status != "done"),
+            max_id=max((o.id for o in rows), default=0),
+        ),  # fmt: skip
     )
 
 
 @router.post("/zakazy/{order_id}/status")
-async def set_status(order_id: int, status: str = Form(...), day: str = Form(""),
-                     session: AsyncSession = Depends(get_session)):  # fmt: skip
+async def set_status(
+    order_id: int,
+    status: str = Form(...),
+    back: str = Form(""),
+    staff: Staff = Depends(require_staff),
+    session: AsyncSession = Depends(get_session),
+):
     order = await session.get(Order, order_id)
     if order is None:
         raise HTTPException(404)
@@ -94,13 +201,14 @@ async def set_status(order_id: int, status: str = Form(...), day: str = Form("")
         raise HTTPException(400)
     order.status = status
     await session.commit()
-    return RedirectResponse(
-        f"/manage/zakazy?day={day or order.day.isoformat()}#o{order.id}", status_code=303
-    )
+    target = back if back.startswith("/manage/") else f"/manage/zakazy?day={order.day.isoformat()}"
+    return RedirectResponse(f"{target}#o{order.id}", status_code=303)
 
 
 @router.get("/api/latest")
-async def latest(session: AsyncSession = Depends(get_session)):
+async def latest(
+    staff: Staff = Depends(require_staff), session: AsyncSession = Depends(get_session)
+):
     """Для опроса со страницы: номер последнего заказа и сколько новых."""
     max_id = await session.scalar(select(func.max(Order.id))) or 0
     new = await session.scalar(select(func.count()).select_from(Order).where(Order.status == "new"))

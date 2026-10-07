@@ -1,0 +1,39 @@
+{% extends "manage/_base.html" %}
+{% block title %}Доставка {{ day.strftime('%d.%m') }}{% endblock %}
+
+{% block content %}
+<div class="m-page-head">
+  <h1>Доставка и выдача · {{ day.strftime('%d.%m') }}</h1>
+  <p>Получить с гостей при выдаче: <b>{{ to_collect|rub }}</b> (оплата при получении, выполненные не считаются).</p>
+</div>
+
+{% if not groups %}<p class="m-empty">На этот день отдавать нечего.</p>{% endif %}
+
+{% for title, orders in groups.items() %}
+<section class="m-card">
+  <h2>{{ title }} <small>{{ orders|length }} {{ 'заказ' if orders|length == 1 else 'заказа' if orders|length < 5 else 'заказов' }}</small></h2>
+  <ol class="m-route">
+    {% for o in orders %}
+    <li class="m-route__item m-order--{{ o.status }}" id="o{{ o.id }}">
+      <div class="m-route__main">
+        <b>№{{ o.id }}</b> <span class="m-badge m-badge--{{ o.status }}">{{ o.status_label }}</span>
+        <div>{{ o.name }} · <a href="tel:{{ o.phone }}">{{ o.phone|phone }}</a></div>
+        {% if o.address %}<div class="m-order__addr">📍 {{ o.address }}</div>{% endif %}
+        {% if o.comment %}<div class="m-order__comment">💬 {{ o.comment }}</div>{% endif %}
+        <div class="m-route__what">{% for it in o.items %}{{ it.qty }} × {{ it.title }}{% if not loop.last %}; {% endif %}{% endfor %}</div>
+      </div>
+      <div class="m-route__side">
+        <b class="m-order__total">{{ o.total|rub }}</b>
+        {% if o.next_status %}
+        <form method="post" action="/manage/zakazy/{{ o.id }}/status">
+          <input type="hidden" name="back" value="/manage/dostavka?day={{ day.isoformat() }}">
+          <button class="m-btn" name="status" value="{{ o.next_status }}">→ {{ statuses[o.next_status] }}</button>
+        </form>
+        {% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endfor %}
+{% endblock %}

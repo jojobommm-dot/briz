@@ -132,8 +132,24 @@
       });
       $("[data-address-field]").hidden = state.mode !== "delivery";
       $("[data-submit]").textContent = `Заказать за ${rub(total())}`;
-      const p = store.get(PROFILE_KEY, {});
+      // Вошедший гость — данные из кабинета; иначе — что запомнил этот телефон
+      const p = me.loggedIn ? { name: me.name, phone: me.phone, address: me.addresses[0] } : store.get(PROFILE_KEY, {});
       ["name", "phone", "address"].forEach((k) => { if (p[k] && !form[k].value) form[k].value = p[k]; });
+      $("[data-login-hint]").hidden = me.loggedIn;
+      const chips = $("[data-addr-chips]");
+      chips.innerHTML = "";
+      (me.addresses || []).forEach((a) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "addr-chip" + (form.address.value === a ? " is-on" : "");
+        b.textContent = a;
+        b.addEventListener("click", () => {
+          form.address.value = a;
+          chips.querySelectorAll(".addr-chip").forEach((x) => x.classList.toggle("is-on", x === b));
+        });
+        chips.appendChild(b);
+      });
+      chips.hidden = !(me.addresses || []).length;
       showErrors({});
     }
 
@@ -183,21 +199,43 @@
             <span>${o.items.map((i) => i.title + (i.qty > 1 ? " × " + i.qty : "")).join(", ")} · ${rub(o.total)}</span></a>
           <span class="mine__status mine__status--${o.status}">${o.statusLabel}</span>
           <button type="button" class="opt__add" data-repeat>Повторить</button>`;
-        li.querySelector("[data-repeat]").addEventListener("click", () => {
-          state.mode = o.mode;
-          state.qty = {};
-          o.items.forEach((i) => { state.qty[i.kind] = i.qty; });
-          render();
-          window.scrollTo({ top: $("[data-options]").offsetTop - 120, behavior: "smooth" });
-        });
+        li.querySelector("[data-repeat]").addEventListener("click", () => repeat(o));
         list.appendChild(li);
       });
       $("[data-mine]").hidden = !list.children.length;
     }
 
+    // Повтор заказа: тот же способ получения и те же позиции, день — ближайший открытый
+    function repeat(o) {
+      state.mode = o.mode;
+      state.qty = {};
+      o.items.forEach((i) => { state.qty[i.kind] = i.qty; });
+      render();
+      window.scrollTo({ top: $("[data-options]").offsetTop - 120, behavior: "smooth" });
+    }
+
+    let me = { loggedIn: false, addresses: [] };
     state.day = (firstOpenDay(state.mode) || data.days[0]).date;
     render();
     renderMine();
+    fetch("/api/me").then((r) => r.json()).then((d) => { me = d; }).catch(() => {});
+    // «Повторить» из кабинета ведёт сюда с ?repeat=<token>
+    const repeatToken = new URLSearchParams(location.search).get("repeat");
+    if (repeatToken) {
+      fetch(`/api/orders/${encodeURIComponent(repeatToken)}`).then((r) => (r.ok ? r.json() : null)).then((o) => { if (o) repeat(o); }).catch(() => {});
+    }
+  }
+
+  // ================= кабинет: подтянуть заказы, сделанные с этого телефона до входа =================
+  const cabinet = document.querySelector("[data-cabinet]");
+  if (cabinet) {
+    const tokens = store.get(ORDERS_KEY, []).map((m) => m.token);
+    if (tokens.length) {
+      fetch("/api/me/claim", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tokens }) })
+        .then((r) => r.json())
+        .then((d) => { if (d.claimed > 0) location.reload(); })
+        .catch(() => {});
+    }
   }
 
   // ================= статус заказа =================

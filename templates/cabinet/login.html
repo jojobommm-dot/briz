@@ -1,0 +1,26 @@
+{% extends "_base.html" %}
+{% block title %}Вход в кабинет — кафе «{{ cafe.name }}»{% endblock %}
+{% block content %}
+<section class="auth">
+  <div class="auth__card">
+    <img class="auth__mark" src="/static/img/logo/briz-mark.svg" alt="" width="96" height="96">
+    <h1 class="poster auth__title"><span>Личный</span><span>кабинет</span></h1>
+    <p class="auth__lead">Ваши заказы, адреса и повтор обеда в одно касание.</p>
+    {% if error %}<p class="field__error auth__error">{{ error }}</p>{% endif %}
+    <form method="post" action="/kabinet/vhod" class="auth__form">
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="field">
+        <label for="phone">Телефон</label>
+        <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="8 912 345-67-89" value="{{ form.phone or '' }}" required>
+      </div>
+      <div class="field">
+        <label for="password">Пароль</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="sheet__submit" type="submit">Войти</button>
+    </form>
+    <p class="auth__switch">Ещё нет кабинета? <a href="/kabinet/registraciya?next={{ next|urlencode }}">Зарегистрироваться</a></p>
+    <p class="auth__hint">Забыли пароль — позвоните нам: <a href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a></p>
+  </div>
+</section>
+{% endblock %}

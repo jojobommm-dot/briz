@@ -1,0 +1,31 @@
+{% extends "_base.html" %}
+{% block title %}Регистрация — кафе «{{ cafe.name }}»{% endblock %}
+{% block content %}
+<section class="auth">
+  <div class="auth__card">
+    <img class="auth__mark" src="/static/img/logo/briz-mark.svg" alt="" width="96" height="96">
+    <h1 class="poster auth__title"><span>Новый</span><span>кабинет</span></h1>
+    <p class="auth__lead">Заказы с этого телефона, сделанные раньше, сами появятся в кабинете.</p>
+    <form method="post" action="/kabinet/registraciya" class="auth__form">
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="field">
+        <label for="name">Как к вам обращаться</label>
+        <input id="name" name="name" type="text" autocomplete="name" maxlength="80" value="{{ form.name or '' }}" required>
+        {% if errors.name %}<p class="field__error">{{ errors.name }}</p>{% endif %}
+      </div>
+      <div class="field">
+        <label for="phone">Телефон</label>
+        <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="8 912 345-67-89" value="{{ form.phone or '' }}" required>
+        {% if errors.phone %}<p class="field__error">{{ errors.phone }}{% if 'войдите' in errors.phone %} — <a href="/kabinet/vhod">вход</a>{% endif %}</p>{% endif %}
+      </div>
+      <div class="field">
+        <label for="password">Пароль <span class="muted">— от 6 символов</span></label>
+        <input id="password" name="password" type="password" autocomplete="new-password" minlength="6" required>
+        {% if errors.password %}<p class="field__error">{{ errors.password }}</p>{% endif %}
+      </div>
+      <button class="sheet__submit" type="submit">Создать кабинет</button>
+    </form>
+    <p class="auth__switch">Уже есть кабинет? <a href="/kabinet/vhod?next={{ next|urlencode }}">Войти</a></p>
+  </div>
+</section>
+{% endblock %}

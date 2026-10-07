@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Менеджер{% endblock %} — «{{ cafe.name }}»</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#082f40">
+  <link rel="icon" href="{{ asset('icons/icon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Raleway:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="{{ asset('css/manage.css') }}">
+</head>
+<body data-max-id="{{ max_id or 0 }}">
+  <header class="m-head">
+    <div class="m-head__title"><img src="/static/img/logo/briz-mark.svg" alt="" width="34" height="34"> БРИЗ · менеджер</div>
+    <nav class="m-tabs" aria-label="Разделы">
+      <a href="/manage/zakazy?day={{ day.isoformat() }}" {% if tab == 'zakazy' %}aria-current="page"{% endif %}>Заказы</a>
+      <a href="/manage/kuhnya?day={{ day.isoformat() }}" {% if tab == 'kuhnya' %}aria-current="page"{% endif %}>Кухня</a>
+      <a href="/manage/dostavka?day={{ day.isoformat() }}" {% if tab == 'dostavka' %}aria-current="page"{% endif %}>Доставка</a>
+    </nav>
+    <div class="m-head__me">
+      <button type="button" class="m-sound" data-sound>🔔 Звук</button>
+      <span>{{ staff.name }}</span>
+      <form method="post" action="/manage/vyhod"><button class="m-link">Выйти</button></form>
+    </div>
+  </header>
+  <nav class="m-days" aria-label="День">
+    {% for d in days %}
+    <a href="?day={{ d }}" {% if d == day.isoformat() %}aria-current="page"{% endif %}>{{ d[8:10] }}.{{ d[5:7] }}{% if d == today.isoformat() %} · сегодня{% endif %}</a>
+    {% endfor %}
+    {% if day.isoformat() not in days %}<a href="?day={{ day.isoformat() }}" aria-current="page">{{ day.strftime('%d.%m') }}</a>{% endif %}
+    <button type="button" class="m-print" onclick="print()">Печать</button>
+  </nav>
+
+  <main class="m-main">{% block content %}{% endblock %}</main>
+
+  <script>
+    // Опрос раз в 15 секунд: пришёл новый заказ — звук, уведомление и перезагрузка
+    (function () {
+      let maxId = Number(document.body.dataset.maxId) || 0;
+      let audio = null;
+      const btn = document.querySelector("[data-sound]");
+      const beep = () => {
+        if (!audio) return;
+        [0, 0.25].forEach((t) => {
+          const o = audio.createOscillator(), g = audio.createGain();
+          o.frequency.value = 880; g.gain.value = 0.15;
+          o.connect(g); g.connect(audio.destination);
+          o.start(audio.currentTime + t); o.stop(audio.currentTime + t + 0.18);
+        });
+      };
+      // Браузер разрешает звук только после нажатия — поэтому кнопка
+      btn.addEventListener("click", () => {
+        audio = audio || new AudioContext();
+        beep();
+        btn.textContent = "🔔 Звук включён";
+        btn.classList.add("is-on");
+        if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
+      });
+      setInterval(async () => {
+        try {
+          const r = await fetch("/manage/api/latest", { cache: "no-store" });
+          if (r.status === 401) { location.reload(); return; }
+          const d = await r.json();
+          if (d.maxId > maxId) {
+            beep();
+            if ("Notification" in window && Notification.permission === "granted") new Notification("Новый заказ обеда", { body: "№" + d.maxId });
+            maxId = d.maxId;
+            setTimeout(() => location.reload(), 1200);
+          }
+        } catch {}
+      }, 15000);
+    })();
+  </script>
+</body>
+</html>
