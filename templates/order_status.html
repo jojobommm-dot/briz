@@ -1,0 +1,40 @@
+{% extends "_base.html" %}
+{% block title %}Заказ №{{ order.number }} — кафе «{{ cafe.name }}»{% endblock %}
+
+{% block content %}
+<section class="app status" data-status data-token="{{ order.token }}">
+  <div class="app__head">
+    <div class="wrap">
+      <p class="eyebrow">Заказ №{{ order.number }} · {{ order.modeLabel }}</p>
+      <h1 class="poster app__title"><span data-st-label>{{ order.statusLabel }}</span></h1>
+      <p class="app__note">{{ order.dayLabel }}, {{ order.slot }}{% if order.address %} · {{ order.address }}{% endif %}</p>
+    </div>
+  </div>
+
+  <div class="wrap app__body">
+    <ol class="steps" data-steps>
+      {% for s in order.flow %}<li data-step="{{ s.key }}">{{ s.label }}</li>{% endfor %}
+    </ol>
+    <p class="status__cancelled" data-cancelled {% if order.status != 'cancelled' %}hidden{% endif %}>Заказ отменён.</p>
+
+    <ul class="status__items">
+      {% for it in order['items'] %}
+      <li>
+        <div><b>{{ it.title }}</b>{% if it.qty > 1 %} × {{ it.qty }}{% endif %}<span>{{ it.details }}</span></div>
+        <span class="status__price">{{ (it.price * it.qty)|rub }}</span>
+      </li>
+      {% endfor %}
+      <li class="status__total"><b>Итого</b><span class="status__price">{{ order.total|rub }}</span></li>
+    </ul>
+    <p class="muted">Оплата при получении. Вопросы — <a href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a></p>
+
+    <div class="status__actions">
+      <a class="frame-btn frame-btn--dark" href="/zakaz"><span>Заказать ещё</span></a>
+      <button type="button" class="linklike status__cancel" data-cancel {% if not order.canCancel %}hidden{% endif %}>Отменить заказ</button>
+    </div>
+  </div>
+  <script type="application/json" id="status-data">{{ order|tojson }}</script>
+</section>
+{% endblock %}
+
+{% block scripts %}<script src="{{ asset('js/order.js') }}" defer></script>{% endblock %}

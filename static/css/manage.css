@@ -1,0 +1,44 @@
+/* Панель менеджера: крупно и контрастно — работать будут с телефона и на кухне */
+:root { --ink: #20262b; --muted: #5d6b73; --line: #d6e1e5; --river: #1583ad; --dark: #082f40; --wine: #e8b15a; --kraft: #ece4d4; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.5 "Raleway", system-ui, sans-serif; font-variant-numeric: lining-nums; color: var(--ink); background: var(--kraft); }
+a { color: var(--river); }
+.m-head { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 12px 16px; background: var(--dark); color: #fff; }
+.m-head__title { font: 600 1.2rem "Oswald", sans-serif; letter-spacing: .08em; }
+.m-days { display: flex; gap: 6px; overflow-x: auto; }
+.m-days a { padding: 4px 12px; border: 1px solid rgba(127, 216, 245, .4); border-radius: 999px; color: #cfe9f3; text-decoration: none; white-space: nowrap; font-size: .9rem; }
+.m-days a[aria-current] { background: #7fd8f5; color: var(--dark); font-weight: 700; }
+.m-sound { margin-left: auto; border: 1px solid var(--wine); background: none; color: var(--wine); padding: 6px 14px; border-radius: 999px; cursor: pointer; font: inherit; }
+.m-main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+.m-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.m-summary div { background: #fff; padding: 12px 14px; border-radius: 10px; display: flex; flex-direction: column; }
+.m-summary span { font-size: .8rem; color: var(--muted); }
+.m-summary b { font: 600 1.8rem "Oswald", sans-serif; }
+.m-summary .is-hot { color: #c0392b; }
+.m-kitchen { border-left: 4px solid var(--river); }
+.m-empty { text-align: center; color: var(--muted); padding: 40px 0; }
+.m-orders { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+@media (min-width: 900px) { .m-orders { grid-template-columns: 1fr 1fr; } }
+.m-order { background: #fff; border-radius: 12px; padding: 14px 16px; border-left: 6px solid var(--line); }
+.m-order--new { border-left-color: #e74c3c; box-shadow: 0 0 0 2px rgba(231, 76, 60, .25); }
+.m-order--accepted, .m-order--cooking { border-left-color: var(--wine); }
+.m-order--on_way, .m-order--ready { border-left-color: var(--river); }
+.m-order--done { opacity: .6; }
+.m-order--cancelled { opacity: .45; }
+.m-order__top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 8px; }
+.m-order__num { font: 600 1.4rem "Oswald", sans-serif; }
+.m-order__mode, .m-order__time { font-size: .85rem; color: var(--muted); }
+.m-order__time { margin-left: auto; }
+.m-badge { padding: 2px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; background: var(--line); }
+.m-badge--new { background: #e74c3c; color: #fff; }
+.m-badge--accepted, .m-badge--cooking { background: var(--wine); }
+.m-badge--on_way, .m-badge--ready { background: var(--river); color: #fff; }
+.m-order__addr, .m-order__comment { margin-top: 4px; }
+.m-order__items { list-style: none; padding: 0; margin: 10px 0; border-top: 1px dashed var(--line); }
+.m-order__items li { padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.m-order__items span { display: block; font-size: .85rem; color: var(--muted); }
+.m-order__bottom { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.m-order__total { font: 600 1.4rem "Oswald", sans-serif; margin-right: auto; }
+.m-order__bottom form { margin: 0; }
+.m-btn { min-height: 44px; padding: 0 18px; border: 0; border-radius: 10px; background: var(--dark); color: #fff; font: 600 1rem "Raleway", sans-serif; cursor: pointer; }
+.m-btn--ghost { background: none; color: var(--muted); border: 1px solid var(--line); }

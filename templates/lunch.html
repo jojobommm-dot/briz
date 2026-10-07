@@ -31,8 +31,8 @@
         <li>Заказ на доставку — до {{ lunch.order_until }}, привезём к обеду</li>
         <li>В кафе ждём на обед с {{ lunch.since }}</li>
       </ul>
-      <a class="frame-btn" href="tel:{{ cafe.phone }}"><span>Заказать по телефону</span></a>
-      <p class="field__hint" style="margin-top: 22px">Онлайн-заказ с оплатой на сайте появится скоро.</p>
+      <a class="frame-btn" href="/zakaz"><span>Заказать онлайн</span></a>
+      <p class="field__hint" style="margin-top: 22px">Или по телефону: <a href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a></p>
     </aside>
   </div>
 </section>

@@ -179,7 +179,7 @@ _SHELL_ASSETS = [
     "icons/icon-192.png",
     "img/logo/briz-mark.svg",
 ]
-_SHELL_PAGES = ["/", "/menu", "/obedy", "/kontakty", "/offline"]
+_SHELL_PAGES = ["/", "/zakaz", "/menu", "/obedy", "/kontakty", "/offline"]
 
 
 def _sw_version() -> str:

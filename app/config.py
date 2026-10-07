@@ -20,8 +20,23 @@ class Settings(BaseSettings):
 
     static_root: Path = BASE_DIR / "static"
     templates_root: Path = BASE_DIR / "templates"
-    # Сюда до появления базы (шаг 2) складываются заявки на банкет
+    # Заявки на банкет и кейтеринг (пока файлами) и локальная база
     data_root: Path = BASE_DIR / "data"
+
+    # --- база ---
+    # Для разработки — SQLite в data/; на сервере — PostgreSQL:
+    # postgresql+asyncpg://briz:пароль@localhost:5432/briz
+    database_url: str = f"sqlite+aiosqlite:///{(BASE_DIR / 'data' / 'briz.db').as_posix()}"
+
+    # --- кафе ---
+    # Пермь живёт по екатеринбургскому времени (UTC+5): от него считаются
+    # «сегодня» и «заказ до 11:00»
+    timezone: str = "Asia/Yekaterinburg"
+
+    # --- панель менеджера (/manage) ---
+    # Пусто — панель выключена. Вход по логину и паролю (HTTP Basic)
+    manage_user: str = "manager"
+    manage_password: str = ""
 
 
 @lru_cache

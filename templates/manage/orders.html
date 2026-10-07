@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Заказы {{ day.strftime('%d.%m') }} — «{{ cafe.name }}», менеджер</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="{{ asset('icons/icon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Raleway:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="{{ asset('css/manage.css') }}">
+</head>
+<body data-max-id="{{ max_id }}">
+  <header class="m-head">
+    <div class="m-head__title">БРИЗ · заказы обедов</div>
+    <nav class="m-days">
+      {% for d in days %}
+      <a href="?day={{ d }}" {% if d == day.isoformat() %}aria-current="page"{% endif %}>{{ d[8:10] }}.{{ d[5:7] }}{% if d == today.isoformat() %} · сегодня{% endif %}</a>
+      {% endfor %}
+    </nav>
+    <button type="button" class="m-sound" data-sound>🔔 Включить звук</button>
+  </header>
+
+  <main class="m-main">
+    <section class="m-summary">
+      <div><span>Заказов</span><b>{{ orders|length }}</b></div>
+      <div><span>Новых</span><b class="{% if counts.new %}is-hot{% endif %}">{{ counts.new or 0 }}</b></div>
+      <div><span>Сумма</span><b>{{ revenue|rub }}</b></div>
+      {% for dish, n, label in kitchen %}
+      <div class="m-kitchen"><span>{{ label }}: {{ dish }}</span><b>{{ n }}</b></div>
+      {% endfor %}
+    </section>
+
+    {% if not orders %}
+    <p class="m-empty">На этот день заказов пока нет. Страница сама подаст звук, когда придёт новый.</p>
+    {% endif %}
+
+    <ul class="m-orders">
+      {% for o in orders %}
+      <li class="m-order m-order--{{ o.status }}" id="o{{ o.id }}">
+        <div class="m-order__top">
+          <b class="m-order__num">№{{ o.id }}</b>
+          <span class="m-badge m-badge--{{ o.status }}">{{ o.status_label }}</span>
+          <span class="m-order__mode">{{ modes[o.mode] }} · {{ o.slot }}</span>
+          <span class="m-order__time">принят в {{ o.created_at.strftime('%H:%M') }}</span>
+        </div>
+        <div class="m-order__who">
+          <b>{{ o.name }}</b> · <a href="tel:{{ o.phone }}">{{ o.phone|phone }}</a>
+          {% if o.address %}<div class="m-order__addr">📍 {{ o.address }}</div>{% endif %}
+          {% if o.comment %}<div class="m-order__comment">💬 {{ o.comment }}</div>{% endif %}
+        </div>
+        <ul class="m-order__items">
+          {% for it in o.items %}<li><b>{{ it.qty }} × {{ it.title }}</b> <span>{{ it.details }}</span></li>{% endfor %}
+        </ul>
+        <div class="m-order__bottom">
+          <b class="m-order__total">{{ o.total|rub }}</b>
+          {% if o.next_status %}
+          <form method="post" action="/manage/zakazy/{{ o.id }}/status">
+            <input type="hidden" name="day" value="{{ day.isoformat() }}">
+            <button class="m-btn" name="status" value="{{ o.next_status }}">→ {{ statuses[o.next_status] }}</button>
+          </form>
+          {% endif %}
+          {% if o.status not in ('done', 'cancelled') %}
+          <form method="post" action="/manage/zakazy/{{ o.id }}/status" onsubmit="return confirm('Отменить заказ №{{ o.id }}?')">
+            <input type="hidden" name="day" value="{{ day.isoformat() }}">
+            <button class="m-btn m-btn--ghost" name="status" value="cancelled">Отменить</button>
+          </form>
+          {% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </main>
+
+  <script>
+    // Опрос раз в 15 секунд: пришёл новый заказ — звук, уведомление и перезагрузка
+    (function () {
+      let maxId = Number(document.body.dataset.maxId) || 0;
+      let audio = null;
+      const btn = document.querySelector("[data-sound]");
+      const beep = () => {
+        if (!audio) return;
+        [0, 0.25].forEach((t) => {
+          const o = audio.createOscillator(), g = audio.createGain();
+          o.frequency.value = 880; g.gain.value = 0.15;
+          o.connect(g); g.connect(audio.destination);
+          o.start(audio.currentTime + t); o.stop(audio.currentTime + t + 0.18);
+        });
+      };
+      // Браузер разрешает звук только после нажатия — поэтому кнопка
+      btn.addEventListener("click", () => {
+        audio = audio || new AudioContext();
+        beep();
+        btn.textContent = "🔔 Звук включён";
+        if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
+        try { sessionStorage.setItem("briz-sound", "1"); } catch {}
+      });
+      try { if (sessionStorage.getItem("briz-sound")) btn.textContent = "🔔 Нажмите, чтобы вернуть звук"; } catch {}
+      setInterval(async () => {
+        try {
+          const r = await fetch("/manage/api/latest", { cache: "no-store" });
+          const d = await r.json();
+          if (d.maxId > maxId) {
+            beep();
+            if ("Notification" in window && Notification.permission === "granted") new Notification("Новый заказ обеда", { body: "№" + d.maxId });
+            maxId = d.maxId;
+            setTimeout(() => location.reload(), 1200);
+          }
+        } catch {}
+      }, 15000);
+    })();
+  </script>
+</body>
+</html>

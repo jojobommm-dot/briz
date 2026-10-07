@@ -1,0 +1,101 @@
+{% extends "_base.html" %}
+{% block title %}Заказать обед — кафе «{{ cafe.name }}», {{ cafe.city }}{% endblock %}
+{% block description %}Закажите комплексный обед кафе «{{ cafe.name }}» с доставкой в офис или самовывозом. Меню на каждый день, заказ на доставку до 11:00.{% endblock %}
+
+{% block content %}
+{# Экран заказа рисует static/js/order.js по данным ниже; без JS остаётся телефон #}
+<section class="app" data-order>
+  <div class="app__head">
+    <div class="wrap">
+      <h1 class="poster app__title"><span>Обед</span><span>с доставкой</span></h1>
+      <div class="seg" role="radiogroup" aria-label="Как получить">
+        <button type="button" class="seg__btn" role="radio" data-mode="delivery">Доставка</button>
+        <button type="button" class="seg__btn" role="radio" data-mode="pickup">Самовывоз</button>
+      </div>
+      <p class="app__note" data-cutoff></p>
+    </div>
+  </div>
+
+  <div class="wrap app__body">
+    <nav class="days" aria-label="День" data-days></nav>
+
+    <div class="today" data-today>
+      <div class="today__img"><img alt="" width="900" height="760" data-today-img></div>
+      <div class="today__menu">
+        <p class="eyebrow" data-today-label></p>
+        <ul class="today__list">
+          <li><span>Салат</span><b data-dish="salad"></b></li>
+          <li><span>Суп</span><b data-dish="soup"></b></li>
+          <li><span>Второе</span><b data-dish="main"></b></li>
+        </ul>
+      </div>
+    </div>
+
+    <ul class="opts" data-options></ul>
+
+    <section class="mine" data-mine hidden>
+      <h2 class="subhead">Мои заказы</h2>
+      <ul class="mine__list" data-mine-list></ul>
+    </section>
+
+    <noscript><p class="lead">Для заказа онлайн нужен JavaScript. Или позвоните: <a href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a></p></noscript>
+  </div>
+
+  {# Корзина: липкая полоса снизу #}
+  <div class="cartbar" data-cartbar hidden>
+    <div>
+      <div class="cartbar__count" data-cart-count></div>
+      <div class="cartbar__sum" data-cart-sum></div>
+    </div>
+    <button type="button" class="cartbar__btn" data-checkout>Оформить</button>
+  </div>
+
+  {# Оформление: нижний лист #}
+  <dialog class="sheet" data-sheet aria-labelledby="sheet-title">
+    <form class="sheet__form" data-form novalidate>
+      <div class="sheet__head">
+        <h2 id="sheet-title">Оформление</h2>
+        <button type="button" class="sheet__close" data-close aria-label="Закрыть">×</button>
+      </div>
+      <p class="sheet__summary" data-summary></p>
+      <p class="field__error" data-err="day" hidden></p>
+      <p class="field__error" data-err="items" hidden></p>
+
+      <fieldset class="field">
+        <legend class="sheet__legend" data-slot-legend>Время</legend>
+        <div class="choices" data-slots></div>
+        <p class="field__error" data-err="slot" hidden></p>
+      </fieldset>
+
+      <div class="field" data-address-field>
+        <label for="o-address">Куда привезти</label>
+        <input id="o-address" name="address" type="text" autocomplete="street-address" maxlength="200" placeholder="Улица, дом, офис, этаж">
+        <p class="field__error" data-err="address" hidden></p>
+      </div>
+      <div class="sheet__row">
+        <div class="field">
+          <label for="o-name">Имя</label>
+          <input id="o-name" name="name" type="text" autocomplete="name" maxlength="80">
+          <p class="field__error" data-err="name" hidden></p>
+        </div>
+        <div class="field">
+          <label for="o-phone">Телефон</label>
+          <input id="o-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="8 912 345-67-89">
+          <p class="field__error" data-err="phone" hidden></p>
+        </div>
+      </div>
+      <div class="field">
+        <label for="o-comment">Комментарий <span class="muted">— необязательно</span></label>
+        <input id="o-comment" name="comment" type="text" maxlength="500" placeholder="Позвонить на ресепшн, без лука…">
+      </div>
+      <p class="sheet__pay">Оплата при получении — наличными или картой.</p>
+      <p class="field__error" data-err="form" hidden></p>
+      <button class="sheet__submit" type="submit" data-submit>Заказать</button>
+    </form>
+  </dialog>
+
+  <script type="application/json" id="order-data">{{ data|tojson }}</script>
+</section>
+{% endblock %}
+
+{% block scripts %}<script src="{{ asset('js/order.js') }}" defer></script>{% endblock %}

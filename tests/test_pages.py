@@ -5,17 +5,8 @@ import re
 from datetime import date, timedelta
 
 import pytest
-from fastapi.testclient import TestClient
 
 from app import banquet
-from app.config import settings
-from app.main import app
-
-
-@pytest.fixture
-def client(tmp_path, monkeypatch):
-    monkeypatch.setattr(settings, "data_root", tmp_path)
-    return TestClient(app)
 
 
 @pytest.mark.parametrize(

@@ -5,7 +5,7 @@
   "description": "Кафе на берегу Камы в Перми: комплексные обеды с доставкой, банкеты до 35 гостей, меню и шашлык.",
   "lang": "ru",
   "dir": "ltr",
-  "start_url": "/?source=pwa",
+  "start_url": "/zakaz?source=pwa",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
@@ -19,7 +19,7 @@
     { "src": "/static/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ],
   "shortcuts": [
-    { "name": "Обеды на неделю", "short_name": "Обеды", "url": "/obedy?source=pwa", "icons": [{ "src": "/static/icons/shortcut-obedy.png", "sizes": "96x96" }] },
+    { "name": "Заказать обед", "short_name": "Заказ", "url": "/zakaz?source=pwa", "icons": [{ "src": "/static/icons/shortcut-obedy.png", "sizes": "96x96" }] },
     { "name": "Рассчитать банкет", "short_name": "Банкет", "url": "/banket?source=pwa#raschet", "icons": [{ "src": "/static/icons/shortcut-banket.png", "sizes": "96x96" }] },
     { "name": "Меню", "short_name": "Меню", "url": "/menu?source=pwa", "icons": [{ "src": "/static/icons/shortcut-menu.png", "sizes": "96x96" }] }
   ],
