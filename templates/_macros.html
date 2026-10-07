@@ -67,15 +67,23 @@
 </div>
 {% endmacro %}
 
-{# Виниловая пластинка: бороздки крутятся, блик стоит на месте, на яблоке — знак «Бриза» #}
-{% macro vinyl(ring, id='vinyl') %}
-<div class="vinyl">
-  {{ ring_text(ring, id, 'vinyl__ring') }}
-  <div class="vinyl__disc">
-    <img class="vinyl__label" src="/static/img/logo/briz-mark.svg" alt="" width="200" height="200" loading="lazy">
-    <span class="vinyl__hole"></span>
+{# Фарфоровая тарелка с блюдом кафе: по краю лазурные полоски в цвет логотипа,
+   тарелка медленно поворачивается, блик стоит на месте, по бокам нож и вилка #}
+{% macro plate(ring, image, id='plate') %}
+<div class="plate">
+  {{ ring_text(ring, id, 'plate__ring') }}
+  <svg class="plate__fork" viewBox="0 0 40 400" aria-hidden="true">
+    <defs><linearGradient id="silver-f-{{ id }}" x1="0" x2="1"><stop offset="0" stop-color="#f4f7f8"/><stop offset=".5" stop-color="#aebac0"/><stop offset="1" stop-color="#e6ecef"/></linearGradient></defs>
+    <path fill="url(#silver-f-{{ id }})" d="M6 0h4v85h4V0h4v85h4V0h4v85h4V0h4v92c0 20-8 32-10 43v250c0 7-8 7-8 0V135C14 124 6 112 6 92z"/>
+  </svg>
+  <div class="plate__dish">
+    <div class="plate__food"><img src="/static/img/{{ image }}" alt="" width="600" height="600" loading="lazy"></div>
   </div>
-  <span class="vinyl__sheen" aria-hidden="true"></span>
+  <span class="plate__sheen" aria-hidden="true"></span>
+  <svg class="plate__knife" viewBox="0 0 40 400" aria-hidden="true">
+    <defs><linearGradient id="silver-k-{{ id }}" x1="0" x2="1"><stop offset="0" stop-color="#e6ecef"/><stop offset=".5" stop-color="#aebac0"/><stop offset="1" stop-color="#f4f7f8"/></linearGradient></defs>
+    <path fill="url(#silver-k-{{ id }})" d="M14 0c12 10 16 60 16 150v20l-10 5v210c0 7-8 7-8 0V40c0-20 0-34 2-40z"/>
+  </svg>
 </div>
 {% endmacro %}
 

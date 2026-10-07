@@ -1,5 +1,5 @@
 {% extends "_base.html" %}
-{% from "_macros.html" import frame_btn, heading, menu_item, squiggle, ring_text, vinyl, pills %}
+{% from "_macros.html" import frame_btn, heading, menu_item, squiggle, ring_text, plate, pills %}
 
 {% block head %}<link rel="preload" as="image" href="/static/img/{{ slides[0].image }}">{% endblock %}
 
@@ -30,11 +30,11 @@
     <p class="about__text">Уютное кафе в Кировском районе, у Камы: деревянный зал на {{ cafe.capacity }} гостей с круглыми столами, летняя веранда и мангал во дворе. Каждый будний день — новое меню обедов, по выходным — дни рождения, юбилеи и свадьбы.</p>
   </div>
   <div class="still" aria-hidden="true">
-    <div class="still__main">{{ vinyl("Вечер на Каме • Домашняя кухня • Банкеты до 35 гостей • Обеды с 12:00 •", "about") }}</div>
+    <div class="still__main">{{ plate("Вечер на Каме • Домашняя кухня • Банкеты до 35 гостей • Обеды с 12:00 •", "briz/dish-carbonara.webp", "about") }}</div>
     <img class="still__a" src="/static/img/briz/dish-caprese.webp" alt="" width="600" height="600" loading="lazy">
     <img class="still__b" src="/static/img/briz/dish-sup-tykva.webp" alt="" width="600" height="600" loading="lazy">
     <img class="still__c" src="/static/img/briz/dish-bolognese.webp" alt="" width="600" height="600" loading="lazy">
-    <img class="still__d" src="/static/img/briz/dish-carbonara.webp" alt="" width="600" height="600" loading="lazy">
+    <img class="still__d" src="/static/img/briz/dish-salat-kurica.webp" alt="" width="600" height="600" loading="lazy">
   </div>
 </section>
 
