@@ -80,14 +80,19 @@ venv\Scripts\python -m pytest -q
   На экран Домой». Плашка скрывается на 14 дней после «Не сейчас».
 - Воркер работает только по HTTPS (и на `127.0.0.1` для разработки).
 
-## Выкладка (Render)
+## Выкладка (Render + Neon)
 
-Всё описано в `render.yaml`: сайт + PostgreSQL, каждый push в `main` выкладывается сам.
-1. render.com → New → Blueprint → репозиторий `briz`; ввести `BASE_URL` и `MANAGE_PASSWORD`.
-2. Свой домен: Settings → Custom Domains → добавить `briz.example.ru`, у регистратора
+Сайт — на Render (описан в `render.yaml`, каждый push в `main` выкладывается сам),
+база — PostgreSQL на Neon: бесплатно и без срока.
+1. neon.tech → новый проект (регион Frankfurt) → Connect → скопировать Connection string
+   (`postgresql://…?sslmode=require&channel_binding=require` — так и вставлять, приложение
+   само переведёт параметры для asyncpg).
+2. render.com → New → Blueprint → репозиторий `briz`; ввести `DATABASE_URL` (строка из Neon),
+   `BASE_URL` (`https://briz.onrender.com`) и `MANAGE_PASSWORD`. Таблицы создаются сами.
+3. Свой домен: Settings → Custom Domains → добавить `briz.example.ru`, у регистратора
    домена завести CNAME на `briz.onrender.com`. HTTPS Render выпускает сам.
    После этого поменять `BASE_URL` на `https://` + домен.
-- Бесплатный тариф засыпает после 15 минут без посетителей; бесплатная база живёт 30 дней.
+- Бесплатный Render засыпает после 15 минут без посетителей, первый заход — до минуты.
 - Диск на Render временный, поэтому всё, что должно сохраниться, — заказы, кабинеты, заявки —
   лежит в PostgreSQL.
 

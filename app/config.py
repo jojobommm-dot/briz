@@ -3,6 +3,7 @@
 
 from functools import lru_cache
 from pathlib import Path
+from urllib.parse import parse_qsl, urlencode
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -21,7 +22,7 @@ class Settings(BaseSettings):
 
     static_root: Path = BASE_DIR / "static"
     templates_root: Path = BASE_DIR / "templates"
-    # Заявки на банкет и кейтеринг (пока файлами) и локальная база
+    # Локальная база SQLite (на сервере — PostgreSQL)
     data_root: Path = BASE_DIR / "data"
 
     # --- база ---
@@ -32,12 +33,21 @@ class Settings(BaseSettings):
     @field_validator("database_url")
     @classmethod
     def _async_driver(cls, url: str) -> str:
-        # Хостинги (Render и др.) отдают postgres:// или postgresql:// —
+        # Хостинги (Render, Neon) отдают postgres:// или postgresql:// —
         # SQLAlchemy нужен явный асинхронный драйвер
         for prefix in ("postgres://", "postgresql://"):
             if url.startswith(prefix):
-                return "postgresql+asyncpg://" + url.removeprefix(prefix)
-        return url
+                url = "postgresql+asyncpg://" + url.removeprefix(prefix)
+        if not url.startswith("postgresql+asyncpg://"):
+            return url
+        # Neon дописывает ?sslmode=require&channel_binding=require — это параметры
+        # libpq, asyncpg их не знает и падает. Шифрование у него задаётся ssl=
+        base, _, query = url.partition("?")
+        params = dict(parse_qsl(query))
+        params.pop("channel_binding", None)
+        if "sslmode" in params:
+            params.setdefault("ssl", params.pop("sslmode"))
+        return f"{base}?{urlencode(params)}" if params else base
 
     # --- кафе ---
     # Пермь живёт по екатеринбургскому времени (UTC+5): от него считаются
