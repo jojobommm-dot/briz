@@ -133,3 +133,38 @@ class OrderItem(Base):
     price: Mapped[int]  # за штуку, на момент заказа
 
     order: Mapped[Order] = relationship(back_populates="items")
+
+
+# Заявки на банкет и кейтеринг: менеджер перезванивает и ведёт до договорённости
+LEAD_KINDS = {"banquet": "Банкет", "catering": "Кейтеринг"}
+LEAD_STATUSES = {
+    "new": "Новая",
+    "in_work": "В работе",
+    "done": "Договорились",
+    "declined": "Отказ",
+}
+LEAD_OPEN = ("new", "in_work")
+
+
+class Lead(Base):
+    __tablename__ = "leads"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    kind: Mapped[str] = mapped_column(String(10), index=True)  # banquet | catering
+    created_at: Mapped[datetime]  # местное время Перми
+    status: Mapped[str] = mapped_column(String(10), default="new", index=True)
+    name: Mapped[str] = mapped_column(String(80))
+    phone: Mapped[str] = mapped_column(String(16))
+    event_date: Mapped[date]
+    guests: Mapped[int]
+    option: Mapped[str] = mapped_column(String(20))  # пакет банкета или формат кейтеринга
+    place: Mapped[str] = mapped_column(String(200), default="")  # куда везти кейтеринг
+    comment: Mapped[str] = mapped_column(Text, default="")
+
+    @property
+    def status_label(self) -> str:
+        return LEAD_STATUSES.get(self.status, self.status)
+
+    @property
+    def kind_label(self) -> str:
+        return LEAD_KINDS.get(self.kind, self.kind)

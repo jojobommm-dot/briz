@@ -1,15 +1,9 @@
-"""Заявка на банкет: проверка полей и сохранение.
+"""Заявка на банкет: проверка полей. Сохраняет в базу app/leads.py."""
 
-До базы (шаг 2–3) заявки пишутся построчно в data/banquet_requests.jsonl —
-так ни одна не потеряется, а потом их можно перенести в таблицу.
-"""
-
-import json
 import re
-from dataclasses import asdict, dataclass
-from datetime import date, datetime
+from dataclasses import dataclass
+from datetime import date
 
-from .config import settings
 from .content import BANQUET_PACKAGES, CAFE
 
 PACKAGE_SLUGS = {p.slug for p in BANQUET_PACKAGES}
@@ -82,10 +76,3 @@ def validate(form: dict[str, str], today: date | None = None) -> tuple[BanquetRe
     if errors:
         return None, errors
     return BanquetRequest(name, phone, event_date.isoformat(), guests, package, comment), {}
-
-
-def save(req: BanquetRequest) -> None:
-    settings.data_root.mkdir(parents=True, exist_ok=True)
-    line = {"created_at": datetime.now().isoformat(timespec="seconds"), **asdict(req)}
-    with (settings.data_root / "banquet_requests.jsonl").open("a", encoding="utf-8") as f:
-        f.write(json.dumps(line, ensure_ascii=False) + "\n")

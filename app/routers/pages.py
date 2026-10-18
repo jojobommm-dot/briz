@@ -3,10 +3,11 @@
 import hashlib
 import logging
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse, RedirectResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from .. import banquet, catering
+from .. import banquet, catering, leads
 from ..config import settings
 from ..content import (
     BANQUET_FACTS,
@@ -21,6 +22,7 @@ from ..content import (
     WEEK_IMAGES,
     popular_dishes,
 )
+from ..database import get_session
 from ..templating import asset, templates
 
 router = APIRouter()
@@ -82,12 +84,12 @@ async def banket(request: Request, paket: str = "", date: str = "", guests: str 
 
 
 @router.post("/banket/zayavka")
-async def banket_request(request: Request):
+async def banket_request(request: Request, session: AsyncSession = Depends(get_session)):
     form = {k: str(v) for k, v in (await request.form()).items()}
     req, errors = banquet.validate(form)
     if req is None:
         return _banket_page(request, form, errors)
-    banquet.save(req)
+    await leads.save(session, req)
     log.info("Заявка на банкет: %s, %s гостей, %s", req.event_date, req.guests, req.package)
     # PRG: обновление страницы «спасибо» не отправит заявку второй раз
     return RedirectResponse("/banket/spasibo", status_code=303)
@@ -129,12 +131,12 @@ async def keytering(request: Request, format: str = ""):
 
 
 @router.post("/keytering/zayavka")
-async def keytering_request(request: Request):
+async def keytering_request(request: Request, session: AsyncSession = Depends(get_session)):
     form = {k: str(v) for k, v in (await request.form()).items()}
     req, errors = catering.validate(form)
     if req is None:
         return _keytering_page(request, form, errors)
-    catering.save(req)
+    await leads.save(session, req)
     log.info("Заявка на кейтеринг: %s, %s гостей, %s", req.event_date, req.guests, req.format)
     return RedirectResponse("/keytering/spasibo", status_code=303)
 

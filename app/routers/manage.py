@@ -1,4 +1,5 @@
-"""Кабинет менеджера: заказы на день, лист для кухни, лист для курьера.
+"""Кабинет менеджера: заказы на день, лист для кухни, лист для курьера, заявки
+на банкет и кейтеринг.
 
 Вход — по логину и паролю сотрудника (таблица staff). Первый менеджер
 создаётся при запуске из MANAGE_USER/MANAGE_PASSWORD, остальные — tools/staff.py.
@@ -12,11 +13,11 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .. import kitchen
+from .. import kitchen, leads
 from .. import lunch_order as lo
 from ..auth import current_staff, login_staff, logout, require_staff
 from ..database import get_session
-from ..models import STATUSES, Order, Staff
+from ..models import LEAD_STATUSES, STATUSES, Lead, Order, Staff
 from ..security import STAFF_COOKIE, login_throttle, verify_password
 from ..templating import templates
 
@@ -42,6 +43,19 @@ async def _orders_for(session: AsyncSession, day: date) -> list[Order]:
             await session.scalars(select(Order).where(Order.day == day).order_by(Order.id.desc()))
         ).all()
     )
+
+
+async def _live(session: AsyncSession) -> dict:
+    """Для шапки и опроса: последние номера заказа и заявки по всей базе, сколько новых
+    заявок. Номера — общие, а не за выбранный день: иначе на дне без свежего заказа
+    опрос считал бы его новым и перезагружал страницу каждые 15 секунд."""
+    return {
+        "max_id": await session.scalar(select(func.max(Order.id))) or 0,
+        "max_lead": await session.scalar(select(func.max(Lead.id))) or 0,
+        "new_leads": await session.scalar(
+            select(func.count()).select_from(Lead).where(Lead.status == "new")
+        ),
+    }
 
 
 def _ctx(staff: Staff, tab: str, day: date, today: date, **extra) -> dict:
@@ -130,7 +144,7 @@ async def orders(
             sheet=kitchen.build(rows, chosen),
             revenue=sum(o.total for o in active),
             counts=Counter(o.status for o in rows),
-            max_id=max((o.id for o in rows), default=0),
+            **await _live(session),
         ),
     )
 
@@ -153,7 +167,7 @@ async def kitchen_page(
             chosen,
             today,
             sheet=kitchen.build(rows, chosen),
-            max_id=max((o.id for o in rows), default=0),
+            **await _live(session),
         ),  # fmt: skip
     )
 
@@ -181,7 +195,7 @@ async def delivery_page(
             today,
             groups=groups,
             to_collect=sum(o.total for o in rows if o.status != "done"),
-            max_id=max((o.id for o in rows), default=0),
+            **await _live(session),
         ),  # fmt: skip
     )
 
@@ -205,11 +219,54 @@ async def set_status(
     return RedirectResponse(f"{target}#o{order.id}", status_code=303)
 
 
+@router.get("/zayavki", response_class=HTMLResponse)
+async def leads_page(
+    request: Request,
+    staff: Staff = Depends(require_staff),
+    session: AsyncSession = Depends(get_session),
+):
+    today = lo.now_local().date()
+    open_, closed = await leads.board(session)
+    return templates.TemplateResponse(
+        request,
+        "manage/leads.html",
+        _ctx(
+            staff,
+            "zayavki",
+            today,
+            today,
+            open=open_,
+            closed=closed,
+            lead_statuses=LEAD_STATUSES,
+            option_titles=leads.OPTION_TITLES,
+            weekdays=lo.WEEKDAYS,
+            **await _live(session),
+        ),
+    )
+
+
+@router.post("/zayavki/{lead_id}/status")
+async def set_lead_status(
+    lead_id: int,
+    status: str = Form(...),
+    staff: Staff = Depends(require_staff),
+    session: AsyncSession = Depends(get_session),
+):
+    lead = await session.get(Lead, lead_id)
+    if lead is None:
+        raise HTTPException(404)
+    if status not in LEAD_STATUSES:
+        raise HTTPException(400)
+    lead.status = status
+    await session.commit()
+    return RedirectResponse(f"/manage/zayavki#z{lead.id}", status_code=303)
+
+
 @router.get("/api/latest")
 async def latest(
     staff: Staff = Depends(require_staff), session: AsyncSession = Depends(get_session)
 ):
-    """Для опроса со страницы: номер последнего заказа и сколько новых."""
-    max_id = await session.scalar(select(func.max(Order.id))) or 0
+    """Для опроса со страницы: последние номера заказа и заявки, сколько новых заказов."""
+    live = await _live(session)
     new = await session.scalar(select(func.count()).select_from(Order).where(Order.status == "new"))
-    return {"maxId": max_id, "new": new}
+    return {"maxId": live["max_id"], "maxLead": live["max_lead"], "new": new}

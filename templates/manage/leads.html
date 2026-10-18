@@ -1,0 +1,57 @@
+{% extends "manage/_base.html" %}
+{% block title %}Заявки{% endblock %}
+{# Заявки не привязаны к дню обедов — полоса дней не нужна #}
+{% block days %}{% endblock %}
+
+{% macro lead_card(l) %}
+<li class="m-order m-lead--{{ l.status }}" id="z{{ l.id }}">
+  <div class="m-order__top">
+    <b class="m-order__num">{{ l.kind_label }}</b>
+    <span class="m-badge m-badge--lead-{{ l.status }}">{{ l.status_label }}</span>
+    <span class="m-order__time">заявка {{ l.created_at.strftime('%d.%m %H:%M') }}</span>
+  </div>
+  <div class="m-lead__what">
+    <b>{{ weekdays[l.event_date.weekday()] }}, {{ l.event_date.strftime('%d.%m.%Y') }}</b>
+    · {{ l.guests }} гост{{ 'ь' if l.guests % 10 == 1 and l.guests % 100 != 11 else ('я' if l.guests % 10 in (2, 3, 4) and l.guests % 100 not in (12, 13, 14) else 'ей') }}
+    · {{ option_titles.get((l.kind, l.option), l.option) }}
+  </div>
+  <div class="m-order__who">
+    <b>{{ l.name }}</b> · <a href="tel:{{ l.phone }}">{{ l.phone|phone }}</a>
+    {% if l.place %}<div class="m-order__addr">📍 {{ l.place }}</div>{% endif %}
+    {% if l.comment %}<div class="m-order__comment">💬 {{ l.comment }}</div>{% endif %}
+  </div>
+  <div class="m-order__bottom">
+    {% if l.status == 'new' %}{{ status_btn(l, 'in_work', 'Перезвонил → в работу') }}{% endif %}
+    {% if l.status in ('new', 'in_work') %}
+      {{ status_btn(l, 'done', 'Договорились') }}
+      {{ status_btn(l, 'declined', 'Отказ', ghost=true) }}
+    {% else %}
+      {{ status_btn(l, 'in_work', 'Вернуть в работу', ghost=true) }}
+    {% endif %}
+  </div>
+</li>
+{% endmacro %}
+
+{% macro status_btn(l, status, label, ghost=false) %}
+<form method="post" action="/manage/zayavki/{{ l.id }}/status">
+  <button class="m-btn{% if ghost %} m-btn--ghost{% endif %}" name="status" value="{{ status }}">{{ label }}</button>
+</form>
+{% endmacro %}
+
+{% block content %}
+<div class="m-page-head">
+  <h1>Заявки на банкет и кейтеринг</h1>
+  <p>Новые — сверху, дальше по дате праздника. Перезвоните гостю и отметьте, чем закончилось.</p>
+</div>
+
+{% if open %}
+<ul class="m-orders">{% for l in open %}{{ lead_card(l) }}{% endfor %}</ul>
+{% else %}
+<p class="m-empty">Открытых заявок нет. Включите звук — страница позовёт, когда придёт новая.</p>
+{% endif %}
+
+{% if closed %}
+<h2 class="m-lead__closed">Закрытые <small>последние {{ closed|length }}</small></h2>
+<ul class="m-orders">{% for l in closed %}{{ lead_card(l) }}{% endfor %}</ul>
+{% endif %}
+{% endblock %}

@@ -112,3 +112,16 @@ h1, h2 { font-family: "Oswald", sans-serif; font-weight: 600; letter-spacing: .0
   .m-card, .m-order, .m-summary > * { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
   .m-main { padding: 0; }
 }
+
+/* заявки на банкет и кейтеринг */
+.m-count { display: inline-block; min-width: 1.5em; padding: 0 6px; border-radius: 999px; background: #e74c3c; color: #fff; font-size: .85rem; text-align: center; }
+.m-lead--new { border-left-color: #e74c3c; box-shadow: 0 0 0 2px rgba(231, 76, 60, .25); }
+.m-lead--in_work { border-left-color: var(--wine); }
+.m-lead--done { border-left-color: #27ae60; opacity: .7; }
+.m-lead--declined { opacity: .45; }
+.m-badge--lead-new { background: #e74c3c; color: #fff; }
+.m-badge--lead-in_work { background: var(--wine); }
+.m-badge--lead-done { background: #27ae60; color: #fff; }
+.m-lead__what { margin-bottom: 6px; font-size: 1.05rem; }
+.m-lead__closed { margin-top: 30px; }
+.m-lead__closed small { font: 500 .9rem "Raleway", sans-serif; color: var(--muted); margin-left: 8px; }

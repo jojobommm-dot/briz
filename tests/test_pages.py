@@ -1,6 +1,5 @@
 """Смоук-тест: страницы открываются, заявка на банкет проходит и проверяется."""
 
-import json
 import re
 from datetime import date, timedelta
 
@@ -48,22 +47,28 @@ def _good_form(**over):
     return form
 
 
-def test_banquet_request_saved(client, tmp_path):
+def _leads_page(client) -> str:
+    """Заявки видит менеджер в /manage/zayavki — там их и проверяем."""
+    client.post("/manage/vhod", data={"login": "manager", "password": "secret"})
+    return client.get("/manage/zayavki").text
+
+
+def test_banquet_request_saved(client):
     r = client.post("/banket/zayavka", data=_good_form(), follow_redirects=False)
     assert r.status_code == 303
     assert r.headers["location"] == "/banket/spasibo"
-    saved = json.loads((tmp_path / "banquet_requests.jsonl").read_text(encoding="utf-8"))
-    assert saved["phone"] == "+79123456789"
-    assert saved["guests"] == 25
+    page = _leads_page(client)
+    assert 'href="tel:+79123456789"' in page
+    assert "25 гостей" in page and "Банкет" in page
 
 
-def test_banquet_request_errors_keep_input(client, tmp_path):
+def test_banquet_request_errors_keep_input(client):
     r = client.post("/banket/zayavka", data=_good_form(phone="123", guests="99"))
     assert r.status_code == 422
     assert "Нужен номер" in r.text
     assert "от 1 до 35 гостей" in r.text
     assert 'value="Ольга"' in r.text
-    assert not (tmp_path / "banquet_requests.jsonl").exists()
+    assert 'class="m-order m-lead' not in _leads_page(client)
 
 
 @pytest.mark.parametrize(
@@ -156,8 +161,9 @@ def test_keytering_page_and_request(client, tmp_path):
     }
     r = client.post("/keytering/zayavka", data=good, follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"] == "/keytering/spasibo"
-    saved = json.loads((tmp_path / "catering_requests.jsonl").read_text(encoding="utf-8"))
-    assert saved["guests"] == 40 and saved["phone"] == "+79120001122"
+    page = _leads_page(client)
+    assert "40 гостей" in page and 'href="tel:+79120001122"' in page
+    assert "Фуршет" in page and "Кировоградская, 1, офис" in page
     assert client.get("/keytering/spasibo").status_code == 200
 
     r = client.post("/keytering/zayavka", data={**good, "guests": "2", "place": ""})

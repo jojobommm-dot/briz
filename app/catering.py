@@ -1,16 +1,9 @@
-"""Заявка на выездной кейтеринг: проверка полей и сохранение.
+"""Заявка на выездной кейтеринг: проверка полей. Сохраняет в базу app/leads.py."""
 
-Как и банкетные, до базы (шаг 2) заявки пишутся построчно в
-data/catering_requests.jsonl — потом переедут в таблицу заявок и в ленту
-менеджера.
-"""
-
-import json
-from dataclasses import asdict, dataclass
-from datetime import date, datetime
+from dataclasses import dataclass
+from datetime import date
 
 from .banquet import normalize_phone, parse_date
-from .config import settings
 from .content import CATERING_FORMATS
 
 FORMAT_SLUGS = {f.slug for f in CATERING_FORMATS}
@@ -68,10 +61,3 @@ def validate(
     if errors:
         return None, errors
     return CateringRequest(name, phone, event_date.isoformat(), guests, fmt, place, comment), {}
-
-
-def save(req: CateringRequest) -> None:
-    settings.data_root.mkdir(parents=True, exist_ok=True)
-    line = {"created_at": datetime.now().isoformat(timespec="seconds"), **asdict(req)}
-    with (settings.data_root / "catering_requests.jsonl").open("a", encoding="utf-8") as f:
-        f.write(json.dumps(line, ensure_ascii=False) + "\n")

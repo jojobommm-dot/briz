@@ -178,7 +178,7 @@ def test_manager_flow(client):
 
     page = client.get(f"/manage/zakazy?day={WEDNESDAY}")
     assert page.status_code == 200 and "Ирина" in page.text
-    assert client.get("/manage/api/latest").json() == {"maxId": 1, "new": 1}
+    assert client.get("/manage/api/latest").json() == {"maxId": 1, "maxLead": 0, "new": 1}
 
     for status in ("accepted", "cooking", "on_way", "done"):
         r = client.post(
@@ -252,3 +252,43 @@ def test_delivery_sheet(client):
     assert page.status_code == 200
     assert "12:30 · Доставка" in page.text and "13:00 · Самовывоз" in page.text
     assert "1 770 ₽" in page.text  # 910 доставка + 860 самовывоз по ценам кафе
+
+
+def test_manage_poll_uses_latest_order_overall(client):
+    # День без свежего заказа не должен считать его новым и перезагружаться по кругу
+    order(client)
+    staff_login(client)
+    page = client.get("/manage/zakazy?day=2026-10-08").text
+    assert 'data-max-id="1"' in page
+
+
+def test_leads_flow(client):
+    good = {
+        "name": "Ольга",
+        "phone": "8 912 345-67-89",
+        "event_date": "2026-11-14",
+        "guests": "21",
+        "package": "prazdnik",
+        "comment": "Юбилей мамы",
+    }
+    assert client.post("/banket/zayavka", data=good, follow_redirects=False).status_code == 303
+    assert client.get("/manage/zayavki", follow_redirects=False).status_code == 303
+
+    staff_login(client)
+    assert client.get("/manage/api/latest").json()["maxLead"] == 1
+    page = client.get("/manage/zayavki").text
+    assert '<span class="m-count">1</span>' in page
+    assert "сб, 14.11.2026" in page
+    assert "21 гость" in page
+    assert "Праздничный" in page
+    assert "Юбилей мамы" in page
+
+    r = client.post("/manage/zayavki/1/status", data={"status": "in_work"}, follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/manage/zayavki#z1"
+    assert 'class="m-count"' not in client.get("/manage/zayavki").text
+    assert client.post("/manage/zayavki/1/status", data={"status": "lost"}).status_code == 400
+    assert client.post("/manage/zayavki/9/status", data={"status": "done"}).status_code == 404
+
+    client.post("/manage/zayavki/1/status", data={"status": "done"})
+    page = client.get("/manage/zayavki").text
+    assert "Открытых заявок нет" in page and "Договорились" in page
