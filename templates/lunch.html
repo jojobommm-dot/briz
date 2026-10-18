@@ -31,8 +31,13 @@
         <li>Заказ на доставку — до {{ lunch.order_until }}, привезём к обеду</li>
         <li>В кафе ждём на обед с {{ lunch.since }}</li>
       </ul>
+      {% if static_site %}
+      <a class="frame-btn" href="tel:{{ cafe.phone }}"><span>Заказать по телефону</span></a>
+      <p class="field__hint" style="margin-top: 22px">{{ cafe.phone|phone }} · или <a href="{{ cafe.vk }}" target="_blank" rel="noopener">во ВКонтакте</a></p>
+      {% else %}
       <a class="frame-btn" href="/zakaz"><span>Заказать онлайн</span></a>
       <p class="field__hint" style="margin-top: 22px">Или по телефону: <a href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a></p>
+      {% endif %}
     </aside>
   </div>
 </section>

@@ -868,3 +868,8 @@ body:has(.cartbar:not([hidden])) .chat, body:has(.cartbar:not([hidden])) .instal
 
 .paper-menu__foot { max-width: 640px; margin: 50px auto 0; text-align: center; font-size: .9rem; }
 .paper-menu__cta { margin-top: 30px; }
+
+/* --- Статичная копия сайта: вместо отправки заявки — позвонить или написать --- */
+.contact-cta { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+.contact-cta__lead { margin: 0 0 6px; max-width: 520px; }
+.kt-form-block .contact-cta { align-items: center; text-align: center; }

@@ -80,6 +80,16 @@ venv\Scripts\python -m pytest -q
   На экран Домой». Плашка скрывается на 14 дней после «Не сейчас».
 - Воркер работает только по HTTPS (и на `127.0.0.1` для разработки).
 
+## Статичная копия на GitHub Pages
+
+Как сайт coffe: https://jojobommm-dot.github.io/briz/ — только страницы (главная, меню, обеды,
+банкеты с калькулятором, кейтеринг, контакты). Онлайн-заказа, кабинетов, `/manage` и отправки
+заявок там нет — вместо них «Позвонить» и «ВКонтакте». Собирает `tools/freeze.py`, выкладывает
+`.github/workflows/pages.yml` после каждого push в `main`.
+- Один раз: Settings → Pages → Source: **GitHub Actions**.
+- Посмотреть копию локально: `venv\Scripts\python tools/freeze.py _site --base-url http://127.0.0.1:8300`,
+  затем `python -m http.server 8300 -d _site`.
+
 ## Выкладка (Render + Neon)
 
 Сайт — на Render (описан в `render.yaml`, каждый push в `main` выкладывается сам),

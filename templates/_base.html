@@ -1,5 +1,6 @@
+{% set order_href = '/obedy' if static_site else '/zakaz' %}
 <!doctype html>
-<html lang="ru">
+<html lang="ru"{% if static_site %} data-static{% endif %}>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -8,7 +9,7 @@
   <meta name="theme-color" content="#082f40">
   <link rel="icon" href="{{ asset('icons/icon.svg') }}" type="image/svg+xml">
   <link rel="icon" href="{{ asset('icons/favicon-32.png') }}" sizes="32x32" type="image/png">
-  <link rel="manifest" href="/manifest.webmanifest">
+  {% if not static_site %}<link rel="manifest" href="/manifest.webmanifest">{% endif %}
   {# iPhone: иконка на экране «Домой», имя под ней и полноэкранный режим #}
   <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
   <meta name="apple-mobile-web-app-title" content="{{ cafe.name }}">
@@ -42,12 +43,12 @@
         <a href="/keytering" {% if nav == 'keytering' %}aria-current="page"{% endif %}>Кейтеринг</a>
         <a href="/#galereya">Галерея</a>
         <a href="/kontakty" {% if nav == 'kontakty' %}aria-current="page"{% endif %}>Контакты</a>
-        <a class="nav__cab" href="/kabinet" {% if nav == 'kabinet' %}aria-current="page"{% endif %}>{% if customer_logged_in(request) %}Кабинет{% else %}Войти{% endif %}</a>
-        <a class="nav__order" href="/zakaz" {% if nav == 'zakaz' %}aria-current="page"{% endif %}>Заказать обед</a>
+        {% if not static_site %}<a class="nav__cab" href="/kabinet" {% if nav == 'kabinet' %}aria-current="page"{% endif %}>{% if customer_logged_in(request) %}Кабинет{% else %}Войти{% endif %}</a>{% endif %}
+        <a class="nav__order" href="{{ order_href }}" {% if nav == 'zakaz' %}aria-current="page"{% endif %}>Заказать обед</a>
         <a class="nav__phone" href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a>
       </nav>
-      <a class="header__cab" href="/kabinet">{% if customer_logged_in(request) %}Кабинет{% else %}Войти{% endif %}</a>
-      <a class="frame-btn frame-btn--sm header__cta" href="/zakaz"><span>Заказать обед</span></a>
+      {% if not static_site %}<a class="header__cab" href="/kabinet">{% if customer_logged_in(request) %}Кабинет{% else %}Войти{% endif %}</a>{% endif %}
+      <a class="frame-btn frame-btn--sm header__cta" href="{{ order_href }}"><span>Заказать обед</span></a>
       <button class="burger" type="button" aria-controls="nav" aria-expanded="false" aria-label="Меню">
         <span></span><span></span><span></span>
       </button>
@@ -77,8 +78,8 @@
           <ul class="footer__links">
             <li><a href="/kontakty">Контакты</a></li>
             <li><a href="/banket#raschet">Заявка на банкет</a></li>
-            <li><a href="/zakaz">Заказать обед</a></li>
-            <li><a href="/kabinet">Личный кабинет</a></li>
+            <li><a href="{{ order_href }}">Заказать обед</a></li>
+            {% if not static_site %}<li><a href="/kabinet">Личный кабинет</a></li>{% endif %}
             <li><button type="button" class="linklike" data-chat-open>Задать вопрос</button></li>
           </ul>
         </div>
@@ -119,6 +120,7 @@
 
   {# Предложение установить приложение. Android/Chrome — своя кнопка установки,
      iPhone — подсказка «Поделиться → На экран Домой» (кнопки установки там нет) #}
+  {% if not static_site %}
   <div class="install" data-install hidden>
     <img class="install__icon" src="{{ asset('icons/icon-192.png') }}" alt="" width="48" height="48">
     <div class="install__text">
@@ -130,6 +132,8 @@
   </div>
 
   {# Чат появится на шаге 4. Пока кнопка ведёт к живым каналам связи #}
+  {% endif %}
+
   <div class="chat" data-chat>
     <button class="chat__toggle" type="button" aria-expanded="false" aria-controls="chat-panel">
       <svg viewBox="0 0 24 24" aria-hidden="true"><use href="/static/icons/sprite.svg#chat"></use></svg>

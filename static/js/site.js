@@ -168,7 +168,8 @@
     });
   }
   // --- PWA: service worker и предложение установить приложение ---
-  if ("serviceWorker" in navigator) {
+  // В статичной копии на GitHub Pages воркера нет: там нет сервера, который его отдаёт
+  if ("serviceWorker" in navigator && !("static" in document.documentElement.dataset)) {
     window.addEventListener("load", () => {
       navigator.serviceWorker.register("/sw.js")
         .then(() => console.log("[briz] service worker зарегистрирован"))

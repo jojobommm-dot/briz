@@ -23,6 +23,15 @@
 
 {% macro squiggle() %}<svg class="squiggle" viewBox="0 0 190 12" aria-hidden="true"><use href="/static/icons/sprite.svg#squiggle"></use></svg>{% endmacro %}
 
+{# Вместо отправки заявки в статичной копии сайта: позвонить или написать #}
+{% macro contact_buttons(lead) %}
+<div class="contact-cta">
+  <p class="contact-cta__lead">{{ lead }}</p>
+  <a class="frame-btn frame-btn--dark" href="tel:{{ cafe.phone }}"><span>Позвонить {{ cafe.phone|phone }}</span></a>
+  <a class="frame-btn frame-btn--dark" href="{{ cafe.vk }}" target="_blank" rel="noopener"><span>Написать во ВКонтакте</span></a>
+</div>
+{% endmacro %}
+
 {% macro page_banner(image, eyebrow, title, lead='') %}
 <section class="banner" style="--bg: url('/static/img/{{ image }}')">
   <div class="wrap banner__inner">

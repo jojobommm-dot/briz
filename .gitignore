@@ -12,3 +12,6 @@ data/
 
 # Claude Code (личные настройки)
 .claude/settings.local.json
+
+# Статичная копия для GitHub Pages (tools/freeze.py)
+_site/

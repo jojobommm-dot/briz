@@ -1,5 +1,5 @@
 {% extends "_base.html" %}
-{% from "_macros.html" import page_banner, heading, pills, ring_text, frame_btn %}
+{% from "_macros.html" import page_banner, heading, pills, ring_text, frame_btn, contact_buttons %}
 {% block title %}Выездной кейтеринг — кафе «{{ cafe.name }}», {{ cafe.city }}{% endblock %}
 {% block description %}Выездной кейтеринг кафе «{{ cafe.name }}» в Перми: фуршеты, банкеты на выезде, шашлык с мангала и обеды для команды. Заявка онлайн.{% endblock %}
 
@@ -64,6 +64,9 @@
 <section class="section kt-form-block" id="zayavka">
   <div class="wrap narrow-form">
     {{ heading("Заявка", "Рассчитаем ваш кейтеринг") }}
+    {% if static_site %}
+    {{ contact_buttons("Расскажите, что за мероприятие, на сколько гостей и куда привезти — посчитаем стоимость и предложим меню.") }}
+    {% else %}
     <form class="kt-form" method="post" action="/keytering/zayavka" novalidate>
       <fieldset class="field kt-form__formats">
         <legend>Формат</legend>
@@ -112,6 +115,7 @@
       <div class="center"><button class="frame-btn frame-btn--dark" type="submit"><span>Отправить заявку</span></button></div>
       <p class="consent center">Перезвоним по указанному номеру, чтобы уточнить детали и посчитать стоимость.</p>
     </form>
+    {% endif %}
   </div>
 </section>
 {% endblock %}

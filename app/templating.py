@@ -48,5 +48,8 @@ templates.env.globals["customer_logged_in"] = _customer_logged_in
 templates.env.globals["cafe"] = CAFE
 templates.env.globals["debug"] = settings.debug
 templates.env.globals["base_url"] = settings.base_url
+# Статичная копия для GitHub Pages (tools/freeze.py): без сервера — без кабинета,
+# онлайн-заказа, отправки заявок и приложения; вместо них звонок и ВКонтакте
+templates.env.globals["static_site"] = False
 templates.env.filters["phone"] = _phone
 templates.env.filters["rub"] = _rub

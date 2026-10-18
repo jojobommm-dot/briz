@@ -1,5 +1,5 @@
 {% extends "_base.html" %}
-{% from "_macros.html" import package_card, facts_row, page_banner, heading %}
+{% from "_macros.html" import package_card, facts_row, page_banner, heading, contact_buttons %}
 
 {% block title %}Банкеты на берегу Камы — кафе «{{ cafe.name }}», {{ cafe.city }}{% endblock %}
 {% block description %}Банкетный зал до {{ cafe.capacity }} гостей в Кировском районе Перми: пакеты от {{ packages[0].price }} ₽ за гостя, можно свой алкоголь, летняя веранда у Камы.{% endblock %}
@@ -14,7 +14,7 @@
 <section class="section section--tight" id="raschet">
   <div class="wrap">
     {{ heading("Расчёт и заявка", "Соберите свой банкет") }}
-    <form class="calc" method="post" action="/banket/zayavka" novalidate data-calc>
+    <form class="calc" {% if static_site %}onsubmit="return false"{% else %}method="post" action="/banket/zayavka"{% endif %} novalidate data-calc>
       <div class="calc__step">
         <h2><span class="step">01</span> Выберите пакет</h2>
         {% if errors.package %}<p class="field__error">{{ errors.package }}</p>{% endif %}
@@ -45,6 +45,12 @@
           </div>
         </div>
 
+        {% if static_site %}
+        <div class="calc__step">
+          <h2><span class="step">03</span> Бронь</h2>
+          {{ contact_buttons("Позвоните или напишите — подтвердим дату, обсудим меню и забронируем зал.") }}
+        </div>
+        {% else %}
         <div class="calc__step">
           <h2><span class="step">03</span> Контакты</h2>
           <div class="field">
@@ -62,6 +68,7 @@
             <textarea id="comment" name="comment" rows="3" maxlength="1000" placeholder="Повод, детское меню, торт, музыка…">{{ form.comment or '' }}</textarea>
           </div>
         </div>
+        {% endif %}
       </div>
 
       <div class="total" aria-live="polite">
@@ -70,9 +77,9 @@
           <div class="total__sum" data-total>—</div>
           <div class="total__hint" data-total-hint>Без алкоголя и дополнительных услуг</div>
         </div>
-        <button class="frame-btn" type="submit"><span>Оставить заявку</span></button>
+        {% if static_site %}<a class="frame-btn" href="tel:{{ cafe.phone }}"><span>Забронировать</span></a>{% else %}<button class="frame-btn" type="submit"><span>Оставить заявку</span></button>{% endif %}
       </div>
-      <p class="consent">Нажимая кнопку, вы соглашаетесь, что мы перезвоним по указанному номеру. Данные нужны только для связи по заявке.</p>
+      {% if not static_site %}<p class="consent">Нажимая кнопку, вы соглашаетесь, что мы перезвоним по указанному номеру. Данные нужны только для связи по заявке.</p>{% endif %}
     </form>
   </div>
 </section>
