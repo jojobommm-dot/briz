@@ -26,7 +26,8 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
-      - run: pip install -r requirements.txt
+      # requirements-dev: в нём httpx — им tools/freeze.py рисует страницы
+      - run: pip install -r requirements-dev.txt
       - id: pages
         uses: actions/configure-pages@v5
       # base_url — https://jojobommm-dot.github.io/briz или свой домен, если задан в Settings → Pages
