@@ -92,6 +92,9 @@ venv\Scripts\python -m pytest -q
 
 ## Выкладка (Render + Neon)
 
+Боевой сайт: **https://briz-7exj.onrender.com** (панель — `/manage`, пароль менеджера —
+`PROD_MANAGE_PASSWORD` в локальном `.env`). Сервис `briz` на Render, проект `briz` на Neon (Frankfurt).
+
 Сайт — на Render (описан в `render.yaml`, каждый push в `main` выкладывается сам),
 база — PostgreSQL на Neon: бесплатно и без срока.
 1. neon.tech → новый проект (регион Frankfurt) → Connect → скопировать Connection string
