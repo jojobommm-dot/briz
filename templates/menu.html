@@ -1,28 +1,53 @@
 {% extends "_base.html" %}
-{% from "_macros.html" import page_banner, menu_item, frame_btn %}
+{% from "_macros.html" import frame_btn %}
 {% block title %}Меню — кафе «{{ cafe.name }}», {{ cafe.city }}{% endblock %}
-{% block description %}Меню кафе «{{ cafe.name }}»: салаты, супы, паста, горячее, шашлык. Цены и вес блюд.{% endblock %}
+{% block description %}Меню кафе «{{ cafe.name }}»: салаты, закуски, супы, паста, горячие блюда, десерты и напитки. Цены и вес блюд.{% endblock %}
+{# Рукописные заголовки — как на печатном меню кафе; шрифт нужен только этой странице #}
+{% block head %}<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@700&display=swap">{% endblock %}
 
 {% block content %}
-{{ page_banner("briz/hero-shashlik.webp", "Наше меню", "Домашняя кухня и шашлык", "Готовим сами, порции честные. Любое блюдо можно заказать с собой.") }}
-
-<nav class="chips" aria-label="Разделы меню" data-chips>
-  <div class="wrap chips__row">
-    {% for c in menu %}<a class="chip" href="#{{ c.slug }}">{{ c.title }}</a>{% endfor %}
-  </div>
-</nav>
-
-<section class="section section--tight">
-  <div class="wrap">
-    {% for c in menu %}
-    <div class="menu-cat" id="{{ c.slug }}">
-      <h2 class="menu-cat__title">{{ c.title }}</h2>
-      <div class="menu-cols">
-        {% for d in c.dishes %}{{ menu_item(d.name, d.price, (d.note ~ (" · " if d.note and d.weight else "") ~ d.weight)) }}{% endfor %}
-      </div>
+{# Страница в духе печатного меню: кремовая бумага, бирюзовая клякса, рисунки пером #}
+<div class="paper">
+  <section class="paper-hero">
+    <svg class="paper-hero__sketch paper-hero__sketch--l" viewBox="0 0 64 64" aria-hidden="true"><use href="/static/icons/sketch.svg#salaty"></use></svg>
+    <svg class="paper-hero__sketch paper-hero__sketch--r" viewBox="0 0 64 64" aria-hidden="true"><use href="/static/icons/sketch.svg#goryachie-napitki"></use></svg>
+    <div class="wrap paper-hero__inner">
+      <h1 class="paper-hero__title">Меню</h1>
+      <p class="paper-hero__lead">Готовим сами, порции честные. Любое блюдо можно взять с собой — позвоните, соберём к вашему приходу.</p>
     </div>
-    {% endfor %}
-    <div class="center" style="margin-top: 50px">{{ frame_btn("/obedy", "Обеды на неделю", "frame-btn--dark") }}</div>
-  </div>
-</section>
+  </section>
+
+  <nav class="chips chips--paper" aria-label="Разделы меню" data-chips>
+    <div class="wrap chips__row">
+      {% for c in menu %}<a class="chip" href="#{{ c.slug }}">{{ c.title }}</a>{% endfor %}
+    </div>
+  </nav>
+
+  <section class="paper-menu">
+    <div class="wrap">
+      <div class="paper-cols">
+        {% for c in menu %}
+        <section class="pcat" id="{{ c.slug }}">
+          <h2 class="pcat__title">
+            <span>{{ c.title }}</span>
+            <svg class="pcat__icon" viewBox="0 0 64 64" aria-hidden="true"><use href="/static/icons/sketch.svg#{{ c.slug }}"></use></svg>
+          </h2>
+          {% for d in c.dishes %}
+          <div class="pdish">
+            <div class="pdish__row">
+              <span class="pdish__name">{{ d.name }}</span>
+              <span class="pdish__dots" aria-hidden="true"></span>
+              <span class="pdish__price">{{ d.price|rub }}</span>
+            </div>
+            <p class="pdish__note">{% if d.weight %}<span class="pdish__weight">{{ d.weight }}</span>{% endif %}{% if d.weight and d.note %} · {% endif %}{{ d.note }}</p>
+          </div>
+          {% endfor %}
+        </section>
+        {% endfor %}
+      </div>
+      <p class="paper-menu__foot">Вес — порция / гарнир / соус. Цены в рублях. Меню и цены уточняйте по телефону <a href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a>.</p>
+      <div class="center paper-menu__cta">{{ frame_btn("/obedy", "Обеды на неделю", "frame-btn--dark") }}</div>
+    </div>
+  </section>
+</div>
 {% endblock %}

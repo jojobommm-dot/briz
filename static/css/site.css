@@ -816,3 +816,55 @@ body:has(.cartbar:not([hidden])) .chat, body:has(.cartbar:not([hidden])) .instal
 .addr-chip { border: 1.5px solid var(--ink); border-radius: 999px; background: none; padding: 5px 14px; cursor: pointer; font-size: .86rem; color: var(--ink); text-align: left; }
 .addr-chip.is-on { background: var(--ink); color: var(--cream); }
 .sheet__login { font-size: .88rem; color: var(--text); margin: -8px 0 16px; }
+
+/* --- Меню: как печатное меню кафе — кремовая бумага, бирюзовая клякса, рисунки пером --- */
+.paper {
+  --paper-bg: #fbf3e6;      /* кремовая бумага */
+  --sketch: #8a4a44;        /* рисунки пером — коричнево-вишнёвые */
+  --teal-ink: #3a8790;      /* заголовки разделов — бирюза кляксы, потемнее для чтения */
+  --brown-ink: #4a3533;     /* текст блюд */
+  --muted-ink: #7d6965;
+  --accent: var(--teal-ink);
+  background: var(--paper-bg); color: var(--muted-ink);
+}
+.paper-hero { position: relative; overflow: hidden; padding: 40px 0 36px; text-align: center; }
+@media (min-width: 900px) { .paper-hero { padding: 60px 0 50px; } }
+.paper-hero__inner { position: relative; z-index: 1; }
+.paper-hero__title {
+  display: grid; place-items: center; width: min(520px, 100%); aspect-ratio: 520 / 340; margin: 0 auto 6px;
+  background: url("/static/img/menu/splash.svg") center / contain no-repeat;
+  font-family: "Amatic SC", var(--serif); font-weight: 700; font-size: clamp(4.4rem, 17vw, 8rem);
+  line-height: 1; letter-spacing: .02em; color: #fff;
+}
+.paper-hero__lead { max-width: 520px; margin: 0 auto; font-size: 1.02rem; color: var(--muted-ink); }
+.paper-hero__sketch { position: absolute; width: clamp(110px, 17vw, 240px); height: auto; color: var(--sketch); opacity: .5; }
+.paper-hero__sketch--l { left: -20px; bottom: -6px; transform: rotate(-8deg); }
+.paper-hero__sketch--r { right: -10px; top: 14px; transform: rotate(6deg); }
+@media (max-width: 700px) { .paper-hero__sketch { opacity: .22; } }
+
+.chips--paper { background: var(--paper-bg); border-color: rgba(138, 74, 68, .18); }
+.chips--paper .chip { color: var(--muted-ink); }
+.chips--paper .chip:hover, .chips--paper .chip.is-active { color: var(--teal-ink); border-bottom-color: var(--teal-ink); }
+
+.paper-menu { padding: 10px 0 80px; }
+.paper-cols { column-gap: 64px; }
+@media (min-width: 760px) { .paper-cols { columns: 2; } }
+@media (min-width: 1180px) { .paper-cols { columns: 3; } }
+.pcat { break-inside: avoid; padding-top: 44px; scroll-margin-top: 50px; }
+.pcat__title {
+  display: flex; align-items: flex-end; gap: 12px; margin: 0 0 18px;
+  font-family: "Amatic SC", var(--serif); font-weight: 700; font-size: 2.7rem; line-height: 1;
+  letter-spacing: .03em; color: var(--teal-ink);
+}
+.pcat__icon { width: 62px; height: 62px; flex: none; color: var(--sketch); margin-bottom: -10px; }
+
+.pdish { margin-bottom: 15px; }
+.pdish__row { display: flex; align-items: baseline; gap: 8px; }
+.pdish__name { font-size: 1.02rem; font-weight: 500; line-height: 1.45; color: var(--brown-ink); }
+.pdish__dots { flex: 1; min-width: 16px; border-bottom: 2px dotted rgba(138, 74, 68, .35); transform: translateY(-5px); }
+.pdish__weight { white-space: nowrap; font-variant-numeric: lining-nums; }
+.pdish__price { min-width: 4.4em; text-align: right; font-weight: 600; color: var(--brown-ink); white-space: nowrap; font-variant-numeric: lining-nums tabular-nums; }
+.pdish__note { margin: 2px 0 0; max-width: 34em; font-size: .88rem; line-height: 1.55; color: var(--muted-ink); }
+
+.paper-menu__foot { max-width: 640px; margin: 50px auto 0; text-align: center; font-size: .9rem; }
+.paper-menu__cta { margin-top: 30px; }

@@ -167,3 +167,17 @@ def test_keytering_page_and_request(client, tmp_path):
 
 def test_nav_has_keytering(client):
     assert 'href="/keytering"' in client.get("/").text
+
+
+def test_menu_page(client):
+    from app.content import MENU
+
+    r = client.get("/menu")
+    assert r.status_code == 200
+    assert r.text.count('class="pcat"') == len(MENU)
+    assert "«Посикунчики» с мясом" in r.text
+    # У каждого раздела есть свой рисунок пером, а у страницы — клякса
+    sketch = client.get("/static/icons/sketch.svg").text
+    for c in MENU:
+        assert f'id="{c.slug}"' in sketch, c.slug
+    assert client.get("/static/img/menu/splash.svg").status_code == 200
