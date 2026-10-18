@@ -4,6 +4,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,6 +28,16 @@ class Settings(BaseSettings):
     # Для разработки — SQLite в data/; на сервере — PostgreSQL:
     # postgresql+asyncpg://briz:пароль@localhost:5432/briz
     database_url: str = f"sqlite+aiosqlite:///{(BASE_DIR / 'data' / 'briz.db').as_posix()}"
+
+    @field_validator("database_url")
+    @classmethod
+    def _async_driver(cls, url: str) -> str:
+        # Хостинги (Render и др.) отдают postgres:// или postgresql:// —
+        # SQLAlchemy нужен явный асинхронный драйвер
+        for prefix in ("postgres://", "postgresql://"):
+            if url.startswith(prefix):
+                return "postgresql+asyncpg://" + url.removeprefix(prefix)
+        return url
 
     # --- кафе ---
     # Пермь живёт по екатеринбургскому времени (UTC+5): от него считаются

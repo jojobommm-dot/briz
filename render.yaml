@@ -1,0 +1,35 @@
+# Выкладка на Render: Dashboard → New → Blueprint → этот репозиторий.
+# Каждый push в main выкладывается сам.
+services:
+  - type: web
+    name: briz
+    runtime: python
+    plan: free
+    region: frankfurt
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    # Render стоит перед приложением прокси с HTTPS — доверяем его заголовкам
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips "*"
+    healthCheckPath: /healthz
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: briz-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      # Адрес сайта без слэша: сначала https://briz.onrender.com, потом свой домен
+      - key: BASE_URL
+        sync: false
+      - key: MANAGE_USER
+        value: manager
+      # Пароль первого менеджера — вводится в Render при создании
+      - key: MANAGE_PASSWORD
+        sync: false
+
+databases:
+  - name: briz-db
+    plan: free
+    region: frankfurt
+    databaseName: briz
+    user: briz
