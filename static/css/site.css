@@ -873,3 +873,27 @@ body:has(.cartbar:not([hidden])) .chat, body:has(.cartbar:not([hidden])) .instal
 .contact-cta { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
 .contact-cta__lead { margin: 0 0 6px; max-width: 520px; }
 .kt-form-block .contact-cta { align-items: center; text-align: center; }
+
+/* Крутящиеся надписи по кругу (.ring): повёрнутый квадрат по диагонали шире себя,
+   и на телефоне его край выходил за экран — появлялась белая полоса справа и прокрутка
+   вбок. Секции с кольцами обрезают лишнее по горизонтали; clip, а не hidden — чтобы не
+   срезать верх и низ надписи и не превращать секцию в прокручиваемый блок. */
+.menu-block, .kt-teaser, .kt-intro, .about { overflow-x: clip; }
+/* Старые iPhone (iOS 15 и раньше) не знают clip — для них страховка на уровне страницы */
+@supports not (overflow: clip) {
+  html, body { overflow-x: hidden; }
+}
+/* Колонка сетки по умолчанию не уже своего самого широкого неразрывного содержимого
+   (min-width: auto) — на экранах 320 px строка с ценами распирала её за край экрана */
+.split > *, .week__slide > *, .menu3 > *, .kt-intro__grid > *, .dark-menu__cols > * { min-width: 0; }
+/* Узкий экран: строка меню переносится целиком — цены уходят на следующую строку и
+   прижимаются вправо, вместо того чтобы сжать название до столбика букв */
+.mi__row { flex-wrap: wrap; row-gap: 2px; }
+.mi__name { min-width: 0; overflow-wrap: break-word; }
+.mi__price { margin-left: auto; }
+@media (max-width: 400px) { .note-card { padding: 30px 20px; } }
+/* Кнопки в рамке на узком экране: поуже поля, чтобы текст не ломался на две строки */
+@media (max-width: 400px) { .frame-btn { padding: 0 26px; white-space: nowrap; } }
+.calc > *, .calc__grid > * { min-width: 0; }
+/* Самые узкие экраны: сумма и кнопка заявки — в две строки */
+@media (max-width: 360px) { .total { flex-wrap: wrap; } .total .frame-btn { flex: 1 1 auto; } }
