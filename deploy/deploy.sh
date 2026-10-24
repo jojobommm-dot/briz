@@ -20,7 +20,7 @@ systemctl restart briz
 
 # Таблицы и новые колонки приложение досоздаёт само при запуске
 for i in $(seq 1 20); do
-    if curl -fsS http://127.0.0.1:8200/healthz >/dev/null; then
+    if curl -fs http://127.0.0.1:8200/healthz >/dev/null; then
         echo "сайт отвечает"
         exit 0
     fi
