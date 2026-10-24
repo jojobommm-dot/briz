@@ -13,5 +13,8 @@ def client(tmp_path, monkeypatch):
         settings, "database_url", f"sqlite+aiosqlite:///{(tmp_path / 't.db').as_posix()}"
     )
     monkeypatch.setattr(settings, "manage_password", "secret")
+    # Тесты не должны зависеть от .env машины: с https-адресом куки входа ставятся
+    # с флагом Secure, а тестовый клиент ходит по http и их не возвращает
+    monkeypatch.setattr(settings, "base_url", "http://testserver")
     with TestClient(app) as c:  # с lifespan: создаются таблицы
         yield c

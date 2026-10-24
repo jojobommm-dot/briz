@@ -1,0 +1,21 @@
+# Сайт «Бриз» на сервере Автодонора: /etc/systemd/system/briz.service
+# Рядом с Автодонором (razbor, :8100), не мешая ему: свой пользователь, своя база,
+# свой порт. Наружу смотрит Caddy (deploy/Caddyfile.briz).
+[Unit]
+Description=Briz cafe site (uvicorn :8200)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+User=briz
+Group=briz
+WorkingDirectory=/opt/briz
+# Настройки — в /opt/briz/.env (права 600, в git не попадает)
+ExecStart=/opt/briz/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8200 --workers 1 --proxy-headers --forwarded-allow-ips 127.0.0.1
+Restart=always
+RestartSec=3
+# Сервер на 1 ГБ делим с Автодонором — не даём сайту кафе съесть всю память
+MemoryMax=300M
+
+[Install]
+WantedBy=multi-user.target

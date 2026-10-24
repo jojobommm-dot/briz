@@ -1,0 +1,36 @@
+# Блок для /etc/caddy/Caddyfile (добавляется в конец, Автодонор не трогается).
+# HTTPS Caddy выпускает сам, как только A-записи briz.bar и www.briz.bar
+# укажут на этот сервер.
+briz.bar {
+    encode zstd gzip
+
+    # Статику отдаёт Caddy напрямую; адреса с ?v=… — кешируются надолго
+    handle /static/* {
+        root * /opt/briz
+        header Cache-Control "public, max-age=604800"
+        file_server
+    }
+
+    handle {
+        reverse_proxy 127.0.0.1:8200
+    }
+
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    log {
+        output file /var/log/caddy/briz.log {
+            roll_size 20mb
+            roll_keep 10
+        }
+    }
+}
+
+www.briz.bar {
+    redir https://briz.bar{uri} permanent
+}
