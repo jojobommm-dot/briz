@@ -90,10 +90,31 @@ venv\Scripts\python -m pytest -q
 - Посмотреть копию локально: `venv\Scripts\python tools/freeze.py _site --base-url http://127.0.0.1:8300`,
   затем `python -m http.server 8300 -d _site`.
 
-## Выкладка (Render + Neon)
+## Выкладка: свой сервер (основная)
 
-Боевой сайт: **https://briz-7exj.onrender.com** (панель — `/manage`, пароль менеджера —
-`PROD_MANAGE_PASSWORD` в локальном `.env`). Сервис `briz` на Render, проект `briz` на Neon (Frankfurt).
+Боевой сайт: **https://briz.bar** — на сервере Автодонора (2.56.241.120), рядом с ним, не мешая:
+
+| Что | Где |
+| --- | --- |
+| Код | `/opt/briz` (git, пользователь `briz`), venv `/opt/briz/venv` |
+| Настройки | `/opt/briz/.env` (права 600): `DATABASE_URL`, `SECRET_KEY`, `BASE_URL`, `MANAGE_*` |
+| Служба | `briz` (`deploy/briz.service`): uvicorn на `127.0.0.1:8200`, 1 воркер, до 300 МБ |
+| База | PostgreSQL на этом же сервере, база и роль `briz` (Автодонор — `razbor`) |
+| HTTPS | Caddy: блок `deploy/Caddyfile.briz` в `/etc/caddy/Caddyfile`, журнал `/var/log/caddy/briz.log` |
+| DNS | nic.ru: A-записи `briz.bar` и `www.briz.bar` → 2.56.241.120 |
+
+Обновить до свежего `main` (бэкап базы, pull, зависимости, перезапуск, проверка):
+
+    bash /opt/briz/deploy/deploy.sh
+
+Бэкапы — в `/opt/backups/briz-*.sql.gz`. Логи: `journalctl -u briz -f`.
+Пароль менеджера — `PROD_MANAGE_PASSWORD` в локальном `.env`.
+
+## Выкладка: Render + Neon (запасная)
+
+Прежний адрес: https://briz-7exj.onrender.com — бесплатный тариф, засыпает без посетителей
+(первый заход до минуты), база на Neon во Франкфурте. Для настоящих гостей не годится: долго
+и персональные данные за границей (152-ФЗ).
 
 Сайт — на Render (описан в `render.yaml`, каждый push в `main` выкладывается сам),
 база — PostgreSQL на Neon: бесплатно и без срока.
@@ -117,4 +138,4 @@ venv\Scripts\python -m pytest -q
 4. Чат в реальном времени (WebSocket) с лентой диалогов для администратора
 5. Заказ обедов и онлайн-оплата
 6. Бот: готовые ответы, затем ИИ по базе знаний кафе
-7. Выкладка на поддомен
+7. ~~Выкладка на свой сервер~~ — https://briz.bar
