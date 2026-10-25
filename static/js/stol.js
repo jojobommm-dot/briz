@@ -75,7 +75,7 @@
         const picked = c.dishes.reduce((n, d) => n + (state.qty[d.key] || 0), 0);
         const b = document.createElement("button");
         b.type = "button";
-        b.className = "cat";
+        b.className = "book-cat";
         b.setAttribute("aria-pressed", String(c.slug === state.cat));
         b.innerHTML = c.title + (picked ? ` <i>${picked}</i>` : "");
         b.addEventListener("click", () => { state.cat = c.slug; renderCats(); renderDishes(); });

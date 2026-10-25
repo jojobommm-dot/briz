@@ -909,9 +909,10 @@ body:has(.cartbar:not([hidden])) .chat, body:has(.cartbar:not([hidden])) .instal
 .split > *, .week__slide > *, .menu3 > *, .kt-intro__grid > *, .dark-menu__cols > * { min-width: 0; }
 /* Узкий экран: строка меню переносится целиком — цены уходят на следующую строку и
    прижимаются вправо, вместо того чтобы сжать название до столбика букв */
-.mi__row { flex-wrap: wrap; row-gap: 2px; }
-.mi__name { min-width: 0; overflow-wrap: break-word; }
-.mi__price { margin-left: auto; }
+/* Строка меню не переносится: при нехватке места переносится название, цена — всегда справа */
+.mi__name { flex: 0 1 auto; min-width: 0; overflow-wrap: break-word; }
+.mi__dots { min-width: 12px; }
+.mi__price, .mi__price2 { flex: none; }
 @media (max-width: 400px) { .note-card { padding: 30px 20px; } }
 /* Кнопки в рамке на узком экране: поуже поля, чтобы текст не ломался на две строки */
 @media (max-width: 400px) { .frame-btn { padding: 0 26px; white-space: nowrap; } }
@@ -950,10 +951,10 @@ body:has(.cartbar:not([hidden])) .chat, body:has(.cartbar:not([hidden])) .instal
 .book-guests__more { margin: 0; font-size: .88rem; }
 .cats { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 18px -20px 18px; padding: 0 20px 4px; }
 .cats::-webkit-scrollbar { display: none; }
-.cat { flex: none; padding: 8px 16px 7px; border: 1.5px solid var(--ink); border-radius: 999px; background: none; cursor: pointer; white-space: nowrap;
+.book-cat { flex: none; padding: 8px 16px 7px; border: 1.5px solid var(--ink); border-radius: 999px; background: none; cursor: pointer; white-space: nowrap;
   font-family: var(--poster); font-weight: 500; font-size: .92rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); }
-.cat[aria-pressed="true"] { background: var(--ink); color: var(--cream); }
-.cat i { font-style: normal; display: inline-block; min-width: 20px; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--glow); color: var(--dark); font-size: .8rem; }
+.book-cat[aria-pressed="true"] { background: var(--ink); color: var(--cream); }
+.book-cat i { font-style: normal; display: inline-block; min-width: 20px; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--glow); color: var(--dark); font-size: .8rem; }
 .book-pre { list-style: none; margin: 0 0 16px; padding: 12px 14px; border-radius: 12px; background: var(--kraft-light); font-size: .92rem; }
 .book-pre li { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
 .book-pre li span { min-width: 0; overflow-wrap: break-word; }
