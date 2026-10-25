@@ -225,7 +225,7 @@
   // тем быстрее. Пальцем листается сама. Край, за которым есть ещё, растворяется
   const mouse = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
   const EDGE = 110;  // ширина зоны у края, px
-  const MAX_SPEED = 12;  // px за кадр у самого края
+  const MAX_SPEED = 0.7;  // px в мс у самого края — от частоты кадров не зависит
   document.querySelectorAll("[data-hscroll]").forEach((row) => {
     const update = () => {
       row.classList.toggle("is-more-left", row.scrollLeft > 2);
@@ -238,11 +238,17 @@
     update();
     if (!mouse) return;
 
-    let speed = 0, frame = 0;
-    const tick = () => {
-      const before = row.scrollLeft;
-      row.scrollLeft += speed;
-      frame = speed && row.scrollLeft !== before ? requestAnimationFrame(tick) : 0;
+    let speed = 0, frame = 0, last = 0, pos = 0;
+    const tick = (now) => {
+      const dt = last ? Math.min(now - last, 50) : 16;
+      last = now;
+      // Позицию копим с дробной частью (scrollLeft округляется) и держим в пределах ленты
+      const end = row.scrollWidth - row.clientWidth;
+      pos = Math.max(0, Math.min(end, pos + speed * dt));
+      row.scrollLeft = pos;
+      const atEdge = (speed < 0 && pos <= 0) || (speed > 0 && pos >= end);
+      frame = speed && !atEdge ? requestAnimationFrame(tick) : 0;
+      if (!frame) last = 0;
     };
     row.addEventListener("mousemove", (e) => {
       const r = row.getBoundingClientRect();
@@ -251,7 +257,7 @@
       if (x < near) speed = -MAX_SPEED * (1 - x / near);
       else if (x > r.width - near) speed = MAX_SPEED * (1 - (r.width - x) / near);
       else speed = 0;
-      if (speed && !frame) frame = requestAnimationFrame(tick);
+      if (speed && !frame) { pos = row.scrollLeft; frame = requestAnimationFrame(tick); }
     });
     row.addEventListener("mouseleave", () => { speed = 0; });
   });
