@@ -16,7 +16,7 @@
     <nav class="m-tabs" aria-label="Разделы">
       <a href="/manage/zakazy?day={{ day.isoformat() }}" {% if tab == 'zakazy' %}aria-current="page"{% endif %}>Заказы</a>
       <a href="/manage/kuhnya?day={{ day.isoformat() }}" {% if tab == 'kuhnya' %}aria-current="page"{% endif %}>Кухня</a>
-      <a href="/manage/dostavka?day={{ day.isoformat() }}" {% if tab == 'dostavka' %}aria-current="page"{% endif %}>Доставка</a>
+      <a href="/manage/vydacha?day={{ day.isoformat() }}" {% if tab == 'vydacha' %}aria-current="page"{% endif %}>Выдача</a>
       <a href="/manage/zayavki" {% if tab == 'zayavki' %}aria-current="page"{% endif %}>Заявки{% if new_leads %} <span class="m-count">{{ new_leads }}</span>{% endif %}</a>
     </nav>
     <div class="m-head__me">

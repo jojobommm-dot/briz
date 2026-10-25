@@ -10,20 +10,22 @@ class Base(DeclarativeBase):
     pass
 
 
-# Статусы заказа обеда. Порядок — как заказ движется; у доставки и самовывоза
-# предпоследний шаг разный
+# Статусы заказа обеда. Порядок — как заказ движется; у доставки, самовывоза
+# и обеда в зале предпоследний шаг свой
 STATUSES = {
     "new": "Новый",
     "accepted": "Принят",
     "cooking": "Готовится",
     "on_way": "Курьер в пути",
     "ready": "Готов к выдаче",
+    "served": "Стол накрыт",
     "done": "Выполнен",
     "cancelled": "Отменён",
 }
 FLOW = {
     "delivery": ["new", "accepted", "cooking", "on_way", "done"],
     "pickup": ["new", "accepted", "cooking", "ready", "done"],
+    "hall": ["new", "accepted", "cooking", "served", "done"],
 }
 
 
@@ -83,7 +85,7 @@ class Order(Base):
     token: Mapped[str] = mapped_column(String(24), unique=True, index=True)
     created_at: Mapped[datetime]  # местное время Перми
     status: Mapped[str] = mapped_column(String(16), default="new", index=True)
-    mode: Mapped[str] = mapped_column(String(10))  # delivery | pickup
+    mode: Mapped[str] = mapped_column(String(10))  # delivery | pickup | hall
     day: Mapped[date] = mapped_column(index=True)
     slot: Mapped[str] = mapped_column(String(20))
     name: Mapped[str] = mapped_column(String(80))
@@ -91,6 +93,7 @@ class Order(Base):
     address: Mapped[str] = mapped_column(String(200), default="")
     comment: Mapped[str] = mapped_column(Text, default="")
     total: Mapped[int]
+    guests: Mapped[int] = mapped_column(default=0)  # обед в зале: на сколько человек стол
     # Заказ гостя с кабинетом; заказы без входа — None
     # Mapped[int] + nullable, а не Mapped[int | None]: SQLAlchemy 2.0.36 на Python 3.14
     # не разбирает объединения типов в аннотациях

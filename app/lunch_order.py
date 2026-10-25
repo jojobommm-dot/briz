@@ -1,9 +1,15 @@
 """Заказ комплексных обедов: что можно заказать, на какой день, почём.
 
-Цены и «заказ на доставку до 11:00» — с афиш кафе (см. content.LUNCH).
-Сознательные допущения, которые надо сверить с кафе:
-- самовывоз принимаем до 14:00 того же дня (PICKUP_CUTOFF);
-- слоты доставки — по полчаса с 12:00 до 14:00;
+Три способа получить обед:
+- доставка — привозим в офис к получасовому окну;
+- самовывоз — забирают в кафе с собой;
+- в кафе ко времени — гость заказывает заранее, к его приходу обед уже на столе.
+
+Цены и «заказ на доставку до 11:00» — с афиш кафе (см. content.LUNCH); самовывоз
+и обед в зале — по цене кафе. Сознательные допущения, которые надо сверить с кафе:
+- самовывоз и зал принимаем на сегодня до 13:30, и не позже чем за 30 минут
+  до выбранного времени (MIN_LEAD) — кухне нужно успеть;
+- слоты — по полчаса с 12:00 до 14:00;
 - оплата при получении (онлайн-оплата — следующим шагом).
 Всё это — константы ниже, меняются в одном месте.
 """
@@ -37,12 +43,15 @@ OPTIONS = [
 ]
 OPTIONS_BY_KIND = {o.kind: o for o in OPTIONS}
 
-MODES = {"delivery": "Доставка", "pickup": "Самовывоз"}
-CUTOFF = {"delivery": time(11, 0), "pickup": time(14, 0)}
+MODES = {"delivery": "Доставка", "pickup": "Самовывоз", "hall": "В кафе ко времени"}
+CUTOFF = {"delivery": time(11, 0), "pickup": time(13, 30), "hall": time(13, 30)}
 SLOTS = {
     "delivery": ["12:00–12:30", "12:30–13:00", "13:00–13:30", "13:30–14:00"],
     "pickup": ["12:00", "12:30", "13:00", "13:30", "14:00"],
+    "hall": ["12:00", "12:30", "13:00", "13:30", "14:00"],
 }
+MIN_LEAD = timedelta(minutes=30)  # на сегодня — не ближе, чем за полчаса до времени
+MAX_GUESTS = 30  # столик в зале; больше — это банкет
 DAYS_AHEAD = 5  # рабочих дней в выборе
 MAX_QTY = 50  # одной позиции; больше — это уже кейтеринг
 
@@ -83,10 +92,24 @@ def details(option: Option, day: date) -> str:
     return " · ".join(menu[p] for p in option.parts if p in menu)
 
 
-def is_open(day: date, mode: str, now: datetime) -> bool:
+def slot_start(slot: str) -> time:
+    """«12:30–13:00» → 12:30: к этому времени обед должен быть готов."""
+    return time.fromisoformat(slot.split("–")[0])
+
+
+def open_slots(day: date, mode: str, now: datetime) -> list[str]:
+    """Какое время ещё можно выбрать: на сегодня — до CUTOFF и не ближе MIN_LEAD."""
     if menu_for(day) is None or day < now.date():
-        return False
-    return day > now.date() or now.time() < CUTOFF[mode]
+        return []
+    if day > now.date():
+        return list(SLOTS[mode])
+    if now.time() >= CUTOFF[mode]:
+        return []
+    return [s for s in SLOTS[mode] if datetime.combine(day, slot_start(s)) - now >= MIN_LEAD]
+
+
+def is_open(day: date, mode: str, now: datetime) -> bool:
+    return bool(open_slots(day, mode, now))
 
 
 def day_label(day: date, today: date) -> str:
@@ -108,6 +131,7 @@ def order_days(now: datetime) -> list[dict]:
                     "label": day_label(d, now.date()),
                     "short": f"{WEEKDAYS[d.weekday()]}, {d.day} {MONTHS[d.month - 1]}",
                     "open": {m: is_open(d, m, now) for m in MODES},
+                    "slots": {m: open_slots(d, m, now) for m in MODES},
                     "menu": menu_for(d),
                     "image": WEEK_IMAGES[d.weekday()],
                 }
@@ -133,6 +157,7 @@ def page_data(now: datetime) -> dict:
         "slots": SLOTS,
         "cutoff": {m: CUTOFF[m].strftime("%H:%M") for m in MODES},
         "maxQty": MAX_QTY,
+        "maxGuests": MAX_GUESTS,
     }
 
 
@@ -146,6 +171,7 @@ class OrderDraft:
     address: str
     comment: str
     items: list[tuple[Option, int]]
+    guests: int = 0  # только для зала: на сколько человек накрыть
 
     @property
     def total(self) -> int:
@@ -156,7 +182,7 @@ def validate(payload: dict, now: datetime) -> tuple[OrderDraft | None, dict[str,
     errors: dict[str, str] = {}
     mode = str(payload.get("mode", ""))
     if mode not in MODES:
-        errors["mode"] = "Выберите доставку или самовывоз"
+        errors["mode"] = "Выберите, как получить обед"
         mode = "delivery"
 
     try:
@@ -171,6 +197,8 @@ def validate(payload: dict, now: datetime) -> tuple[OrderDraft | None, dict[str,
     slot = str(payload.get("slot", ""))
     if slot not in SLOTS[mode]:
         errors["slot"] = "Выберите время"
+    elif day is not None and "day" not in errors and slot not in open_slots(day, mode, now):
+        errors["slot"] = f"На {slot} уже не успеем — выберите время попозже"
 
     name = str(payload.get("name", "")).strip()
     if not 2 <= len(name) <= 80:
@@ -183,8 +211,17 @@ def validate(payload: dict, now: datetime) -> tuple[OrderDraft | None, dict[str,
     address = re.sub(r"\s+", " ", str(payload.get("address", ""))).strip()
     if mode == "delivery" and not 5 <= len(address) <= 200:
         errors["address"] = "Куда привезти: улица, дом, офис"
-    if mode == "pickup":
+    if mode != "delivery":
         address = ""
+
+    guests = 0
+    if mode == "hall":
+        try:
+            guests = int(payload.get("guests", 0))
+        except (TypeError, ValueError):
+            guests = 0
+        if not 1 <= guests <= MAX_GUESTS:
+            errors["guests"] = f"На сколько человек накрыть: от 1 до {MAX_GUESTS}"
 
     items: list[tuple[Option, int]] = []
     raw_items = payload.get("items")
@@ -205,7 +242,7 @@ def validate(payload: dict, now: datetime) -> tuple[OrderDraft | None, dict[str,
 
     if errors:
         return None, errors
-    return OrderDraft(mode, day, slot, name, phone, address, comment, items), {}
+    return OrderDraft(mode, day, slot, name, phone, address, comment, items, guests), {}
 
 
 def new_token() -> str:

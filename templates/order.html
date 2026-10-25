@@ -1,6 +1,6 @@
 {% extends "_base.html" %}
 {% block title %}Заказать обед — кафе «{{ cafe.name }}», {{ cafe.city }}{% endblock %}
-{% block description %}Закажите комплексный обед кафе «{{ cafe.name }}» с доставкой в офис или самовывозом. Меню на каждый день, заказ на доставку до 11:00.{% endblock %}
+{% block description %}Закажите комплексный обед кафе «{{ cafe.name }}» с доставкой в офис, с собой или в кафе ко времени — придёте, а обед уже на столе. Меню на каждый день, заказ на доставку до 11:00.{% endblock %}
 
 {% block content %}
 {# Экран заказа рисует static/js/order.js по данным ниже; без JS остаётся телефон #}
@@ -11,6 +11,7 @@
       <div class="seg" role="radiogroup" aria-label="Как получить">
         <button type="button" class="seg__btn" role="radio" data-mode="delivery">Доставка</button>
         <button type="button" class="seg__btn" role="radio" data-mode="pickup">Самовывоз</button>
+        <button type="button" class="seg__btn" role="radio" data-mode="hall">В кафе</button>
       </div>
       <p class="app__note" data-cutoff></p>
     </div>
@@ -68,6 +69,16 @@
         <p class="field__error" data-err="slot" hidden></p>
       </fieldset>
 
+      <div class="field" data-guests-field hidden>
+        <label for="o-guests">На сколько человек накрыть</label>
+        <div class="qty qty--field">
+          <button type="button" data-guests-dec aria-label="Меньше">−</button>
+          <input id="o-guests" name="guests" type="number" inputmode="numeric" min="1" max="{{ data.maxGuests }}" value="1">
+          <button type="button" data-guests-inc aria-label="Больше">+</button>
+        </div>
+        <p class="field__error" data-err="guests" hidden></p>
+      </div>
+
       <div class="field" data-address-field>
         <label for="o-address">Куда привезти</label>
         <div class="addr-chips" data-addr-chips hidden></div>
@@ -90,7 +101,7 @@
         <label for="o-comment">Комментарий <span class="muted">— необязательно</span></label>
         <input id="o-comment" name="comment" type="text" maxlength="500" placeholder="Позвонить на ресепшн, без лука…">
       </div>
-      <p class="sheet__pay">Оплата при получении — наличными или картой.</p>
+      <p class="sheet__pay" data-pay>Оплата при получении — наличными или картой.</p>
       <p class="field__error" data-err="form" hidden></p>
       <button class="sheet__submit" type="submit" data-submit>Заказать</button>
     </form>

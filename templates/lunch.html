@@ -30,6 +30,7 @@
       <ul class="plain">
         <li>Заказ на доставку — до {{ lunch.order_until }}, привезём к обеду</li>
         <li>В кафе ждём на обед с {{ lunch.since }}</li>
+        {% if not static_site %}<li>Закажите заранее ко времени — придёте, а обед уже на столе</li>{% endif %}
       </ul>
       {% if static_site %}
       <a class="frame-btn" href="tel:{{ cafe.phone }}"><span>Заказать по телефону</span></a>

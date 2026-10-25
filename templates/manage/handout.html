@@ -1,0 +1,52 @@
+{% extends "manage/_base.html" %}
+{% block title %}Выдача {{ day.strftime('%d.%m') }}{% endblock %}
+
+{% block content %}
+{% set icons = {"delivery": "🚗", "pickup": "🛍", "hall": "🍽"} %}
+<div class="m-page-head">
+  <h1>Выдача · {{ day.strftime('%d.%m') }}</h1>
+  <p>Получить с гостей: <b>{{ to_collect|rub }}</b> (оплата при получении, выполненные не считаются).</p>
+</div>
+
+{# Сводка по способам — она же фильтр: курьеру можно распечатать только доставку #}
+<nav class="m-summary m-modes" aria-label="Способ получения">
+  <a href="?day={{ day.isoformat() }}" {% if not mode %}aria-current="page"{% endif %}>
+    <span>Все</span><b>{{ by_mode.values()|sum(attribute='count') }}</b><small>осталось {{ by_mode.values()|sum(attribute='left') }}</small></a>
+  {% for m, label in modes.items() %}
+  <a href="?day={{ day.isoformat() }}&amp;mode={{ m }}" {% if mode == m %}aria-current="page"{% endif %}>
+    <span>{{ icons[m] }} {{ label }}</span><b>{{ by_mode[m].count }}</b><small>осталось {{ by_mode[m].left }}</small></a>
+  {% endfor %}
+</nav>
+
+{% if not groups %}<p class="m-empty">{{ 'На этот день отдавать нечего.' if not mode else 'Таких заказов на этот день нет.' }}</p>{% endif %}
+
+{% for t, orders in groups.items() %}
+<section class="m-card">
+  <h2>к {{ t }} <small>{{ orders|length }} {{ 'заказ' if orders|length == 1 else 'заказа' if orders|length < 5 else 'заказов' }}</small></h2>
+  <ol class="m-route">
+    {% for o in orders %}
+    <li class="m-route__item m-order--{{ o.status }}" id="o{{ o.id }}">
+      <div class="m-route__main">
+        <b>№{{ o.id }}</b> <span class="m-badge m-badge--{{ o.status }}">{{ o.status_label }}</span>
+        <span class="m-mode m-mode--{{ o.mode }}">{{ icons[o.mode] }} {{ modes[o.mode] }}{% if o.mode == 'delivery' %} · {{ o.slot }}{% endif %}</span>
+        <div>{{ o.name }} · <a href="tel:{{ o.phone }}">{{ o.phone|phone }}</a></div>
+        {% if o.address %}<div class="m-order__addr">📍 {{ o.address }}</div>{% endif %}
+        {% if o.mode == 'hall' %}<div class="m-order__addr">🍽 Стол на {{ o.guests }} {{ 'гостя' if o.guests == 1 else 'гостей' }} к {{ o.slot }}</div>{% endif %}
+        {% if o.comment %}<div class="m-order__comment">💬 {{ o.comment }}</div>{% endif %}
+        <div class="m-route__what">{% for it in o.items %}{{ it.qty }} × {{ it.title }}{% if not loop.last %}; {% endif %}{% endfor %}</div>
+      </div>
+      <div class="m-route__side">
+        <b class="m-order__total">{{ o.total|rub }}</b>
+        {% if o.next_status %}
+        <form method="post" action="/manage/zakazy/{{ o.id }}/status">
+          <input type="hidden" name="back" value="/manage/vydacha?day={{ day.isoformat() }}{% if mode %}&mode={{ mode }}{% endif %}">
+          <button class="m-btn" name="status" value="{{ o.next_status }}">→ {{ statuses[o.next_status] }}</button>
+        </form>
+        {% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endfor %}
+{% endblock %}

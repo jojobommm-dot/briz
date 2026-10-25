@@ -48,7 +48,7 @@ h1, h2 { font-family: "Oswald", sans-serif; font-weight: 600; letter-spacing: .0
 .m-order { background: #fff; border-radius: 12px; padding: 14px 16px; border-left: 6px solid var(--line); }
 .m-order--new { border-left-color: #e74c3c; box-shadow: 0 0 0 2px rgba(231, 76, 60, .25); }
 .m-order--accepted, .m-order--cooking { border-left-color: var(--wine); }
-.m-order--on_way, .m-order--ready { border-left-color: var(--river); }
+.m-order--on_way, .m-order--ready, .m-order--served { border-left-color: var(--river); }
 .m-order--done { opacity: .6; }
 .m-order--cancelled { opacity: .45; }
 .m-order__top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 8px; }
@@ -58,7 +58,7 @@ h1, h2 { font-family: "Oswald", sans-serif; font-weight: 600; letter-spacing: .0
 .m-badge { padding: 2px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; background: var(--line); white-space: nowrap; }
 .m-badge--new { background: #e74c3c; color: #fff; }
 .m-badge--accepted, .m-badge--cooking { background: var(--wine); }
-.m-badge--on_way, .m-badge--ready { background: var(--river); color: #fff; }
+.m-badge--on_way, .m-badge--ready, .m-badge--served { background: var(--river); color: #fff; }
 .m-order__addr, .m-order__comment { margin-top: 4px; }
 .m-order__items { list-style: none; padding: 0; margin: 10px 0; border-top: 1px dashed var(--line); }
 .m-order__items li { padding: 6px 0; border-bottom: 1px dashed var(--line); }
@@ -95,6 +95,11 @@ h1, h2 { font-family: "Oswald", sans-serif; font-weight: 600; letter-spacing: .0
 .m-route__main { flex: 1 1 320px; }
 .m-route__what { margin-top: 4px; font-size: .92rem; color: var(--muted); }
 .m-route__side { display: flex; align-items: center; gap: 12px; }
+/* Выдача: сводка-фильтр по способам и метка способа у заказа */
+.m-modes > a { border: 2px solid transparent; }
+.m-modes > a[aria-current] { border-color: var(--river); }
+.m-mode { display: inline-block; margin-left: 6px; padding: 1px 9px; border-radius: 999px; font-size: .82rem; background: var(--kraft); }
+.m-mode--hall { background: #fbe3c4; }
 
 /* вход */
 .m-login-page { min-height: 100vh; display: grid; place-items: center; background: radial-gradient(circle at 50% 20%, #0f6a8c, var(--dark) 70%); padding: 20px; }

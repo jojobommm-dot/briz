@@ -38,13 +38,24 @@ def order_payload(**over):
 def test_days_and_cutoff():
     days = lo.order_days(at(10, 59))
     assert days[0]["date"] == WEDNESDAY.isoformat() and days[0]["label"] == "Сегодня"
-    assert days[0]["open"] == {"delivery": True, "pickup": True}
+    assert days[0]["open"] == {"delivery": True, "pickup": True, "hall": True}
     assert all(date.fromisoformat(d["date"]).weekday() < 5 for d in days)  # без выходных
     assert len(days) == lo.DAYS_AHEAD
 
     after = lo.order_days(at(11, 0))[0]["open"]
-    assert after == {"delivery": False, "pickup": True}  # доставка до 11:00, самовывоз дольше
-    assert lo.order_days(at(14, 0))[0]["open"] == {"delivery": False, "pickup": False}
+    assert after == {"delivery": False, "pickup": True, "hall": True}  # доставка до 11:00
+    closed = {"delivery": False, "pickup": False, "hall": False}
+    assert lo.order_days(at(13, 30))[0]["open"] == closed
+
+
+def test_today_slots_need_half_an_hour():
+    # В 12:40 к 13:00 кухня не успеет, к 13:30 — да; завтра — всё время
+    today = lo.order_days(at(12, 40))[0]
+    assert today["slots"]["hall"] == ["13:30", "14:00"]
+    assert today["slots"]["pickup"] == ["13:30", "14:00"]
+    assert today["slots"]["delivery"] == []
+    tomorrow = lo.order_days(at(12, 40))[1]
+    assert tomorrow["slots"]["hall"] == lo.SLOTS["hall"]
 
 
 def test_prices_follow_mode():
@@ -52,6 +63,7 @@ def test_prices_follow_mode():
     assert lo.price(full, "delivery") == 390 and lo.price(full, "pickup") == 370
     salad = lo.OPTIONS_BY_KIND["salad"]
     assert lo.price(salad, "delivery") == 110 and lo.price(salad, "pickup") == 120
+    assert lo.price(full, "hall") == 370  # в зале — цена кафе
 
 
 def test_page_renders(client, morning):
@@ -97,6 +109,38 @@ def test_pickup_has_no_address_and_cafe_prices(client, morning):
     )
     order = r.json()["order"]
     assert order["address"] == "" and order["total"] == 2 * 370 + 120
+
+
+def test_hall_order_to_time(client, morning):
+    r = client.post(
+        "/api/orders",
+        json=order_payload(mode="hall", slot="13:00", address="что угодно", guests=3),
+    )
+    assert r.status_code == 200
+    order = r.json()["order"]
+    assert (
+        order["address"] == ""
+        and order["guests"] == 3
+        and order["modeLabel"] == "В кафе ко времени"
+    )
+    assert order["total"] == 2 * 370 + 120
+    assert [s["key"] for s in order["flow"]][-2:] == ["served", "done"]
+    page = client.get(r.json()["url"]).text
+    assert "стол на 3 гостей" in page
+
+
+@pytest.mark.parametrize("guests", [0, 31, "много", None])
+def test_hall_needs_guests(client, morning, guests):
+    r = client.post("/api/orders", json=order_payload(mode="hall", slot="13:00", guests=guests))
+    assert r.status_code == 422 and "guests" in r.json()["errors"]
+
+
+def test_hall_slot_too_soon(client, monkeypatch):
+    monkeypatch.setattr(lo, "now_local", lambda: at(12, 40))
+    r = client.post("/api/orders", json=order_payload(mode="hall", slot="13:00", guests=1))
+    assert r.status_code == 422 and "не успеем" in r.json()["errors"]["slot"]
+    r = client.post("/api/orders", json=order_payload(mode="hall", slot="13:30", guests=1))
+    assert r.status_code == 200
 
 
 @pytest.mark.parametrize(

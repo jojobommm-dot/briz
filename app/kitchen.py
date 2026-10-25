@@ -3,9 +3,9 @@
 Из каждого заказанного варианта («Полный комплекс», «Суп и второе»…) получаем
 блюда дня: салат, суп, второе и гарнир (второе всегда идёт с гарниром). Дальше:
 - сколько порций каждого блюда и сколько это в граммах по нормам выхода;
-- к какому времени: по слотам доставки и самовывоза;
-- сколько уже отдано (курьер уехал / забрали / выполнен) и сколько осталось;
-- упаковка: контейнеры, приборы, пакеты.
+- к какому времени: по слотам доставки, самовывоза и зала;
+- сколько уже отдано (курьер уехал / готов к выдаче / стол накрыт / выполнен) и сколько осталось;
+- упаковка: контейнеры, приборы, пакеты — только навынос; зал — столы и гости.
 """
 
 from collections import Counter, defaultdict
@@ -19,7 +19,7 @@ from .models import Order
 PARTS = [("salad", "Салат"), ("soup", "Суп"), ("main", "Второе"), ("side", "Гарнир")]
 # Из чего состоит вариант: второе всегда с гарниром
 EXPAND = {"salad": ("salad",), "soup": ("soup",), "main": ("main", "side")}
-SENT = {"on_way", "ready", "done"}  # с кухни уже ушло
+SENT = {"on_way", "ready", "served", "done"}  # с кухни уже ушло
 
 
 def slot_start(slot: str) -> str:
@@ -43,6 +43,7 @@ class DishRow:
     sent: int = 0
     delivery: int = 0
     pickup: int = 0
+    hall: int = 0
     by_time: Counter = field(default_factory=Counter)
     portion: int = 0
     unit: str = ""
@@ -68,6 +69,7 @@ class Sheet:
     times: list[str]
     combos: list[dict]  # «Полный комплекс × 5 → салат, суп, второе, гарнир»
     packaging: dict
+    hall: dict  # обеды в зале: сколько столов и гостей
     orders: int
     waiting: int  # новых, ещё не принятых
 
@@ -89,6 +91,7 @@ def build(orders: list[Order], day: date) -> Sheet:
     times: set[str] = set()
     containers = Counter()
     cutlery = 0
+    hall = [o for o in active if o.mode == "hall"]
 
     for o in active:
         t = slot_start(o.slot)
@@ -104,6 +107,8 @@ def build(orders: list[Order], day: date) -> Sheet:
                 setattr(r, o.mode, getattr(r, o.mode) + it.qty)
                 if o.status in SENT:
                     r.sent += it.qty
+            if o.mode == "hall":
+                continue  # в зале — тарелки, не контейнеры
             # Контейнеры: суп — свой, салат — свой, второе с гарниром — в одном
             for p in parts:
                 if p in ("salad", "soup", "main"):
@@ -122,6 +127,7 @@ def build(orders: list[Order], day: date) -> Sheet:
                 "qty": c["qty"],
                 "delivery": c["mode_delivery"],
                 "pickup": c["mode_pickup"],
+                "hall": c["mode_hall"],
                 "parts": [dict(PARTS)[p] for p in parts_of(option.kind)],
                 "dishes": [dishes.get(p, "—") for p in parts_of(option.kind)],
             }
@@ -137,7 +143,12 @@ def build(orders: list[Order], day: date) -> Sheet:
             "salad": containers["salad"],
             "main": containers["main"],
             "cutlery": cutlery,
-            "bags": len(active),
+            "bags": len(active) - len(hall),
+        },
+        hall={
+            "tables": len(hall),
+            "guests": sum(o.guests for o in hall),
+            "by_time": Counter(slot_start(o.slot) for o in hall),
         },
         orders=len(active),
         waiting=sum(1 for o in active if o.status == "new"),

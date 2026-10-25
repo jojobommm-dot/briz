@@ -30,6 +30,7 @@ def order_json(o: Order) -> dict:
         "dayLabel": f"{lo.WEEKDAYS[o.day.weekday()]}, {o.day.day} {lo.MONTHS[o.day.month - 1]}",
         "slot": o.slot,
         "address": o.address,
+        "guests": o.guests,
         "total": o.total,
         "items": [
             {"kind": i.kind, "title": i.title, "details": i.details, "qty": i.qty, "price": i.price}
@@ -83,6 +84,7 @@ async def create_order(
         address=draft.address,
         comment=draft.comment,
         total=draft.total,
+        guests=draft.guests,
         items=[
             OrderItem(
                 kind=o.kind,

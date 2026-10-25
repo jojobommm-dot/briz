@@ -1,4 +1,4 @@
-"""Кабинет менеджера: заказы на день, лист для кухни, лист для курьера, заявки
+"""Кабинет менеджера: заказы на день, лист для кухни, лист выдачи, заявки
 на банкет и кейтеринг.
 
 Вход — по логину и паролю сотрудника (таблица staff). Первый менеджер
@@ -172,28 +172,49 @@ async def kitchen_page(
     )
 
 
-@router.get("/dostavka", response_class=HTMLResponse)
-async def delivery_page(
+@router.get("/dostavka")
+async def delivery_old(day: str = ""):
+    """Старый адрес вкладки — закладки и ярлыки менеджеров продолжают работать."""
+    return RedirectResponse(f"/manage/vydacha?day={day}" if day else "/manage/vydacha", 307)
+
+
+@router.get("/vydacha", response_class=HTMLResponse)
+async def handout_page(
     request: Request,
     day: str = "",
+    mode: str = "",
     staff: Staff = Depends(require_staff),
     session: AsyncSession = Depends(get_session),
 ):
+    """Лист выдачи: все заказы дня по времени — курьеру, на стойку самовывоза и в зал.
+    Фильтр mode оставляет один способ: например, распечатать маршрут курьеру."""
     chosen, today = _pick_day(day)
-    rows = [o for o in await _orders_for(session, chosen) if o.status != "cancelled"]
-    rows.sort(key=lambda o: (kitchen.slot_start(o.slot), o.mode, o.id))
+    active = [o for o in await _orders_for(session, chosen) if o.status != "cancelled"]
+    mode = mode if mode in lo.MODES else ""
+    rows = [o for o in active if not mode or o.mode == mode]
+    order_of = list(lo.MODES)  # курьер уезжает раньше, чем гость заходит в зал
+    rows.sort(key=lambda o: (kitchen.slot_start(o.slot), order_of.index(o.mode), o.id))
     groups: dict[str, list[Order]] = {}
     for o in rows:
-        groups.setdefault(f"{kitchen.slot_start(o.slot)} · {lo.MODES[o.mode]}", []).append(o)
+        groups.setdefault(kitchen.slot_start(o.slot), []).append(o)
+    by_mode = {
+        m: {
+            "count": sum(1 for o in active if o.mode == m),
+            "left": sum(1 for o in active if o.mode == m and o.status != "done"),
+        }
+        for m in lo.MODES
+    }
     return templates.TemplateResponse(
         request,
-        "manage/delivery.html",
+        "manage/handout.html",
         _ctx(
             staff,
-            "dostavka",
+            "vydacha",
             chosen,
             today,
             groups=groups,
+            mode=mode,
+            by_mode=by_mode,
             to_collect=sum(o.total for o in rows if o.status != "done"),
             **await _live(session),
         ),  # fmt: skip

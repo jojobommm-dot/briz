@@ -30,7 +30,10 @@ def engine() -> AsyncEngine:
 # Колонки, добавленные после первой версии таблиц: create_all старые таблицы не
 # трогает, поэтому досоздаём их сами. Схема пока только растёт — Alembic не нужен
 _ADDED_COLUMNS = {
-    "orders": {"customer_id": "INTEGER REFERENCES customers(id) ON DELETE SET NULL"},
+    "orders": {
+        "customer_id": "INTEGER REFERENCES customers(id) ON DELETE SET NULL",
+        "guests": "INTEGER NOT NULL DEFAULT 0",
+    },
 }
 
 

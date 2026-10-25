@@ -32,12 +32,31 @@
     const total = () => cart().reduce((s, c) => s + priceOf(c.opt) * c.qty, 0);
     const count = () => cart().reduce((s, c) => s + c.qty, 0);
 
+    // Подписи способов получения: заголовок, пояснение, время, оплата
+    const MODE_TEXT = {
+      delivery: {
+        title: "с доставкой", legend: "Время доставки", pay: "Оплата курьеру — наличными или картой.",
+        hint: "Позвонить на ресепшн, без лука…",
+        note: (c) => `Доставка на сегодня — при заказе до ${c}. Привезём к обеду.`,
+      },
+      pickup: {
+        title: "с собой", legend: "Когда заберёте", pay: "Оплата при получении — наличными или картой.",
+        hint: "Без лука, суп отдельно…",
+        note: (c) => `Заберите в кафе с собой: соберём к выбранному времени. На сегодня — до ${c}.`,
+      },
+      hall: {
+        title: "ко времени", legend: "Во сколько придёте", pay: "Оплата в кафе после обеда — наличными или картой.",
+        hint: "Столик у окна, детский стул, без лука…",
+        note: (c) => `Придёте — а обед уже на столе. Закажите заранее, на сегодня — до ${c}, минимум за полчаса.`,
+      },
+    };
+    const text = () => MODE_TEXT[state.mode];
+    const slotsOpen = () => currentDay().slots[state.mode];
+
     function renderMode() {
       root.querySelectorAll("[data-mode]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.mode === state.mode)));
-      $("[data-cutoff]").textContent = state.mode === "delivery"
-        ? `Доставка на сегодня — при заказе до ${data.cutoff.delivery}. Привезём к обеду.`
-        : `Заберите в кафе: заказ на сегодня — до ${data.cutoff.pickup}.`;
-      $(".app__title span:last-child").textContent = state.mode === "delivery" ? "с доставкой" : "с собой";
+      $("[data-cutoff]").textContent = text().note(data.cutoff[state.mode]);
+      $(".app__title span:last-child").textContent = text().title;
       if (!currentDay() || !currentDay().open[state.mode]) state.day = (firstOpenDay(state.mode) || data.days[0]).date;
     }
 
@@ -119,11 +138,15 @@
       $("[data-summary]").textContent =
         `${data.modes[state.mode]} · ${d.label}, ${d.short} · ` +
         cart().map((c) => c.opt.title + (c.qty > 1 ? ` × ${c.qty}` : "")).join(", ");
-      $("[data-slot-legend]").textContent = state.mode === "delivery" ? "Время доставки" : "Когда заберёте";
+      $("[data-slot-legend]").textContent = text().legend;
+      $("[data-pay]").textContent = text().pay;
+      form.comment.placeholder = text().hint;
+      // На сегодня — только время, к которому кухня ещё успеет
+      const open = slotsOpen();
+      if (!open.includes(state.slot)) state.slot = open[0] || null;
       const slots = $("[data-slots]");
       slots.innerHTML = "";
-      data.slots[state.mode].forEach((s, i) => {
-        if (!state.slot && i === 0) state.slot = s;
+      open.forEach((s) => {
         const label = document.createElement("label");
         label.className = "choice";
         label.innerHTML = `<input type="radio" name="slot" value="${s}" ${s === state.slot ? "checked" : ""}><span>${s}</span>`;
@@ -131,6 +154,10 @@
         slots.appendChild(label);
       });
       $("[data-address-field]").hidden = state.mode !== "delivery";
+      $("[data-guests-field]").hidden = state.mode !== "hall";
+      // Гостей по умолчанию — сколько обедов с супом или вторым: обычно один на человека
+      if (!guestsTouched) form.guests.value = Math.min(data.maxGuests, Math.max(1, cart()
+        .filter((c) => c.opt.parts.includes("main") || c.opt.parts.includes("soup")).reduce((n, c) => n + c.qty, 0)));
       $("[data-submit]").textContent = `Заказать за ${rub(total())}`;
       // Вошедший гость — данные из кабинета; иначе — что запомнил этот телефон
       const p = me.loggedIn ? { name: me.name, phone: me.phone, address: me.addresses[0] } : store.get(PROFILE_KEY, {});
@@ -153,6 +180,15 @@
       showErrors({});
     }
 
+    let guestsTouched = false;
+    const setGuests = (n) => {
+      guestsTouched = true;
+      form.guests.value = Math.min(data.maxGuests, Math.max(1, Number(n) || 1));
+    };
+    $("[data-guests-dec]").addEventListener("click", () => setGuests(Number(form.guests.value) - 1));
+    $("[data-guests-inc]").addEventListener("click", () => setGuests(Number(form.guests.value) + 1));
+    form.guests.addEventListener("change", () => setGuests(form.guests.value));
+
     $("[data-checkout]").addEventListener("click", () => { renderSheet(); sheet.showModal(); });
     $("[data-close]").addEventListener("click", () => sheet.close());
     sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.close(); });
@@ -165,6 +201,7 @@
       const payload = {
         mode: state.mode, day: state.day, slot: state.slot,
         name: form.name.value, phone: form.phone.value, address: form.address.value, comment: form.comment.value,
+        guests: state.mode === "hall" ? Number(form.guests.value) : 0,
         items: cart().map((c) => ({ kind: c.opt.kind, qty: c.qty })),
       };
       try {

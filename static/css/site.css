@@ -657,7 +657,7 @@ body::after {
 .app__note { margin: 14px 0 0; color: var(--text-dark); font-size: .95rem; }
 .app__body { padding-top: 26px; padding-bottom: 140px; }
 
-/* Переключатель «Доставка / Самовывоз» */
+/* Переключатель «Доставка / Самовывоз / В кафе» */
 .seg { display: inline-flex; border: 1.5px solid var(--glow); border-radius: 999px; padding: 3px; }
 .seg__btn { border: 0; background: none; color: var(--glow); padding: 9px 20px 8px; border-radius: 999px; cursor: pointer;
   font-family: var(--poster); font-weight: 500; font-size: 1rem; letter-spacing: .1em; text-transform: uppercase; }
@@ -701,6 +701,11 @@ body::after {
 .qty { display: flex; align-items: center; border-radius: 999px; background: var(--ink); color: var(--cream); }
 .qty button { width: 40px; height: 40px; border: 0; background: none; color: inherit; font-size: 1.3rem; cursor: pointer; }
 .qty span { min-width: 22px; text-align: center; font-family: var(--poster); font-size: 1.15rem; }
+/* Счётчик гостей в оформлении: тот же, но с полем ввода */
+.qty--field { display: inline-flex; }
+.field .qty--field input { width: 56px; padding: 0; border: 0; background: none; color: inherit; text-align: center; box-shadow: none;
+  font-family: var(--poster); font-size: 1.2rem; -moz-appearance: textfield; appearance: textfield; }
+.qty--field input::-webkit-inner-spin-button, .qty--field input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* Мои заказы */
 .mine__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
@@ -709,7 +714,7 @@ body::after {
 .mine__item a span { display: block; font-size: .86rem; color: var(--text); }
 .mine__status { padding: 2px 10px; border-radius: 999px; font-size: .78rem; font-weight: 700; background: var(--line); }
 .mine__status--new { background: var(--wine); color: var(--wood); }
-.mine__status--on_way, .mine__status--ready, .mine__status--cooking, .mine__status--accepted { background: var(--river); color: var(--white); }
+.mine__status--on_way, .mine__status--ready, .mine__status--served, .mine__status--cooking, .mine__status--accepted { background: var(--river); color: var(--white); }
 
 /* Корзина */
 .cartbar { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 36; max-width: 640px; margin: 0 auto;
@@ -897,3 +902,9 @@ body:has(.cartbar:not([hidden])) .chat, body:has(.cartbar:not([hidden])) .instal
 .calc > *, .calc__grid > * { min-width: 0; }
 /* Самые узкие экраны: сумма и кнопка заявки — в две строки */
 @media (max-width: 360px) { .total { flex-wrap: wrap; } .total .frame-btn { flex: 1 1 auto; } }
+
+/* Три способа получения не помещаются в узкий телефон с прежними отступами */
+@media (max-width: 420px) {
+  .seg { display: flex; }
+  .seg__btn { flex: 1 1 auto; padding: 9px 10px 8px; letter-spacing: .06em; font-size: .92rem; }
+}

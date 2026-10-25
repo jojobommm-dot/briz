@@ -19,7 +19,7 @@
     <thead>
       <tr>
         <th>Блюдо</th><th class="num">Порций</th><th class="num">Выход</th><th class="num">Осталось</th><th class="num">Отдано</th>
-        <th class="num">Доставка</th><th class="num">Самовывоз</th>
+        <th class="num">Доставка</th><th class="num">Самовывоз</th><th class="num">В кафе</th>
       </tr>
     </thead>
     <tbody>
@@ -32,6 +32,7 @@
         <td class="num">{{ r.sent }}</td>
         <td class="num">{{ r.delivery }}</td>
         <td class="num">{{ r.pickup }}</td>
+        <td class="num">{{ r.hall }}</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -62,7 +63,7 @@
     {% for c in sheet.combos %}
     <li>
       <div class="m-combo__head"><b>{{ c.title }}</b><span class="m-combo__qty">× {{ c.qty }}</span>
-        <small>доставка {{ c.delivery }} · самовывоз {{ c.pickup }}</small></div>
+        <small>доставка {{ c.delivery }} · самовывоз {{ c.pickup }} · в кафе {{ c.hall }}</small></div>
       <div class="m-combo__parts">
         {% for part in c.parts %}<span><i>{{ part }}</i>{{ c.dishes[loop.index0] }} <b>× {{ c.qty }}</b></span>{% endfor %}
       </div>
@@ -71,9 +72,22 @@
   </ul>
 </section>
 
-{# 4. Упаковка #}
+{# 4. Зал: к какому времени накрыть столы #}
+{% if sheet.hall.tables %}
 <section class="m-card">
-  <h2>Упаковка</h2>
+  <h2>Зал: обеды ко времени</h2>
+  <div class="m-summary m-summary--tight">
+    <div><span>Столов накрыть</span><b>{{ sheet.hall.tables }}</b></div>
+    <div><span>Гостей</span><b>{{ sheet.hall.guests }}</b></div>
+    {% for t, n in sheet.hall.by_time|dictsort %}<div><span>Столов к {{ t }}</span><b>{{ n }}</b></div>{% endfor %}
+  </div>
+  <p class="m-note">Подать к выбранному времени: суп горячим, второе — сразу после. Кто за каким столом — во вкладке «Выдача».</p>
+</section>
+{% endif %}
+
+{# 5. Упаковка #}
+<section class="m-card">
+  <h2>Упаковка <small>навынос: доставка и самовывоз</small></h2>
   <div class="m-summary m-summary--tight">
     <div><span>Контейнеры для супа</span><b>{{ sheet.packaging.soup }}</b></div>
     <div><span>Контейнеры для салата</span><b>{{ sheet.packaging.salad }}</b></div>

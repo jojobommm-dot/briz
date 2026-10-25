@@ -183,10 +183,10 @@ def test_manager_flow(client):
     for status in ("accepted", "cooking", "on_way", "done"):
         r = client.post(
             "/manage/zakazy/1/status",
-            data={"status": status, "back": "/manage/dostavka"},
+            data={"status": status, "back": "/manage/vydacha"},
             follow_redirects=False,
         )
-        assert r.status_code == 303 and r.headers["location"].startswith("/manage/dostavka")
+        assert r.status_code == 303 and r.headers["location"].startswith("/manage/vydacha")
         assert client.get(f"/api/orders/{token}").json()["status"] == status
     assert client.post("/manage/zakazy/1/status", data={"status": "ready"}).status_code == 400
 
@@ -222,8 +222,8 @@ def test_kitchen_sheet(client):
 def test_kitchen_math():
     from app.models import Order, OrderItem
 
-    def mk(oid, mode, slot, status, items):
-        return Order(id=oid, mode=mode, slot=slot, status=status,
+    def mk(oid, mode, slot, status, items, guests=0):
+        return Order(id=oid, mode=mode, slot=slot, status=status, guests=guests,
                      items=[OrderItem(kind=k, title=lo.OPTIONS_BY_KIND[k].title, qty=q, price=0) for k, q in items])  # fmt: skip
 
     orders = [
@@ -242,16 +242,42 @@ def test_kitchen_math():
     assert sheet.orders == 2 and sheet.waiting == 1
     full = next(c for c in sheet.combos if c["title"] == "Полный комплекс")
     assert full["parts"] == ["Салат", "Суп", "Второе", "Гарнир"] and full["qty"] == 2
+    assert sheet.hall == {"tables": 0, "guests": 0, "by_time": {}}
 
 
-def test_delivery_sheet(client):
+def test_kitchen_hall_needs_no_packaging():
+    from app.models import Order, OrderItem
+
+    hall = Order(id=1, mode="hall", slot="13:00", status="served", guests=3,
+                 items=[OrderItem(kind="full", title="Полный комплекс", qty=3, price=0)])  # fmt: skip
+    sheet = kitchen.build([hall], WEDNESDAY)
+    rows = {r.part: r for r in sheet.rows}
+    assert rows["soup"].hall == 3 and rows["soup"].sent == 3  # стол накрыт — с кухни ушло
+    assert sheet.packaging == {"soup": 0, "salad": 0, "main": 0, "cutlery": 0, "bags": 0}
+    assert sheet.hall == {"tables": 1, "guests": 3, "by_time": {"13:00": 1}}
+    assert sheet.combos[0]["hall"] == 3
+
+
+def test_handout_sheet(client):
     order(client)
     order(client, mode="pickup", slot="13:00", address="", phone="89990000000", name="Пётр")
+    order(client, mode="hall", slot="13:00", address="", guests=2, name="Анна",
+          items=[{"kind": "full", "qty": 2}])  # fmt: skip
     staff_login(client)
-    page = client.get(f"/manage/dostavka?day={WEDNESDAY}")
-    assert page.status_code == 200
-    assert "12:30 · Доставка" in page.text and "13:00 · Самовывоз" in page.text
-    assert "1 770 ₽" in page.text  # 910 доставка + 860 самовывоз по ценам кафе
+    # Старый адрес вкладки ведёт на новый
+    r = client.get(f"/manage/dostavka?day={WEDNESDAY}", follow_redirects=False)
+    assert r.headers["location"] == f"/manage/vydacha?day={WEDNESDAY}"
+
+    page = client.get(f"/manage/vydacha?day={WEDNESDAY}").text
+    assert "к 12:30" in page and "к 13:00" in page
+    assert "Стол на 2 гостей к 13:00" in page
+    assert "2 510 ₽" in page  # 910 доставка + 860 самовывоз + 740 в зале по ценам кафе
+    # Самовывоз и зал к одному времени — в одной группе, сначала стойка, потом зал
+    assert page.index("Пётр") < page.index("Анна")
+
+    courier = client.get(f"/manage/vydacha?day={WEDNESDAY}&mode=delivery").text
+    assert "Ирина" in courier and "Пётр" not in courier and "Анна" not in courier
+    assert "910 ₽" in courier
 
 
 def test_manage_poll_uses_latest_order_overall(client):

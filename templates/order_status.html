@@ -7,7 +7,7 @@
     <div class="wrap">
       <p class="eyebrow">Заказ №{{ order.number }} · {{ order.modeLabel }}</p>
       <h1 class="poster app__title"><span data-st-label>{{ order.statusLabel }}</span></h1>
-      <p class="app__note">{{ order.dayLabel }}, {{ order.slot }}{% if order.address %} · {{ order.address }}{% endif %}</p>
+      <p class="app__note">{{ order.dayLabel }}, {{ order.slot }}{% if order.address %} · {{ order.address }}{% endif %}{% if order.mode == 'hall' %} · стол на {{ order.guests }} {{ 'гостя' if order.guests == 1 else 'гостей' }}, {{ cafe.address }}{% endif %}</p>
     </div>
   </div>
 
@@ -26,7 +26,7 @@
       {% endfor %}
       <li class="status__total"><b>Итого</b><span class="status__price">{{ order.total|rub }}</span></li>
     </ul>
-    <p class="muted">Оплата при получении. Вопросы — <a href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a></p>
+    <p class="muted">{{ 'Оплата в кафе после обеда.' if order.mode == 'hall' else 'Оплата при получении.' }} Вопросы — <a href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a></p>
 
     <div class="status__actions">
       <a class="frame-btn frame-btn--dark" href="/zakaz"><span>Заказать ещё</span></a>
