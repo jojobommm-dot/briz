@@ -8,7 +8,7 @@
     <div class="wrap">
       <p class="eyebrow">Бронь №{{ booking.number }} · стол ко времени</p>
       <h1 class="poster app__title"><span data-st-label>{{ booking.statusLabel }}</span></h1>
-      <p class="app__note">{{ booking.dayLabel }}, {{ booking.time }} · стол на {{ n }} {{ 'человек' if (n % 10 in [0, 5, 6, 7, 8, 9] or n % 100 in [11, 12, 13, 14]) else 'человека' }} · {{ cafe.address }}</p>
+      <p class="app__note">{% if booking.editedAt %}Изменена в {{ booking.editedAt }} · {% endif %}{{ booking.dayLabel }}, {{ booking.time }} · стол на {{ n }} {{ 'человек' if (n % 10 in [0, 5, 6, 7, 8, 9] or n % 100 in [11, 12, 13, 14]) else 'человека' }} · {{ cafe.address }}</p>
     </div>
   </div>
 
@@ -37,6 +37,7 @@
 
     <div class="status__actions">
       <a class="frame-btn frame-btn--dark" href="/stol"><span>Забронировать ещё</span></a>
+      <a class="linklike status__edit" href="/stol?edit={{ booking.token }}" data-edit {% if not booking.canEdit %}hidden{% endif %}>Изменить бронь</a>
       <button type="button" class="linklike status__cancel" data-cancel {% if not booking.canCancel %}hidden{% endif %}>Отменить бронь</button>
     </div>
   </div>

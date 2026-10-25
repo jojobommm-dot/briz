@@ -23,6 +23,7 @@
       <span class="m-badge m-badge--{{ o.status }}">{{ o.status_label }}</span>
       <span class="m-order__mode">{{ modes[o.mode] }} · {{ o.slot }}</span>
       <span class="m-order__time">{{ o.created_at.strftime('%H:%M') }}{% if o.customer_id %} · 👤 кабинет{% endif %}</span>
+      {% if o.edited_at %}<span class="m-edited">✏️ изменён гостем в {{ o.edited_at.strftime('%H:%M') }}</span>{% endif %}
     </div>
     <div class="m-order__who">
       <b>{{ o.name }}</b> · <a href="tel:{{ o.phone }}">{{ o.phone|phone }}</a>

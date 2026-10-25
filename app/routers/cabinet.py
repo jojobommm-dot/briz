@@ -16,6 +16,7 @@ from .. import lunch_order as lo
 from ..auth import current_customer, login_customer, logout, require_customer
 from ..banquet import normalize_phone
 from ..database import get_session
+from ..guest import claim, guest_key
 from ..models import Address, Booking, Customer, Order
 from ..security import CUSTOMER_COOKIE, hash_password, login_throttle, verify_password
 from ..templating import templates
@@ -91,6 +92,9 @@ async def login(
             request, "cabinet/login.html", {**ctx, "error": "Неверный телефон или пароль"}, 401
         )
     login_throttle.reset(key)
+    # Заказы, сделанные из этого браузера без входа, — сразу в кабинет
+    if await claim(session, customer, guest_key(request)):
+        await session.commit()
     response = RedirectResponse(_safe_next(next), status_code=303)
     login_customer(response, customer)
     return response
@@ -135,6 +139,9 @@ async def register(
         phone=norm, name=name, password_hash=hash_password(password), created_at=lo.now_local()
     )
     session.add(customer)
+    await session.flush()
+    # Заказы, сделанные из этого браузера до регистрации, — сразу в кабинет
+    await claim(session, customer, guest_key(request))
     await session.commit()
     response = RedirectResponse(_safe_next(next), status_code=303)
     login_customer(response, customer)
@@ -254,36 +261,16 @@ async def claim_orders(
     customer: Customer | None = Depends(current_customer),
     session: AsyncSession = Depends(get_session),
 ):
-    """Привязать к кабинету заказы и брони столов, сделанные с этого телефона до входа.
-
-    Нужны оба признака: ссылка на заказ (её знает только тот, кто заказывал) и
-    совпадение телефона в заказе с телефоном кабинета."""
+    """Привязать к кабинету заказы и брони, сделанные с этого телефона до входа:
+    по ссылкам, запомненным в браузере, и по метке гостя (см. app/guest.py)."""
     if customer is None:
         return JSONResponse({"error": "Нужно войти"}, status_code=401)
     try:
         tokens = (await request.json()).get("tokens", [])
     except (ValueError, AttributeError):
         tokens = []
-    tokens = [t for t in tokens if isinstance(t, str)][:50]
-    if not tokens:
-        return {"claimed": 0}
-    orders = (
-        await session.scalars(
-            select(Order).where(
-                Order.token.in_(tokens), Order.customer_id.is_(None), Order.phone == customer.phone
-            )
-        )
-    ).all()
-    bookings = (
-        await session.scalars(
-            select(Booking).where(
-                Booking.token.in_(tokens),
-                Booking.customer_id.is_(None),
-                Booking.phone == customer.phone,
-            )
-        )
-    ).all()
-    for o in [*orders, *bookings]:
-        o.customer_id = customer.id
+    moved = await claim(
+        session, customer, guest_key(request), tokens if isinstance(tokens, list) else []
+    )
     await session.commit()
-    return {"claimed": len(orders) + len(bookings)}
+    return {"claimed": moved}

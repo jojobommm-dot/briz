@@ -32,6 +32,11 @@ MAX_QTY = 20  # одного блюда
 GUEST_CAN_CANCEL = ("new", "confirmed")  # пришёл — отменять уже нечего
 
 
+def can_edit(status: str, day: date, slot: str, now: datetime) -> bool:
+    """Гость меняет бронь сам, пока не пришёл и до неё не меньше MIN_LEAD."""
+    return status in GUEST_CAN_CANCEL and slot in open_times(day, now)
+
+
 def dish_key(category: str, dish: Dish) -> str:
     """Ключ блюда в заказе: раздел + название. Индекс не годится — меню меняется."""
     return f"{category}/{dish.name}"

@@ -124,11 +124,23 @@ def test_claim_orders_made_before_login(client):
     before = order(client)  # без кабинета, с телефона 8 912 111-22-33
     stranger = order(client, phone="89990000000")
     register(client)
-    r = client.post("/api/me/claim", json={"tokens": [before["token"], stranger["token"], "nope"]})
-    # Чужой телефон не привяжется, даже если ссылка на заказ известна
-    assert r.json() == {"claimed": 1}
-    assert f"№{before['order']['number']}" in client.get("/kabinet").text
-    assert client.post("/api/me/claim", json={"tokens": [before["token"]]}).json() == {"claimed": 0}
+    # Заказ из этого же браузера с тем же телефоном переехал в кабинет сразу при регистрации,
+    # заказ с чужим телефоном — нет, даже из того же браузера
+    page = client.get("/kabinet").text
+    assert f"№{before['order']['number']}" in page
+    assert f"№{stranger['order']['number']}" not in page
+    r = client.post("/api/me/claim", json={"tokens": [stranger["token"], "nope"]})
+    assert r.json() == {"claimed": 0}
+
+
+def test_claim_from_other_browser_needs_link(client):
+    made = order(client)
+    client.cookies.clear()  # другой браузер: метки гостя нет
+    register(client)
+    assert f"№{made['order']['number']}" not in client.get("/kabinet").text
+    # Ссылка на заказ, запомненная в браузере, — второй признак
+    assert client.post("/api/me/claim", json={"tokens": [made["token"]]}).json() == {"claimed": 1}
+    assert f"№{made['order']['number']}" in client.get("/kabinet").text
 
 
 def test_profile_and_password_change(client):
@@ -182,6 +194,7 @@ def test_manager_flow(client):
         "maxId": 1,
         "maxLead": 0,
         "maxBooking": 0,
+        "lastEdit": "",
         "new": 1,
     }
 

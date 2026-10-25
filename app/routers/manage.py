@@ -63,6 +63,18 @@ async def _live(session: AsyncSession) -> dict:
         "max_id": await session.scalar(select(func.max(Order.id))) or 0,
         "max_lead": await session.scalar(select(func.max(Lead.id))) or 0,
         "max_booking": await session.scalar(select(func.max(Booking.id))) or 0,
+        # Гость изменил заказ или бронь — страница тоже должна позвать
+        "last_edit": max(
+            (
+                str(t)
+                for t in (
+                    await session.scalar(select(func.max(Order.edited_at))),
+                    await session.scalar(select(func.max(Booking.edited_at))),
+                )
+                if t
+            ),
+            default="",
+        ),
         "new_leads": await session.scalar(
             select(func.count()).select_from(Lead).where(Lead.status == "new")
         ),
@@ -370,5 +382,6 @@ async def latest(
         "maxId": live["max_id"],
         "maxLead": live["max_lead"],
         "maxBooking": live["max_booking"],
+        "lastEdit": live["last_edit"],
         "new": new,
     }

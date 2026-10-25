@@ -25,7 +25,9 @@
     const data = JSON.parse(document.getElementById("booking-data").textContent);
     const $ = (sel) => root.querySelector(sel);
     const dishes = new Map(data.menu.flatMap((c) => c.dishes.map((d) => [d.key, d])));
-    const state = { day: null, time: null, guests: 2, cat: data.menu[0].slug, qty: {} };
+    // editing — бронь, которую гость сейчас меняет (вместо второй брони)
+    const state = { day: null, time: null, guests: 2, cat: data.menu[0].slug, qty: {}, editing: null };
+    let mine = [];  // активные брони этого гостя с сервера (/api/my)
 
     const currentDay = () => data.days.find((d) => d.date === state.day);
     const cart = () => Object.entries(state.qty).filter(([, q]) => q > 0).map(([key, qty]) => ({ dish: dishes.get(key), key, qty }));
@@ -123,6 +125,7 @@
       const n = count();
       $("[data-bar-sum]").textContent = n ? `Предзаказ ${rub(total())}` : "Без предзаказа";
       $("[data-checkout]").disabled = !state.time;
+      $("[data-checkout]").textContent = state.editing ? "Сохранить" : "Оформить";
     }
 
     function render() { renderDays(); renderTimes(); renderCats(); renderDishes(); renderBar(); }
@@ -152,6 +155,15 @@
 
     function renderSheet() {
       const d = currentDay();
+      const ed = state.editing;
+      $("[data-sheet-title]").textContent = ed ? `Изменение брони №${ed.number}` : "Бронь стола";
+      // Уже есть бронь на этот день — предлагаем изменить её, а не бронировать второй стол
+      const dup = !ed && mine.find((b) => b.day === state.day && b.canEdit);
+      $("[data-dup]").hidden = !dup;
+      if (dup) {
+        $("[data-dup-text]").textContent = `На ${d.label.toLowerCase()} у вас уже есть бронь №${dup.number}: ${dup.time}, стол на ${people(dup.guests)}.`;
+        $("[data-dup-edit]").onclick = () => { sheet.close(); startEdit(dup); };
+      }
       $("[data-summary]").textContent = `${d.label}, ${d.short}, ${state.time} · стол на ${people(state.guests)}`;
       const pre = $("[data-pre]");
       pre.innerHTML = "";
@@ -171,10 +183,14 @@
       const p = me.loggedIn ? { name: me.name, phone: me.phone } : store.get(PROFILE_KEY, {});
       ["name", "phone"].forEach((k) => { if (p[k] && !form[k].value) form[k].value = p[k]; });
       $("[data-login-hint]").hidden = me.loggedIn;
-      $("[data-submit]").textContent = cart().length ? `Забронировать · ${rub(total())}` : "Забронировать стол";
+      $("[data-submit]").textContent = submitLabel();
       showErrors({});
     }
 
+    const submitLabel = () => {
+      if (state.editing) return cart().length ? `Сохранить · ${rub(total())}` : "Сохранить изменения";
+      return cart().length ? `Забронировать · ${rub(total())}` : "Забронировать стол";
+    };
     $("[data-checkout]").addEventListener("click", () => { if (state.time) { renderSheet(); sheet.showModal(); } });
     $("[data-close]").addEventListener("click", () => sheet.close());
     sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.close(); });
@@ -190,26 +206,91 @@
         items: cart().map((c) => ({ key: c.key, qty: c.qty })),
       };
       try {
-        const res = await fetch("/api/bookings", {
-          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+        const ed = state.editing;
+        const res = await fetch(ed ? `/api/bookings/${ed.token}` : "/api/bookings", {
+          method: ed ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
         });
         const body = await res.json();
         if (!res.ok) { showErrors(body.errors || { form: "Не получилось отправить — попробуйте ещё раз" }); return; }
         const prev = store.get(PROFILE_KEY, {});
         store.set(PROFILE_KEY, { ...prev, name: payload.name, phone: payload.phone });
-        store.set(BOOKINGS_KEY, [{ token: body.token, at: Date.now() }, ...store.get(BOOKINGS_KEY, [])].slice(0, 20));
+        const known = store.get(BOOKINGS_KEY, []).filter((m) => m.token !== body.token);
+        store.set(BOOKINGS_KEY, [{ token: body.token, at: Date.now() }, ...known].slice(0, 20));
         location.href = body.url;
       } catch {
         showErrors({ form: "Нет связи с кафе. Проверьте интернет или позвоните нам." });
       } finally {
         btn.disabled = false;
-        btn.textContent = "Забронировать";
+        btn.textContent = submitLabel();
       }
+    });
+
+    // ---- ваши брони: активные — изменить вместо второй брони ----
+    async function loadMine() {
+      const tokens = store.get(BOOKINGS_KEY, []).map((m) => m.token).slice(0, 20).join(",");
+      try {
+        const r = await fetch(`/api/my?tokens=${encodeURIComponent(tokens)}`);
+        mine = r.ok ? (await r.json()).bookings : [];
+      } catch { mine = []; }
+      renderMine();
+    }
+
+    function renderMine() {
+      const list = $("[data-mine-list]");
+      list.innerHTML = "";
+      mine.forEach((b) => {
+        const li = document.createElement("li");
+        li.className = "mine__item" + (state.editing && state.editing.token === b.token ? " is-editing" : "");
+        li.innerHTML = `
+          <a href="/stol/${b.token}"><b>№${b.number} · ${b.dayLabel}, ${b.time}</b><span></span></a>
+          <span class="mine__status mine__status--${b.status}">${b.statusLabel}</span>
+          ${b.canEdit ? `<button type="button" class="opt__add" data-edit>Изменить</button>` : ""}`;
+        li.querySelector("a span").textContent = `Стол на ${people(b.guests)} · ` +
+          (b.items.length ? `предзаказ ${rub(b.total)}` : "без предзаказа");
+        const e = li.querySelector("[data-edit]");
+        if (e) e.addEventListener("click", () => startEdit(b));
+        list.appendChild(li);
+      });
+      $("[data-mine]").hidden = !mine.length;
+    }
+
+    function startEdit(b) {
+      state.editing = b;
+      if (data.days.some((d) => d.date === b.day && d.times.length)) state.day = b.day;
+      state.time = b.time;
+      state.qty = {};
+      b.items.forEach((i) => { if (dishes.has(i.key)) state.qty[i.key] = i.qty; });
+      ["name", "phone", "comment"].forEach((k) => { form[k].value = b[k] || ""; });
+      setGuests(b.guests);
+      const again = b.status === "confirmed" ? " После сохранения менеджер подтвердит бронь заново." : "";
+      $("[data-editing-text]").textContent = `Изменяете бронь №${b.number} на ${b.dayLabel}, ${b.time}.${again}`;
+      $("[data-editing]").hidden = false;
+      render();
+      renderMine();
+      window.scrollTo({ top: $("[data-editing]").getBoundingClientRect().top + scrollY - 110, behavior: "smooth" });
+    }
+
+    $("[data-edit-cancel]").addEventListener("click", () => {
+      state.editing = null;
+      state.qty = {};
+      form.comment.value = "";
+      $("[data-editing]").hidden = true;
+      history.replaceState(null, "", "/stol");
+      render();
+      renderMine();
     });
 
     state.day = (data.days.find((d) => d.times.length) || data.days[0]).date;
     render();
+    loadMine();
     fetch("/api/me").then((r) => r.json()).then((d) => { me = d; }).catch(() => {});
+    // «Изменить бронь» со страницы брони ведёт сюда с ?edit=<token>
+    const editToken = new URLSearchParams(location.search).get("edit");
+    if (editToken) {
+      fetch(`/api/bookings/${encodeURIComponent(editToken)}`).then((r) => (r.ok ? r.json() : null)).then((b) => {
+        if (b && b.canEdit) startEdit(b); else if (b) location.replace(`/stol/${b.token}`);
+      }).catch(() => {});
+    }
   }
 
   // ================= статус брони =================
@@ -226,6 +307,7 @@
       });
       status.querySelector("[data-cancelled]").hidden = b.status !== "cancelled";
       status.querySelector("[data-cancel]").hidden = !b.canCancel;
+      status.querySelector("[data-edit]").hidden = !b.canEdit;
       return b.status === "done" || b.status === "cancelled";
     };
     const mine = store.get(BOOKINGS_KEY, []);

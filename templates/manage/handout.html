@@ -28,6 +28,7 @@
     <li class="m-route__item m-order--{{ o.status }}" id="o{{ o.id }}">
       <div class="m-route__main">
         <b>№{{ o.id }}</b> <span class="m-badge m-badge--{{ o.status }}">{{ o.status_label }}</span>
+        {% if o.edited_at %}<span class="m-edited">✏️ изменён в {{ o.edited_at.strftime('%H:%M') }}</span>{% endif %}
         <span class="m-mode m-mode--{{ o.mode }}">{{ icons[o.mode] }} {{ modes[o.mode] }}{% if o.mode == 'delivery' %} · {{ o.slot }}{% endif %}</span>
         <div>{{ o.name }} · <a href="tel:{{ o.phone }}">{{ o.phone|phone }}</a></div>
         {% if o.address %}<div class="m-order__addr">📍 {{ o.address }}</div>{% endif %}

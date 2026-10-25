@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Raleway:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="{{ asset('css/manage.css') }}">
 </head>
-<body data-max-id="{{ max_id or 0 }}" data-max-lead="{{ max_lead or 0 }}" data-max-booking="{{ max_booking or 0 }}">
+<body data-max-id="{{ max_id or 0 }}" data-max-lead="{{ max_lead or 0 }}" data-max-booking="{{ max_booking or 0 }}" data-last-edit="{{ last_edit or '' }}">
   <header class="m-head">
     <div class="m-head__title"><img src="/static/img/logo/briz-mark.svg" alt="" width="34" height="34"> БРИЗ · менеджер</div>
     <nav class="m-tabs" aria-label="Разделы">
@@ -44,6 +44,7 @@
       let maxId = Number(document.body.dataset.maxId) || 0;
       let maxLead = Number(document.body.dataset.maxLead) || 0;
       let maxBooking = Number(document.body.dataset.maxBooking) || 0;
+      let lastEdit = document.body.dataset.lastEdit || "";
       let audio = null;
       const btn = document.querySelector("[data-sound]");
       const beep = () => {
@@ -69,15 +70,17 @@
           if (r.status === 401) { location.reload(); return; }
           const d = await r.json();
           const order = d.maxId > maxId, lead = d.maxLead > maxLead, booking = d.maxBooking > maxBooking;
-          if (order || lead || booking) {
+          const edited = (d.lastEdit || "") > lastEdit;
+          if (order || lead || booking || edited) {
             beep();
             if ("Notification" in window && Notification.permission === "granted") {
               const [title, body] = order ? ["Новый заказ обеда", "№" + d.maxId]
                 : booking ? ["Новая бронь стола", "Подтвердите гостю"]
+                : edited ? ["Гость изменил заказ", "Проверьте состав и время"]
                 : ["Новая заявка на банкет или кейтеринг", "Перезвоните гостю"];
               new Notification(title, { body });
             }
-            maxId = d.maxId; maxLead = d.maxLead; maxBooking = d.maxBooking;
+            maxId = d.maxId; maxLead = d.maxLead; maxBooking = d.maxBooking; lastEdit = d.lastEdit || "";
             setTimeout(() => location.reload(), 1200);
           }
         } catch {}

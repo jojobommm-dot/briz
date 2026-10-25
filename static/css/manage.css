@@ -100,6 +100,7 @@ h1, h2 { font-family: "Oswald", sans-serif; font-weight: 600; letter-spacing: .0
 .m-modes > a[aria-current] { border-color: var(--river); }
 .m-mode { display: inline-block; margin-left: 6px; padding: 1px 9px; border-radius: 999px; font-size: .82rem; background: var(--kraft); }
 .m-mode--hall { background: #fbe3c4; }
+.m-edited { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: .82rem; background: #fff3cd; color: #7a5b00; }
 
 /* вход */
 .m-login-page { min-height: 100vh; display: grid; place-items: center; background: radial-gradient(circle at 50% 20%, #0f6a8c, var(--dark) 70%); padding: 20px; }

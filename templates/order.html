@@ -19,6 +19,13 @@
   </div>
 
   <div class="wrap app__body">
+    {# Активные заказы этого гостя: при повторном заходе сразу видно, что уже заказано #}
+    <section class="mine" data-mine hidden>
+      <h2 class="subhead">Ваши заказы</h2>
+      <ul class="mine__list" data-mine-list></ul>
+    </section>
+    <p class="editing" data-editing hidden><span data-editing-text></span> <button type="button" class="linklike" data-edit-cancel>Не менять</button></p>
+
     <nav class="days" aria-label="День" data-days data-hscroll></nav>
 
     <div class="today" data-today>
@@ -34,11 +41,6 @@
     </div>
 
     <ul class="opts" data-options></ul>
-
-    <section class="mine" data-mine hidden>
-      <h2 class="subhead">Мои заказы</h2>
-      <ul class="mine__list" data-mine-list></ul>
-    </section>
 
     <noscript><p class="lead">Для заказа онлайн нужен JavaScript. Или позвоните: <a href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a></p></noscript>
   </div>
@@ -56,13 +58,14 @@
   <dialog class="sheet" data-sheet aria-labelledby="sheet-title">
     <form class="sheet__form" data-form novalidate>
       <div class="sheet__head">
-        <h2 id="sheet-title">Оформление</h2>
+        <h2 id="sheet-title" data-sheet-title>Оформление</h2>
         <button type="button" class="sheet__close" data-close aria-label="Закрыть">×</button>
       </div>
       <fieldset class="field">
         <legend class="sheet__legend">Как получить</legend>
         <div class="choices choices--modes" data-sheet-modes></div>
       </fieldset>
+      <p class="sheet__dup" data-dup hidden><span data-dup-text></span> <button type="button" class="linklike" data-dup-edit>Изменить его</button></p>
       <p class="sheet__summary" data-summary></p>
       <p class="sheet__login" data-login-hint hidden><a href="/kabinet/vhod?next=/zakaz">Войдите</a>, чтобы заказ сохранился в кабинете, а адрес подставлялся сам.</p>
       <p class="field__error" data-err="day" hidden></p>

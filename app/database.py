@@ -33,6 +33,12 @@ _ADDED_COLUMNS = {
     "orders": {
         "customer_id": "INTEGER REFERENCES customers(id) ON DELETE SET NULL",
         "guests": "INTEGER NOT NULL DEFAULT 0",
+        "guest_key": "VARCHAR(32) NOT NULL DEFAULT ''",
+        "edited_at": "TIMESTAMP",
+    },
+    "bookings": {
+        "guest_key": "VARCHAR(32) NOT NULL DEFAULT ''",
+        "edited_at": "TIMESTAMP",
     },
 }
 

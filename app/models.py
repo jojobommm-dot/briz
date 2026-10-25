@@ -94,6 +94,11 @@ class Order(Base):
     comment: Mapped[str] = mapped_column(Text, default="")
     total: Mapped[int]
     guests: Mapped[int] = mapped_column(default=0)  # обед в зале: на сколько человек стол
+    # Метка браузера гостя без кабинета (кука briz_guest, app/guest.py): по ней он видит
+    # свои заказы при повторном заходе, а при регистрации они переезжают в кабинет
+    guest_key: Mapped[str] = mapped_column(String(32), default="", index=True)
+    # Когда гость последний раз менял заказ; не менял — None
+    edited_at: Mapped[datetime] = mapped_column(nullable=True, default=None)
     # Заказ гостя с кабинетом; заказы без входа — None
     # Mapped[int] + nullable, а не Mapped[int | None]: SQLAlchemy 2.0.36 на Python 3.14
     # не разбирает объединения типов в аннотациях
@@ -201,6 +206,8 @@ class Booking(Base):
     phone: Mapped[str] = mapped_column(String(16))
     comment: Mapped[str] = mapped_column(Text, default="")
     total: Mapped[int] = mapped_column(default=0)  # предзаказ; без него — 0
+    guest_key: Mapped[str] = mapped_column(String(32), default="", index=True)  # как у Order
+    edited_at: Mapped[datetime] = mapped_column(nullable=True, default=None)
     customer_id: Mapped[int] = mapped_column(
         ForeignKey("customers.id", ondelete="SET NULL"), index=True, nullable=True, default=None
     )

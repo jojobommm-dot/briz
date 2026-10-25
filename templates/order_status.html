@@ -7,7 +7,7 @@
     <div class="wrap">
       <p class="eyebrow">Заказ №{{ order.number }} · {{ order.modeLabel }}</p>
       <h1 class="poster app__title"><span data-st-label>{{ order.statusLabel }}</span></h1>
-      <p class="app__note">{{ order.dayLabel }}, {{ order.slot }}{% if order.address %} · {{ order.address }}{% endif %}{% if order.mode == 'hall' %} · стол на {{ order.guests }} {{ 'гостя' if order.guests == 1 else 'гостей' }}, {{ cafe.address }}{% endif %}</p>
+      <p class="app__note">{% if order.editedAt %}Изменён в {{ order.editedAt }} · {% endif %}{{ order.dayLabel }}, {{ order.slot }}{% if order.address %} · {{ order.address }}{% endif %}{% if order.mode == 'hall' %} · стол на {{ order.guests }} {{ 'гостя' if order.guests == 1 else 'гостей' }}, {{ cafe.address }}{% endif %}</p>
     </div>
   </div>
 
@@ -30,6 +30,7 @@
 
     <div class="status__actions">
       <a class="frame-btn frame-btn--dark" href="/zakaz"><span>Заказать ещё</span></a>
+      <a class="linklike status__edit" href="/zakaz?edit={{ order.token }}" data-edit {% if not order.canEdit %}hidden{% endif %}>Изменить заказ</a>
       <button type="button" class="linklike status__cancel" data-cancel {% if not order.canCancel %}hidden{% endif %}>Отменить заказ</button>
     </div>
   </div>

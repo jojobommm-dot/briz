@@ -23,7 +23,9 @@
   if (root) {
     const data = JSON.parse(document.getElementById("order-data").textContent);
     const $ = (sel) => root.querySelector(sel);
-    const state = { mode: "delivery", day: null, qty: {}, slot: null };
+    // editing — заказ, который гость сейчас меняет (вместо того чтобы оформлять второй)
+    const state = { mode: "delivery", day: null, qty: {}, slot: null, editing: null };
+    let mine = [];  // активные заказы этого гостя с сервера (/api/my)
 
     const firstOpenDay = (mode) => data.days.find((d) => d.open[mode]) || data.days.find((d) => d.menu);
     // Что сегодня: обедов нет (выходной), приём закрыт или до скольки ещё можно
@@ -122,6 +124,7 @@
     function renderCart() {
       const n = count();
       $("[data-cartbar]").hidden = n === 0;
+      $("[data-checkout]").textContent = state.editing ? "Сохранить" : "Оформить";
       $("[data-cart-count]").textContent = `${n} ${plural(n, "позиция", "позиции", "позиций")} · ${currentDay().label.toLowerCase()}`;
       $("[data-cart-sum]").textContent = rub(total());
     }
@@ -154,6 +157,16 @@
         modes.appendChild(label);
       });
       const d = currentDay();
+      const ed = state.editing;
+      $("[data-sheet-title]").textContent = ed ? `Изменение заказа №${ed.number}` : "Оформление";
+      // Уже есть заказ на этот день — предлагаем изменить его, а не делать второй
+      const dup = !ed && mine.find((o) => o.day === state.day && o.canEdit);
+      $("[data-dup]").hidden = !dup;
+      if (dup) {
+        $("[data-dup-text]").textContent = `На ${d.label.toLowerCase()} у вас уже есть заказ №${dup.number}: ` +
+          dup.items.map((i) => i.title + (i.qty > 1 ? ` × ${i.qty}` : "")).join(", ") + ".";
+        $("[data-dup-edit]").onclick = () => { sheet.close(); startEdit(dup); };
+      }
       $("[data-summary]").textContent =
         `${d.label}, ${d.short} · ` +
         cart().map((c) => c.opt.title + (c.qty > 1 ? ` × ${c.qty}` : "")).join(", ");
@@ -177,7 +190,7 @@
       // Гостей по умолчанию — сколько обедов с супом или вторым: обычно один на человека
       if (!guestsTouched) form.guests.value = Math.min(data.maxGuests, Math.max(1, cart()
         .filter((c) => c.opt.parts.includes("main") || c.opt.parts.includes("soup")).reduce((n, c) => n + c.qty, 0)));
-      $("[data-submit]").textContent = `Заказать за ${rub(total())}`;
+      $("[data-submit]").textContent = submitLabel();
       // Вошедший гость — данные из кабинета; иначе — что запомнил этот телефон
       const p = me.loggedIn ? { name: me.name, phone: me.phone, address: me.addresses[0] } : store.get(PROFILE_KEY, {});
       ["name", "phone", "address"].forEach((k) => { if (p[k] && !form[k].value) form[k].value = p[k]; });
@@ -199,6 +212,7 @@
       showErrors({});
     }
 
+    const submitLabel = () => (state.editing ? `Сохранить · ${rub(total())}` : `Заказать за ${rub(total())}`);
     let guestsTouched = false;
     const setGuests = (n) => {
       guestsTouched = true;
@@ -224,42 +238,82 @@
         items: cart().map((c) => ({ kind: c.opt.kind, qty: c.qty })),
       };
       try {
-        const res = await fetch("/api/orders", {
-          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+        const ed = state.editing;
+        const res = await fetch(ed ? `/api/orders/${ed.token}` : "/api/orders", {
+          method: ed ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
         });
         const body = await res.json();
         if (!res.ok) { showErrors(body.errors || { form: "Не получилось отправить — попробуйте ещё раз" }); return; }
         store.set(PROFILE_KEY, { name: payload.name, phone: payload.phone, address: payload.address || store.get(PROFILE_KEY, {}).address });
-        store.set(ORDERS_KEY, [{ token: body.token, at: Date.now() }, ...store.get(ORDERS_KEY, [])].slice(0, 20));
+        const known = store.get(ORDERS_KEY, []).filter((m) => m.token !== body.token);
+        store.set(ORDERS_KEY, [{ token: body.token, at: Date.now() }, ...known].slice(0, 20));
         location.href = body.url;
       } catch {
         showErrors({ form: "Нет связи с кафе. Проверьте интернет или позвоните нам." });
       } finally {
         btn.disabled = false;
-        btn.textContent = `Заказать за ${rub(total())}`;
+        btn.textContent = submitLabel();
       }
     });
 
-    // ---- мои заказы: последние три, с кнопкой «Повторить» ----
-    async function renderMine() {
-      const mine = store.get(ORDERS_KEY, []).slice(0, 3);
-      if (!mine.length) return;
+    // ---- ваши заказы: активные, на сегодня и вперёд — изменить вместо второго заказа ----
+    // Сервер узнаёт гостя по кабинету или долгой куке; ссылки из localStorage — для
+    // заказов, сделанных до появления куки
+    async function loadMine() {
+      const tokens = store.get(ORDERS_KEY, []).map((m) => m.token).slice(0, 20).join(",");
+      try {
+        const r = await fetch(`/api/my?tokens=${encodeURIComponent(tokens)}`);
+        mine = r.ok ? (await r.json()).orders : [];
+      } catch { mine = []; }
+      renderMine();
+    }
+
+    function renderMine() {
       const list = $("[data-mine-list]");
-      const results = await Promise.all(mine.map((m) =>
-        fetch(`/api/orders/${m.token}`).then((r) => (r.ok ? r.json() : null)).catch(() => null)));
-      results.filter(Boolean).forEach((o) => {
+      list.innerHTML = "";
+      mine.forEach((o) => {
         const li = document.createElement("li");
-        li.className = "mine__item";
+        li.className = "mine__item" + (state.editing && state.editing.token === o.token ? " is-editing" : "");
         li.innerHTML = `
-          <a href="/zakaz/${o.token}"><b>№${o.number} · ${o.dayLabel}</b>
-            <span>${o.items.map((i) => i.title + (i.qty > 1 ? " × " + i.qty : "")).join(", ")} · ${rub(o.total)}</span></a>
+          <a href="/zakaz/${o.token}"><b>№${o.number} · ${o.dayLabel}, ${o.slot}</b>
+            <span></span></a>
           <span class="mine__status mine__status--${o.status}">${o.statusLabel}</span>
-          <button type="button" class="opt__add" data-repeat>Повторить</button>`;
-        li.querySelector("[data-repeat]").addEventListener("click", () => repeat(o));
+          ${o.canEdit ? `<button type="button" class="opt__add" data-edit>Изменить</button>` : ""}`;
+        li.querySelector("a span").textContent =
+          `${o.modeLabel} · ${o.items.map((i) => i.title + (i.qty > 1 ? " × " + i.qty : "")).join(", ")} · ${rub(o.total)}`;
+        const b = li.querySelector("[data-edit]");
+        if (b) b.addEventListener("click", () => startEdit(o));
         list.appendChild(li);
       });
-      $("[data-mine]").hidden = !list.children.length;
+      $("[data-mine]").hidden = !mine.length;
     }
+
+    // Правка заказа: всё как при оформлении, только «Сохранить» вместо «Заказать»
+    function startEdit(o) {
+      state.editing = o;
+      state.mode = o.mode;
+      if (data.days.some((d) => d.date === o.day && d.open[o.mode])) state.day = o.day;
+      state.slot = o.slot;
+      state.qty = {};
+      o.items.forEach((i) => { state.qty[i.kind] = i.qty; });
+      ["name", "phone", "address", "comment"].forEach((k) => { form[k].value = o[k] || ""; });
+      if (o.mode === "hall") { guestsTouched = true; form.guests.value = o.guests; }
+      $("[data-editing-text]").textContent = `Изменяете заказ №${o.number} на ${o.dayLabel}. Поменяйте что нужно и нажмите «Сохранить».`;
+      $("[data-editing]").hidden = false;
+      render();
+      renderMine();
+      window.scrollTo({ top: $("[data-editing]").getBoundingClientRect().top + scrollY - 110, behavior: "smooth" });
+    }
+
+    $("[data-edit-cancel]").addEventListener("click", () => {
+      state.editing = null;
+      state.qty = {};
+      form.comment.value = "";
+      $("[data-editing]").hidden = true;
+      history.replaceState(null, "", "/zakaz");
+      render();
+      renderMine();
+    });
 
     // Повтор заказа: тот же способ получения и те же позиции, день — ближайший открытый
     function repeat(o) {
@@ -273,12 +327,18 @@
     let me = { loggedIn: false, addresses: [] };
     state.day = firstOpenDay(state.mode).date;
     render();
-    renderMine();
+    loadMine();
     fetch("/api/me").then((r) => r.json()).then((d) => { me = d; }).catch(() => {});
-    // «Повторить» из кабинета ведёт сюда с ?repeat=<token>
-    const repeatToken = new URLSearchParams(location.search).get("repeat");
+    // «Повторить» из кабинета ведёт сюда с ?repeat=<token>, «Изменить» со страницы заказа — с ?edit=<token>
+    const params = new URLSearchParams(location.search);
+    const repeatToken = params.get("repeat"), editToken = params.get("edit");
     if (repeatToken) {
       fetch(`/api/orders/${encodeURIComponent(repeatToken)}`).then((r) => (r.ok ? r.json() : null)).then((o) => { if (o) repeat(o); }).catch(() => {});
+    }
+    if (editToken) {
+      fetch(`/api/orders/${encodeURIComponent(editToken)}`).then((r) => (r.ok ? r.json() : null)).then((o) => {
+        if (o && o.canEdit) startEdit(o); else if (o) location.replace(`/zakaz/${o.token}`);
+      }).catch(() => {});
     }
   }
 
@@ -309,6 +369,7 @@
       });
       status.querySelector("[data-cancelled]").hidden = o.status !== "cancelled";
       status.querySelector("[data-cancel]").hidden = !o.canCancel;
+      status.querySelector("[data-edit]").hidden = !o.canEdit;
       return o.status === "done" || o.status === "cancelled";
     };
     // Если заказ открыли по ссылке не с этого телефона — запомним его здесь

@@ -41,6 +41,7 @@
       <span class="m-badge m-badge--{{ b.status }}">{{ b.status_label }}</span>
       <span class="m-order__mode">🍽 стол на {{ b.guests }}</span>
       <span class="m-order__time">№{{ b.id }} · {{ b.created_at.strftime('%d.%m %H:%M') }}{% if b.customer_id %} · 👤 кабинет{% endif %}</span>
+      {% if b.edited_at %}<span class="m-edited">✏️ изменена гостем {{ b.edited_at.strftime('%d.%m в %H:%M') }}</span>{% endif %}
     </div>
     <div class="m-order__who">
       <b>{{ b.name }}</b> · <a href="tel:{{ b.phone }}">{{ b.phone|phone }}</a>

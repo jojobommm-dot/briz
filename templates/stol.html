@@ -13,6 +13,13 @@
   </div>
 
   <div class="wrap app__body">
+    {# Активные брони этого гостя: при повторном заходе сразу видно, что уже забронировано #}
+    <section class="mine" data-mine hidden>
+      <h2 class="subhead">Ваши брони</h2>
+      <ul class="mine__list" data-mine-list></ul>
+    </section>
+    <p class="editing" data-editing hidden><span data-editing-text></span> <button type="button" class="linklike" data-edit-cancel>Не менять</button></p>
+
     <h2 class="subhead">Когда</h2>
     <nav class="days" aria-label="День" data-days data-hscroll></nav>
     <div class="choices book-times" data-times data-hscroll></div>
@@ -48,9 +55,10 @@
   <dialog class="sheet" data-sheet aria-labelledby="sheet-title">
     <form class="sheet__form" data-form novalidate>
       <div class="sheet__head">
-        <h2 id="sheet-title">Бронь стола</h2>
+        <h2 id="sheet-title" data-sheet-title>Бронь стола</h2>
         <button type="button" class="sheet__close" data-close aria-label="Закрыть">×</button>
       </div>
+      <p class="sheet__dup" data-dup hidden><span data-dup-text></span> <button type="button" class="linklike" data-dup-edit>Изменить её</button></p>
       <p class="sheet__summary" data-summary></p>
       <ul class="book-pre" data-pre></ul>
       <p class="sheet__login" data-login-hint hidden><a href="/kabinet/vhod?next=/stol">Войдите</a>, чтобы бронь сохранилась в кабинете.</p>
