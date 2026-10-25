@@ -178,7 +178,12 @@ def test_manager_flow(client):
 
     page = client.get(f"/manage/zakazy?day={WEDNESDAY}")
     assert page.status_code == 200 and "Ирина" in page.text
-    assert client.get("/manage/api/latest").json() == {"maxId": 1, "maxLead": 0, "new": 1}
+    assert client.get("/manage/api/latest").json() == {
+        "maxId": 1,
+        "maxLead": 0,
+        "maxBooking": 0,
+        "new": 1,
+    }
 
     for status in ("accepted", "cooking", "on_way", "done"):
         r = client.post(

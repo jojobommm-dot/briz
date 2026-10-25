@@ -1,0 +1,47 @@
+{% extends "_base.html" %}
+{% block title %}Бронь №{{ booking.number }} — кафе «{{ cafe.name }}»{% endblock %}
+
+{% block content %}
+{% set n = booking.guests %}
+<section class="app status" data-booking-status data-token="{{ booking.token }}">
+  <div class="app__head">
+    <div class="wrap">
+      <p class="eyebrow">Бронь №{{ booking.number }} · стол ко времени</p>
+      <h1 class="poster app__title"><span data-st-label>{{ booking.statusLabel }}</span></h1>
+      <p class="app__note">{{ booking.dayLabel }}, {{ booking.time }} · стол на {{ n }} {{ 'человек' if (n % 10 in [0, 5, 6, 7, 8, 9] or n % 100 in [11, 12, 13, 14]) else 'человека' }} · {{ cafe.address }}</p>
+    </div>
+  </div>
+
+  <div class="wrap app__body">
+    <ol class="steps">
+      {% for s in booking.flow %}<li data-step="{{ s.key }}">{{ s.label }}</li>{% endfor %}
+    </ol>
+    <p class="status__cancelled" data-cancelled {% if booking.status != 'cancelled' %}hidden{% endif %}>Бронь отменена.</p>
+
+    {% if booking['items'] %}
+    <h2 class="subhead">Предзаказ — подадим к {{ booking.time }}</h2>
+    <ul class="status__items">
+      {% for it in booking['items'] %}
+      <li>
+        <div><b>{{ it.name }}</b>{% if it.qty > 1 %} × {{ it.qty }}{% endif %}<span>{{ it.category }}</span></div>
+        <span class="status__price">{{ (it.price * it.qty)|rub }}</span>
+      </li>
+      {% endfor %}
+      <li class="status__total"><b>Итого</b><span class="status__price">{{ booking.total|rub }}</span></li>
+    </ul>
+    {% else %}
+    <p class="muted">Без предзаказа — меню принесём к столу.</p>
+    {% endif %}
+    {% if booking.comment %}<p class="muted">Комментарий: {{ booking.comment }}</p>{% endif %}
+    <p class="muted">Оплата в кафе. Вопросы и перенос брони — <a href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a></p>
+
+    <div class="status__actions">
+      <a class="frame-btn frame-btn--dark" href="/stol"><span>Забронировать ещё</span></a>
+      <button type="button" class="linklike status__cancel" data-cancel {% if not booking.canCancel %}hidden{% endif %}>Отменить бронь</button>
+    </div>
+  </div>
+  <script type="application/json" id="booking-status">{{ booking|tojson }}</script>
+</section>
+{% endblock %}
+
+{% block scripts %}<script src="{{ asset('js/stol.js') }}" defer></script>{% endblock %}

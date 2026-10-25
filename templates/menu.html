@@ -14,6 +14,7 @@
     <div class="wrap paper-hero__inner">
       <h1 class="paper-hero__title">Меню</h1>
       <p class="paper-hero__lead">Готовим сами, порции честные. Любое блюдо можно взять с собой — позвоните, соберём к вашему приходу.</p>
+      {% if not static_site %}<p class="paper-hero__cta"><a class="frame-btn frame-btn--dark" href="/stol"><span>Стол с предзаказом</span></a></p>{% endif %}
     </div>
   </section>
 

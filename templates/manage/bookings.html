@@ -1,0 +1,72 @@
+{% extends "manage/_base.html" %}
+{% block title %}Столы {{ day.strftime('%d.%m') }}{% endblock %}
+
+{% block content %}
+<section class="m-summary">
+  <div><span>Броней</span><b>{{ count }}</b></div>
+  <div><span>Новых, ждут подтверждения</span><b class="{% if waiting %}is-hot{% endif %}">{{ waiting }}</b></div>
+  <div><span>Гостей</span><b>{{ guests }}</b><small>из {{ cafe.capacity }} мест зала</small></div>
+  <div><span>Предзаказ</span><b>{{ pre_total|rub }}</b></div>
+</section>
+
+{% if not bookings %}
+<p class="m-empty">На этот день броней нет. Включите звук — страница позовёт, когда придёт бронь.</p>
+{% endif %}
+
+{% if pre %}
+<section class="m-card">
+  <h2>Кухне: предзаказ <small>подать к приходу гостей</small></h2>
+  <div class="m-table-wrap">
+  <table class="m-table">
+    <thead><tr><th>Блюдо</th><th class="num">Всего</th><th>К какому времени</th></tr></thead>
+    <tbody>
+      {% for name, r in pre %}
+      <tr>
+        <td><span class="m-part">{{ r.category }}</span><b>{{ name }}</b></td>
+        <td class="num big">{{ r.qty }}</td>
+        <td>{% for t, q in r.by_time|dictsort %}к {{ t }} — {{ q }}{% if not loop.last %}; {% endif %}{% endfor %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endif %}
+
+<ul class="m-orders">
+  {% for b in bookings %}
+  <li class="m-order m-order--{{ b.status }}" id="b{{ b.id }}">
+    <div class="m-order__top">
+      <b class="m-order__num">{{ b.time }}</b>
+      <span class="m-badge m-badge--{{ b.status }}">{{ b.status_label }}</span>
+      <span class="m-order__mode">🍽 стол на {{ b.guests }}</span>
+      <span class="m-order__time">№{{ b.id }} · {{ b.created_at.strftime('%d.%m %H:%M') }}{% if b.customer_id %} · 👤 кабинет{% endif %}</span>
+    </div>
+    <div class="m-order__who">
+      <b>{{ b.name }}</b> · <a href="tel:{{ b.phone }}">{{ b.phone|phone }}</a>
+      {% if b.comment %}<div class="m-order__comment">💬 {{ b.comment }}</div>{% endif %}
+    </div>
+    {% if b.items %}
+    <ul class="m-order__items">
+      {% for it in b.items %}<li><b>{{ it.qty }} × {{ it.name }}</b> <span>{{ it.category }}</span></li>{% endfor %}
+    </ul>
+    {% else %}
+    <p class="m-note">Без предзаказа.</p>
+    {% endif %}
+    <div class="m-order__bottom">
+      {% if b.total %}<b class="m-order__total">{{ b.total|rub }}</b>{% endif %}
+      {% if b.next_status %}
+      <form method="post" action="/manage/stoly/{{ b.id }}/status">
+        <button class="m-btn" name="status" value="{{ b.next_status }}">→ {{ booking_statuses[b.next_status] }}</button>
+      </form>
+      {% endif %}
+      {% if b.status not in ('done', 'cancelled') %}
+      <form method="post" action="/manage/stoly/{{ b.id }}/status" onsubmit="return confirm('Отменить бронь на {{ b.time }}?')">
+        <button class="m-btn m-btn--ghost" name="status" value="cancelled">Отменить</button>
+      </form>
+      {% endif %}
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}

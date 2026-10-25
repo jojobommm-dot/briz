@@ -16,7 +16,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from .auth import LoginRequired
 from .config import settings
 from .database import dispose, init_db
-from .routers import cabinet, manage, order, pages
+from .routers import cabinet, manage, order, pages, stol
 from .templating import templates
 
 logging.basicConfig(
@@ -38,6 +38,7 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory=settings.static_root), name="static")
 app.include_router(pages.router)
 app.include_router(order.router)
+app.include_router(stol.router)
 app.include_router(cabinet.router)
 app.include_router(manage.public)
 app.include_router(manage.router)

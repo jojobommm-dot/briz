@@ -1,0 +1,84 @@
+{% extends "_base.html" %}
+{% block title %}Стол ко времени — кафе «{{ cafe.name }}», {{ cafe.city }}{% endblock %}
+{% block description %}Забронируйте стол в кафе «{{ cafe.name }}» и выберите блюда заранее — подадим к вашему приходу. Пермь, {{ cafe.address }}.{% endblock %}
+
+{% block content %}
+{# Экран брони рисует static/js/stol.js по данным ниже; без JS остаётся телефон #}
+<section class="app" data-booking>
+  <div class="app__head">
+    <div class="wrap">
+      <h1 class="poster app__title"><span>Стол</span><span>ко времени</span></h1>
+      <p class="app__note">Забронируйте стол и, если хотите, выберите блюда заранее — подадим к вашему приходу. Бронь — минимум за час, оплата в кафе.</p>
+    </div>
+  </div>
+
+  <div class="wrap app__body">
+    <h2 class="subhead">Когда</h2>
+    <nav class="days" aria-label="День" data-days></nav>
+    <div class="choices book-times" data-times></div>
+    <p class="muted" data-no-times hidden>На этот день свободного времени для брони уже нет — выберите другой.</p>
+
+    <div class="book-guests">
+      <h2 class="subhead">Сколько гостей</h2>
+      <div class="qty qty--field">
+        <button type="button" data-guests-dec aria-label="Меньше">−</button>
+        <input name="guests" type="number" inputmode="numeric" min="1" max="{{ data.maxGuests }}" value="2" aria-label="Гостей" data-guests>
+        <button type="button" data-guests-inc aria-label="Больше">+</button>
+      </div>
+      <p class="muted book-guests__more">Больше {{ data.maxGuests }} — это уже <a href="/banket">банкет</a>.</p>
+    </div>
+
+    <h2 class="subhead">Предзаказ <span class="muted book-optional">— необязательно</span></h2>
+    <p class="muted">Выберите блюда — кухня приготовит к вашему времени. Или закажете на месте.</p>
+    <nav class="cats" aria-label="Разделы меню" data-cats></nav>
+    <ul class="opts" data-dishes></ul>
+
+    <noscript><p class="lead">Для брони онлайн нужен JavaScript. Или позвоните: <a href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a></p></noscript>
+  </div>
+
+  {# Итог брони: липкая полоса снизу, видна всегда — бронь возможна и без предзаказа #}
+  <div class="cartbar" data-cartbar>
+    <div>
+      <div class="cartbar__count" data-bar-when></div>
+      <div class="cartbar__sum book-bar__sum" data-bar-sum></div>
+    </div>
+    <button type="button" class="cartbar__btn" data-checkout>Оформить</button>
+  </div>
+
+  <dialog class="sheet" data-sheet aria-labelledby="sheet-title">
+    <form class="sheet__form" data-form novalidate>
+      <div class="sheet__head">
+        <h2 id="sheet-title">Бронь стола</h2>
+        <button type="button" class="sheet__close" data-close aria-label="Закрыть">×</button>
+      </div>
+      <p class="sheet__summary" data-summary></p>
+      <ul class="book-pre" data-pre></ul>
+      <p class="sheet__login" data-login-hint hidden><a href="/kabinet/vhod?next=/stol">Войдите</a>, чтобы бронь сохранилась в кабинете.</p>
+      {% for f in ("day", "time", "guests", "items") %}<p class="field__error" data-err="{{ f }}" hidden></p>{% endfor %}
+      <div class="sheet__row">
+        <div class="field">
+          <label for="b-name">Имя</label>
+          <input id="b-name" name="name" type="text" autocomplete="name" maxlength="80">
+          <p class="field__error" data-err="name" hidden></p>
+        </div>
+        <div class="field">
+          <label for="b-phone">Телефон</label>
+          <input id="b-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="8 912 345-67-89">
+          <p class="field__error" data-err="phone" hidden></p>
+        </div>
+      </div>
+      <div class="field">
+        <label for="b-comment">Комментарий <span class="muted">— необязательно</span></label>
+        <input id="b-comment" name="comment" type="text" maxlength="500" placeholder="У окна, день рождения, детский стул…">
+      </div>
+      <p class="sheet__pay">Оплата в кафе — наличными или картой. Менеджер позвонит, если понадобится уточнить.</p>
+      <p class="field__error" data-err="form" hidden></p>
+      <button class="sheet__submit" type="submit" data-submit>Забронировать</button>
+    </form>
+  </dialog>
+
+  <script type="application/json" id="booking-data">{{ data|tojson }}</script>
+</section>
+{% endblock %}
+
+{% block scripts %}<script src="{{ asset('js/stol.js') }}" defer></script>{% endblock %}

@@ -16,10 +16,11 @@ from .. import lunch_order as lo
 from ..auth import current_customer, login_customer, logout, require_customer
 from ..banquet import normalize_phone
 from ..database import get_session
-from ..models import Address, Customer, Order
+from ..models import Address, Booking, Customer, Order
 from ..security import CUSTOMER_COOKIE, hash_password, login_throttle, verify_password
 from ..templating import templates
 from .order import order_json
+from .stol import booking_json
 
 router = APIRouter()
 
@@ -167,6 +168,14 @@ async def cabinet(
     active = [o for o in orders if o.status not in ("done", "cancelled")]
     past = [o for o in orders if o.status in ("done", "cancelled")]
     spent = sum(o.total for o in orders if o.status != "cancelled")
+    bookings = (
+        await session.scalars(
+            select(Booking)
+            .where(Booking.customer_id == customer.id)
+            .order_by(Booking.day.desc(), Booking.time.desc())
+            .limit(10)
+        )
+    ).all()
     return _page(
         request,
         "cabinet/index.html",
@@ -174,6 +183,7 @@ async def cabinet(
             "customer": customer,
             "active": [order_json(o) for o in active],
             "past": [order_json(o) for o in past],
+            "bookings": [booking_json(b) for b in bookings],
             "stats": {"count": len([o for o in orders if o.status != "cancelled"]), "spent": spent},
             "saved": request.query_params.get("saved", ""),
         },
@@ -244,7 +254,7 @@ async def claim_orders(
     customer: Customer | None = Depends(current_customer),
     session: AsyncSession = Depends(get_session),
 ):
-    """Привязать к кабинету заказы, сделанные с этого телефона до входа.
+    """Привязать к кабинету заказы и брони столов, сделанные с этого телефона до входа.
 
     Нужны оба признака: ссылка на заказ (её знает только тот, кто заказывал) и
     совпадение телефона в заказе с телефоном кабинета."""
@@ -264,7 +274,16 @@ async def claim_orders(
             )
         )
     ).all()
-    for o in orders:
+    bookings = (
+        await session.scalars(
+            select(Booking).where(
+                Booking.token.in_(tokens),
+                Booking.customer_id.is_(None),
+                Booking.phone == customer.phone,
+            )
+        )
+    ).all()
+    for o in [*orders, *bookings]:
         o.customer_id = customer.id
     await session.commit()
-    return {"claimed": len(orders)}
+    return {"claimed": len(orders) + len(bookings)}

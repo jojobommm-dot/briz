@@ -31,7 +31,24 @@
   </div>
 
   <div class="wrap app__body">
-    <div class="cab-cta"><a class="cartbar__btn" href="/zakaz">Заказать обед</a></div>
+    <div class="cab-cta"><a class="cartbar__btn" href="/zakaz">Заказать обед</a> <a class="opt__add" href="/stol">Стол ко времени</a></div>
+
+    {% if bookings %}
+    <h2 class="subhead">Брони столов</h2>
+    <ul class="co-list">
+      {% for b in bookings %}
+      <li class="co">
+        <a class="co__main" href="/stol/{{ b.token }}">
+          <span class="co__num">№{{ b.number }}</span>
+          <span class="co__when">{{ b.dayLabel }} · {{ b.time }} · стол на {{ b.guests }}</span>
+          <span class="co__what">{% for it in b['items'] %}{{ it.name }}{% if it.qty > 1 %} × {{ it.qty }}{% endif %}{% if not loop.last %}, {% endif %}{% else %}без предзаказа{% endfor %}</span>
+        </a>
+        <span class="mine__status mine__status--{{ b.status }}">{{ b.statusLabel }}</span>
+        {% if b.total %}<span class="co__sum">{{ b.total|rub }}</span>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
 
     {% if active %}
     <h2 class="subhead">Сейчас в работе</h2>

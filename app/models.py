@@ -171,3 +171,69 @@ class Lead(Base):
     @property
     def kind_label(self) -> str:
         return LEAD_KINDS.get(self.kind, self.kind)
+
+
+# Бронь стола: менеджер подтверждает, отмечает, что гости пришли; гость может
+# отменить сам, пока не пришёл
+BOOKING_STATUSES = {
+    "new": "Новая",
+    "confirmed": "Стол подтверждён",
+    "seated": "Гости пришли",
+    "done": "Завершена",
+    "cancelled": "Отменена",
+}
+BOOKING_FLOW = ["new", "confirmed", "seated", "done"]
+
+
+class Booking(Base):
+    """Стол ко времени: бронь с предзаказом из основного меню (app/booking.py)."""
+
+    __tablename__ = "bookings"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    token: Mapped[str] = mapped_column(String(24), unique=True, index=True)  # /stol/<token>
+    created_at: Mapped[datetime]  # местное время Перми
+    status: Mapped[str] = mapped_column(String(12), default="new", index=True)
+    day: Mapped[date] = mapped_column(index=True)
+    time: Mapped[str] = mapped_column(String(5))  # «18:30»
+    guests: Mapped[int]
+    name: Mapped[str] = mapped_column(String(80))
+    phone: Mapped[str] = mapped_column(String(16))
+    comment: Mapped[str] = mapped_column(Text, default="")
+    total: Mapped[int] = mapped_column(default=0)  # предзаказ; без него — 0
+    customer_id: Mapped[int] = mapped_column(
+        ForeignKey("customers.id", ondelete="SET NULL"), index=True, nullable=True, default=None
+    )
+
+    items: Mapped[list["BookingItem"]] = relationship(
+        back_populates="booking",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        order_by="BookingItem.id",
+    )
+
+    @property
+    def status_label(self) -> str:
+        return BOOKING_STATUSES.get(self.status, self.status)
+
+    @property
+    def next_status(self) -> str | None:
+        if self.status not in BOOKING_FLOW or self.status == "done":
+            return None
+        return BOOKING_FLOW[BOOKING_FLOW.index(self.status) + 1]
+
+
+class BookingItem(Base):
+    __tablename__ = "booking_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    booking_id: Mapped[int] = mapped_column(
+        ForeignKey("bookings.id", ondelete="CASCADE"), index=True
+    )
+    key: Mapped[str] = mapped_column(String(160))  # раздел/название — см. booking.dish_key
+    category: Mapped[str] = mapped_column(String(80))
+    name: Mapped[str] = mapped_column(String(120))
+    qty: Mapped[int]
+    price: Mapped[int]  # за штуку, на момент брони
+
+    booking: Mapped[Booking] = relationship(back_populates="items")

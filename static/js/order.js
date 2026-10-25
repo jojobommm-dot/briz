@@ -64,6 +64,7 @@
       root.querySelectorAll("[data-mode]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.mode === state.mode)));
       $("[data-cutoff]").textContent = `${text().about} ${todayNote()}`;
       $(".app__title span:last-child").textContent = text().title;
+      $("[data-stol-hint]").hidden = state.mode !== "hall";
       if (!currentDay() || !currentDay().open[state.mode]) state.day = firstOpenDay(state.mode).date;
     }
 
@@ -284,7 +285,8 @@
   // ================= кабинет: подтянуть заказы, сделанные с этого телефона до входа =================
   const cabinet = document.querySelector("[data-cabinet]");
   if (cabinet) {
-    const tokens = store.get(ORDERS_KEY, []).map((m) => m.token);
+    // Заказы обедов и брони столов (их запоминает stol.js) — одним списком
+    const tokens = [...store.get(ORDERS_KEY, []), ...store.get("briz-bookings", [])].map((m) => m.token);
     if (tokens.length) {
       fetch("/api/me/claim", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tokens }) })
         .then((r) => r.json())

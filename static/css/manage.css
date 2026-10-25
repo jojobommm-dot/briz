@@ -47,8 +47,8 @@ h1, h2 { font-family: "Oswald", sans-serif; font-weight: 600; letter-spacing: .0
 @media (min-width: 900px) { .m-orders { grid-template-columns: 1fr 1fr; } }
 .m-order { background: #fff; border-radius: 12px; padding: 14px 16px; border-left: 6px solid var(--line); }
 .m-order--new { border-left-color: #e74c3c; box-shadow: 0 0 0 2px rgba(231, 76, 60, .25); }
-.m-order--accepted, .m-order--cooking { border-left-color: var(--wine); }
-.m-order--on_way, .m-order--ready, .m-order--served { border-left-color: var(--river); }
+.m-order--accepted, .m-order--cooking, .m-order--confirmed { border-left-color: var(--wine); }
+.m-order--on_way, .m-order--ready, .m-order--served, .m-order--seated { border-left-color: var(--river); }
 .m-order--done { opacity: .6; }
 .m-order--cancelled { opacity: .45; }
 .m-order__top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 8px; }
@@ -57,8 +57,8 @@ h1, h2 { font-family: "Oswald", sans-serif; font-weight: 600; letter-spacing: .0
 .m-order__time { margin-left: auto; }
 .m-badge { padding: 2px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; background: var(--line); white-space: nowrap; }
 .m-badge--new { background: #e74c3c; color: #fff; }
-.m-badge--accepted, .m-badge--cooking { background: var(--wine); }
-.m-badge--on_way, .m-badge--ready, .m-badge--served { background: var(--river); color: #fff; }
+.m-badge--accepted, .m-badge--cooking, .m-badge--confirmed { background: var(--wine); }
+.m-badge--on_way, .m-badge--ready, .m-badge--served, .m-badge--seated { background: var(--river); color: #fff; }
 .m-order__addr, .m-order__comment { margin-top: 4px; }
 .m-order__items { list-style: none; padding: 0; margin: 10px 0; border-top: 1px dashed var(--line); }
 .m-order__items li { padding: 6px 0; border-bottom: 1px dashed var(--line); }

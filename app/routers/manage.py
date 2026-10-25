@@ -1,4 +1,4 @@
-"""Кабинет менеджера: заказы на день, лист для кухни, лист выдачи, заявки
+"""Кабинет менеджера: заказы на день, лист для кухни, лист выдачи, брони столов, заявки
 на банкет и кейтеринг.
 
 Вход — по логину и паролю сотрудника (таблица staff). Первый менеджер
@@ -6,18 +6,28 @@
 """
 
 from collections import Counter
-from datetime import date
+from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import booking as bk
 from .. import kitchen, leads
 from .. import lunch_order as lo
 from ..auth import current_staff, login_staff, logout, require_staff
 from ..database import get_session
-from ..models import LEAD_STATUSES, STATUSES, Lead, Order, Staff
+from ..models import (
+    BOOKING_FLOW,
+    BOOKING_STATUSES,
+    LEAD_STATUSES,
+    STATUSES,
+    Booking,
+    Lead,
+    Order,
+    Staff,
+)
 from ..security import STAFF_COOKIE, login_throttle, verify_password
 from ..templating import templates
 
@@ -52,6 +62,7 @@ async def _live(session: AsyncSession) -> dict:
     return {
         "max_id": await session.scalar(select(func.max(Order.id))) or 0,
         "max_lead": await session.scalar(select(func.max(Lead.id))) or 0,
+        "max_booking": await session.scalar(select(func.max(Booking.id))) or 0,
         "new_leads": await session.scalar(
             select(func.count()).select_from(Lead).where(Lead.status == "new")
         ),
@@ -240,6 +251,71 @@ async def set_status(
     return RedirectResponse(f"{target}#o{order.id}", status_code=303)
 
 
+@router.get("/stoly", response_class=HTMLResponse)
+async def bookings_page(
+    request: Request,
+    day: str = "",
+    staff: Staff = Depends(require_staff),
+    session: AsyncSession = Depends(get_session),
+):
+    """Брони столов на день: кто, во сколько, сколько гостей, что подать к приходу."""
+    chosen, today = _pick_day(day)
+    rows = list(
+        (
+            await session.scalars(
+                select(Booking).where(Booking.day == chosen).order_by(Booking.time, Booking.id)
+            )
+        ).all()
+    )
+    active = [b for b in rows if b.status != "cancelled"]
+    # Кухне: предзаказ по блюдам и ко времени
+    pre: dict[str, dict] = {}
+    for b in active:
+        for it in b.items:
+            row = pre.setdefault(it.name, {"category": it.category, "qty": 0, "by_time": Counter()})
+            row["qty"] += it.qty
+            row["by_time"][b.time] += it.qty
+    upcoming = [(today + timedelta(days=i)).isoformat() for i in range(bk.DAYS_AHEAD)]
+    return templates.TemplateResponse(
+        request,
+        "manage/bookings.html",
+        _ctx(
+            staff,
+            "stoly",
+            chosen,
+            today,
+            days=upcoming,
+            bookings=rows,
+            pre=sorted(pre.items(), key=lambda kv: (kv[1]["category"], kv[0])),
+            guests=sum(b.guests for b in active),
+            pre_total=sum(b.total for b in active),
+            waiting=sum(1 for b in active if b.status == "new"),
+            booking_statuses=BOOKING_STATUSES,
+            count=len(active),
+            **await _live(session),
+        ),  # fmt: skip
+    )
+
+
+@router.post("/stoly/{booking_id}/status")
+async def set_booking_status(
+    booking_id: int,
+    status: str = Form(...),
+    staff: Staff = Depends(require_staff),
+    session: AsyncSession = Depends(get_session),
+):
+    booking = await session.get(Booking, booking_id)
+    if booking is None:
+        raise HTTPException(404)
+    if status not in BOOKING_FLOW and status != "cancelled":
+        raise HTTPException(400)
+    booking.status = status
+    await session.commit()
+    return RedirectResponse(
+        f"/manage/stoly?day={booking.day.isoformat()}#b{booking.id}", status_code=303
+    )
+
+
 @router.get("/zayavki", response_class=HTMLResponse)
 async def leads_page(
     request: Request,
@@ -290,4 +366,9 @@ async def latest(
     """Для опроса со страницы: последние номера заказа и заявки, сколько новых заказов."""
     live = await _live(session)
     new = await session.scalar(select(func.count()).select_from(Order).where(Order.status == "new"))
-    return {"maxId": live["max_id"], "maxLead": live["max_lead"], "new": new}
+    return {
+        "maxId": live["max_id"],
+        "maxLead": live["max_lead"],
+        "maxBooking": live["max_booking"],
+        "new": new,
+    }

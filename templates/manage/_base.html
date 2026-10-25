@@ -10,13 +10,14 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Raleway:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="{{ asset('css/manage.css') }}">
 </head>
-<body data-max-id="{{ max_id or 0 }}" data-max-lead="{{ max_lead or 0 }}">
+<body data-max-id="{{ max_id or 0 }}" data-max-lead="{{ max_lead or 0 }}" data-max-booking="{{ max_booking or 0 }}">
   <header class="m-head">
     <div class="m-head__title"><img src="/static/img/logo/briz-mark.svg" alt="" width="34" height="34"> БРИЗ · менеджер</div>
     <nav class="m-tabs" aria-label="Разделы">
       <a href="/manage/zakazy?day={{ day.isoformat() }}" {% if tab == 'zakazy' %}aria-current="page"{% endif %}>Заказы</a>
       <a href="/manage/kuhnya?day={{ day.isoformat() }}" {% if tab == 'kuhnya' %}aria-current="page"{% endif %}>Кухня</a>
       <a href="/manage/vydacha?day={{ day.isoformat() }}" {% if tab == 'vydacha' %}aria-current="page"{% endif %}>Выдача</a>
+      <a href="/manage/stoly?day={{ day.isoformat() }}" {% if tab == 'stoly' %}aria-current="page"{% endif %}>Столы</a>
       <a href="/manage/zayavki" {% if tab == 'zayavki' %}aria-current="page"{% endif %}>Заявки{% if new_leads %} <span class="m-count">{{ new_leads }}</span>{% endif %}</a>
     </nav>
     <div class="m-head__me">
@@ -38,10 +39,11 @@
   <main class="m-main">{% block content %}{% endblock %}</main>
 
   <script>
-    // Опрос раз в 15 секунд: пришёл новый заказ или заявка — звук, уведомление и перезагрузка
+    // Опрос раз в 15 секунд: пришёл новый заказ, бронь или заявка — звук, уведомление и перезагрузка
     (function () {
       let maxId = Number(document.body.dataset.maxId) || 0;
       let maxLead = Number(document.body.dataset.maxLead) || 0;
+      let maxBooking = Number(document.body.dataset.maxBooking) || 0;
       let audio = null;
       const btn = document.querySelector("[data-sound]");
       const beep = () => {
@@ -66,13 +68,16 @@
           const r = await fetch("/manage/api/latest", { cache: "no-store" });
           if (r.status === 401) { location.reload(); return; }
           const d = await r.json();
-          const order = d.maxId > maxId, lead = d.maxLead > maxLead;
-          if (order || lead) {
+          const order = d.maxId > maxId, lead = d.maxLead > maxLead, booking = d.maxBooking > maxBooking;
+          if (order || lead || booking) {
             beep();
             if ("Notification" in window && Notification.permission === "granted") {
-              new Notification(order ? "Новый заказ обеда" : "Новая заявка на банкет или кейтеринг", { body: order ? "№" + d.maxId : "Перезвоните гостю" });
+              const [title, body] = order ? ["Новый заказ обеда", "№" + d.maxId]
+                : booking ? ["Новая бронь стола", "Подтвердите гостю"]
+                : ["Новая заявка на банкет или кейтеринг", "Перезвоните гостю"];
+              new Notification(title, { body });
             }
-            maxId = d.maxId; maxLead = d.maxLead;
+            maxId = d.maxId; maxLead = d.maxLead; maxBooking = d.maxBooking;
             setTimeout(() => location.reload(), 1200);
           }
         } catch {}

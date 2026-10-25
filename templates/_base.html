@@ -39,6 +39,7 @@
       <nav class="nav" id="nav" aria-label="Разделы">
         <a href="/menu" {% if nav == 'menu' %}aria-current="page"{% endif %}>Меню</a>
         <a href="/obedy" {% if nav == 'obedy' %}aria-current="page"{% endif %}>Обеды</a>
+        {% if not static_site %}<a href="/stol" {% if nav == 'stol' %}aria-current="page"{% endif %}>Стол</a>{% endif %}
         <a href="/banket" {% if nav == 'banket' %}aria-current="page"{% endif %}>Банкеты</a>
         <a href="/keytering" {% if nav == 'keytering' %}aria-current="page"{% endif %}>Кейтеринг</a>
         <a href="/#galereya">Галерея</a>
@@ -77,6 +78,7 @@
           <h3 class="footer__h">Гостям</h3>
           <ul class="footer__links">
             <li><a href="/kontakty">Контакты</a></li>
+            {% if not static_site %}<li><a href="/stol">Стол ко времени</a></li>{% endif %}
             <li><a href="/banket#raschet">Заявка на банкет</a></li>
             <li><a href="{{ order_href }}">Заказать обед</a></li>
             {% if not static_site %}<li><a href="/kabinet">Личный кабинет</a></li>{% endif %}

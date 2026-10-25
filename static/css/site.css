@@ -658,6 +658,7 @@ body::after {
 .app__title span:first-child { color: var(--glow); }
 .app__title span:last-child { color: var(--cream); }
 .app__note { margin: 14px 0 0; color: var(--text-dark); font-size: .95rem; }
+.app__note a { color: var(--glow); }
 .app__body { padding-top: 26px; padding-bottom: 140px; }
 
 /* Переключатель «Доставка / Самовывоз / В кафе» */
@@ -693,7 +694,8 @@ body::after {
 @media (min-width: 900px) { .opts { grid-template-columns: 1fr 1fr; } }
 .opt { display: flex; align-items: center; gap: 14px; padding: 16px 16px 16px 20px; background: var(--white); border: 1.5px solid var(--line); border-radius: 16px; transition: border-color .2s, box-shadow .2s; }
 .opt.is-picked { border-color: var(--river); box-shadow: 0 10px 26px rgba(21,131,173,.15); }
-.opt__info { flex: 1; min-width: 0; }
+.opts > * { min-width: 0; }
+.opt__info { flex: 1; min-width: 0; overflow-wrap: break-word; hyphens: auto; }
 .opt__title { margin: 0 0 4px; font-size: 1.45rem; }
 .opt__parts { margin: 0; font-size: .86rem; line-height: 1.45; color: var(--text); }
 .opt__buy { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex: none; }
@@ -706,7 +708,7 @@ body::after {
 .qty span { min-width: 22px; text-align: center; font-family: var(--poster); font-size: 1.15rem; }
 /* Счётчик гостей в оформлении: тот же, но с полем ввода */
 .qty--field { display: inline-flex; }
-.field .qty--field input { width: 56px; padding: 0; border: 0; background: none; color: inherit; text-align: center; box-shadow: none;
+.qty--field input, .field .qty--field input { width: 56px; padding: 0; border: 0; background: none; color: inherit; text-align: center; box-shadow: none;
   font-family: var(--poster); font-size: 1.2rem; -moz-appearance: textfield; appearance: textfield; }
 .qty--field input::-webkit-inner-spin-button, .qty--field input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
@@ -717,13 +719,16 @@ body::after {
 .mine__item a span { display: block; font-size: .86rem; color: var(--text); }
 .mine__status { padding: 2px 10px; border-radius: 999px; font-size: .78rem; font-weight: 700; background: var(--line); }
 .mine__status--new { background: var(--wine); color: var(--wood); }
-.mine__status--on_way, .mine__status--ready, .mine__status--served, .mine__status--cooking, .mine__status--accepted { background: var(--river); color: var(--white); }
+.mine__status--on_way, .mine__status--ready, .mine__status--served, .mine__status--confirmed, .mine__status--seated, .mine__status--cooking, .mine__status--accepted { background: var(--river); color: var(--white); }
 
 /* Корзина */
 .cartbar { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 36; max-width: 640px; margin: 0 auto;
   display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 12px 12px 20px;
   background: var(--dark); color: var(--white); border-radius: 18px; box-shadow: 0 18px 40px rgba(0,0,0,.35); }
 .cartbar[hidden] { display: none; }
+.cartbar > div { min-width: 0; }
+.cartbar__btn { flex: none; }
+@media (max-width: 400px) { .cartbar { padding-left: 16px; gap: 10px; } .cartbar__btn { padding: 0 16px; font-size: 1rem; letter-spacing: .05em; } }
 .cartbar__count { font-size: .82rem; color: var(--text-dark); }
 .cartbar__sum { font-family: var(--poster); font-weight: 600; font-size: 1.7rem; line-height: 1.1; color: var(--cream); }
 .cartbar__btn { min-height: 50px; padding: 0 26px; border: 0; border-radius: 14px; background: var(--glow); color: var(--dark); cursor: pointer;
@@ -803,7 +808,8 @@ body:has(.cartbar:not([hidden])) .chat, body:has(.cartbar:not([hidden])) .instal
 .cab-stats li { display: flex; flex-direction: column; }
 .cab-stats b { font-family: var(--poster); font-weight: 600; font-size: 2.2rem; line-height: 1; color: var(--cream); }
 .cab-stats span { font-size: .85rem; color: var(--text-dark); }
-.cab-cta { margin: 0 0 30px; }
+.cab-cta { margin: 0 0 30px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.cab-cta .opt__add { display: inline-flex; align-items: center; text-decoration: none; }
 .cab-cta .cartbar__btn { display: inline-flex; align-items: center; }
 .co-list { list-style: none; margin: 0 0 34px; padding: 0; display: grid; gap: 10px; }
 .co { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 14px 16px; background: var(--white); border: 1.5px solid var(--line); border-radius: 16px; }
@@ -850,6 +856,7 @@ body:has(.cartbar:not([hidden])) .chat, body:has(.cartbar:not([hidden])) .instal
   font-family: "Amatic SC", var(--serif); font-weight: 700; font-size: clamp(4.4rem, 17vw, 8rem);
   line-height: 1; letter-spacing: .02em; color: #fff;
 }
+.paper-hero__cta { margin: 22px 0 0; }
 .paper-hero__lead { max-width: 520px; margin: 0 auto; font-size: 1.02rem; color: var(--muted-ink); }
 .paper-hero__sketch { position: absolute; width: clamp(110px, 17vw, 240px); height: auto; color: var(--sketch); opacity: .5; }
 .paper-hero__sketch--l { left: -20px; bottom: -6px; transform: rotate(-8deg); }
@@ -917,3 +924,27 @@ body:has(.cartbar:not([hidden])) .chat, body:has(.cartbar:not([hidden])) .instal
   .seg { display: flex; }
   .seg__btn { flex: 1 1 auto; padding: 9px 10px 8px; letter-spacing: .06em; font-size: .92rem; }
 }
+
+/* Стол ко времени (/stol): время, гости, разделы меню, предзаказ в листе */
+[data-booking] .subhead { margin: 34px 0 14px; }
+[data-booking] .subhead:first-child { margin-top: 0; }
+.book-optional { font-size: .8rem; letter-spacing: .1em; }
+/* Время — одной лентой, как дни: 12:00–23:30 сеткой занимало полэкрана */
+.book-times { flex-wrap: nowrap; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: -6px -20px 0; padding: 0 20px 4px; }
+.book-times::-webkit-scrollbar { display: none; }
+.book-times .choice { flex: none; }
+.book-bar__sum { font-size: 1.25rem; }
+@media (max-width: 400px) { .book-bar__sum { font-size: 1.05rem; } }
+.book-guests { margin-top: 34px; }
+.book-guests .qty--field { margin-bottom: 6px; }
+.book-guests__more { margin: 0; font-size: .88rem; }
+.cats { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 18px -20px 18px; padding: 0 20px 4px; }
+.cats::-webkit-scrollbar { display: none; }
+.cat { flex: none; padding: 8px 16px 7px; border: 1.5px solid var(--ink); border-radius: 999px; background: none; cursor: pointer; white-space: nowrap;
+  font-family: var(--poster); font-weight: 500; font-size: .92rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); }
+.cat[aria-pressed="true"] { background: var(--ink); color: var(--cream); }
+.cat i { font-style: normal; display: inline-block; min-width: 20px; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--glow); color: var(--dark); font-size: .8rem; }
+.book-pre { list-style: none; margin: 0 0 16px; padding: 12px 14px; border-radius: 12px; background: var(--kraft-light); font-size: .92rem; }
+.book-pre li { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
+.book-pre li span { min-width: 0; overflow-wrap: break-word; }
+.book-pre__total { margin-top: 6px; padding-top: 8px !important; border-top: 1px dashed rgba(0,0,0,.2); font-weight: 600; }
