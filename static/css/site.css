@@ -925,6 +925,16 @@ body:has(.cartbar:not([hidden])) .chat, body:has(.cartbar:not([hidden])) .instal
   .seg__btn { flex: 1 1 auto; padding: 9px 10px 8px; letter-spacing: .06em; font-size: .92rem; }
 }
 
+/* Стрелки у горизонтальных лент (site.js, [data-hscroll]) — только для мыши */
+.hs { position: relative; }
+.hs__btn { position: absolute; z-index: 2; width: 40px; height: 40px; margin-top: -20px; border: 1.5px solid var(--ink); border-radius: 50%;
+  background: var(--white); color: var(--ink); font-size: 1.6rem; line-height: 1; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+.hs__btn:hover { background: var(--ink); color: var(--cream); }
+.hs__btn--prev { left: -8px; }
+.hs__btn--next { right: -8px; }
+.hs__btn[hidden] { display: none; }
+@media (hover: none), (pointer: coarse) { .hs__btn { display: none; } }
+
 /* Стол ко времени (/stol): время, гости, разделы меню, предзаказ в листе */
 [data-booking] .subhead { margin: 34px 0 14px; }
 [data-booking] .subhead:first-child { margin-top: 0; }

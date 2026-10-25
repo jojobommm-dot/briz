@@ -14,8 +14,8 @@
 
   <div class="wrap app__body">
     <h2 class="subhead">Когда</h2>
-    <nav class="days" aria-label="День" data-days></nav>
-    <div class="choices book-times" data-times></div>
+    <nav class="days" aria-label="День" data-days data-hscroll></nav>
+    <div class="choices book-times" data-times data-hscroll></div>
     <p class="muted" data-no-times hidden>На этот день свободного времени для брони уже нет — выберите другой.</p>
 
     <div class="book-guests">
@@ -30,7 +30,7 @@
 
     <h2 class="subhead">Предзаказ <span class="muted book-optional">— необязательно</span></h2>
     <p class="muted">Выберите блюда — кухня приготовит к вашему времени. Или закажете на месте.</p>
-    <nav class="cats" aria-label="Разделы меню" data-cats></nav>
+    <nav class="cats" aria-label="Разделы меню" data-cats data-hscroll></nav>
     <ul class="opts" data-dishes></ul>
 
     <noscript><p class="lead">Для брони онлайн нужен JavaScript. Или позвоните: <a href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a></p></noscript>

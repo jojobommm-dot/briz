@@ -62,7 +62,10 @@
       $("[data-no-times]").hidden = times.length > 0;
       // Выбранное время — в поле зрения ленты, страницу при этом не двигаем
       const on = box.querySelector("input:checked");
-      if (on) box.scrollLeft = on.parentElement.offsetLeft - box.offsetLeft - box.clientWidth / 2 + on.parentElement.offsetWidth / 2;
+      if (on) {
+        const r = on.parentElement.getBoundingClientRect(), b = box.getBoundingClientRect();
+        box.scrollLeft += r.left - b.left - (b.width - r.width) / 2;
+      }
     }
 
     function renderCats() {
