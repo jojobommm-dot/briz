@@ -748,6 +748,12 @@ body:has(.cartbar:not([hidden])) .chat, body:has(.cartbar:not([hidden])) .instal
 .sheet__submit:disabled { opacity: .6; }
 .sheet .field[hidden] { display: none; }
 .sheet .choice span { padding: 7px 16px 6px; font-size: .9rem; }
+/* Способ получения в оформлении: три равные кнопки в ряд, длинная подпись — в две строки */
+.choices--modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.choices--modes .choice { display: flex; }
+.sheet .choices--modes .choice span { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 44px;
+  padding: 6px 8px; border-radius: 18px; text-align: center; line-height: 1.15; letter-spacing: .06em; }
+@media (max-width: 360px) { .sheet .choices--modes .choice span { padding: 6px 4px; font-size: .8rem; letter-spacing: .03em; } }
 
 /* Статус заказа */
 .steps { list-style: none; margin: 10px 0 30px; padding: 0; display: grid; counter-reset: st; }

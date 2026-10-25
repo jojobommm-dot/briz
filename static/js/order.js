@@ -35,17 +35,17 @@
     // Подписи способов получения: заголовок, пояснение, время, оплата
     const MODE_TEXT = {
       delivery: {
-        title: "с доставкой", legend: "Время доставки", pay: "Оплата курьеру — наличными или картой.",
+        label: "Доставка", title: "с доставкой", legend: "Время доставки", pay: "Оплата курьеру — наличными или картой.",
         hint: "Позвонить на ресепшн, без лука…",
         note: (c) => `Доставка на сегодня — при заказе до ${c}. Привезём к обеду.`,
       },
       pickup: {
-        title: "с собой", legend: "Когда заберёте", pay: "Оплата при получении — наличными или картой.",
+        label: "Самовывоз", title: "с собой", legend: "Когда заберёте", pay: "Оплата при получении — наличными или картой.",
         hint: "Без лука, суп отдельно…",
         note: (c) => `Заберите в кафе с собой: соберём к выбранному времени. На сегодня — до ${c}.`,
       },
       hall: {
-        title: "ко времени", legend: "Во сколько придёте", pay: "Оплата в кафе после обеда — наличными или картой.",
+        label: "В кафе<br>ко времени", title: "ко времени", legend: "Во сколько придёте", pay: "Оплата в кафе после обеда — наличными или картой.",
         hint: "Столик у окна, детский стул, без лука…",
         note: (c) => `Придёте — а обед уже на столе. Закажите заранее, на сегодня — до ${c}, минимум за полчаса.`,
       },
@@ -120,7 +120,8 @@
 
     function render() { renderMode(); renderDays(); renderToday(); renderOptions(); renderCart(); }
 
-    root.querySelectorAll("[data-mode]").forEach((b) => b.addEventListener("click", () => { state.mode = b.dataset.mode; state.slot = null; render(); }));
+    const setMode = (m) => { state.mode = m; state.slot = null; render(); };
+    root.querySelectorAll("[data-mode]").forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode)));
 
     // ---- оформление ----
     const sheet = $("[data-sheet]");
@@ -134,9 +135,19 @@
     };
 
     function renderSheet() {
+      // Способ получения — и здесь: шапку страницы легко проскроллить и не заметить
+      const modes = $("[data-sheet-modes]");
+      modes.innerHTML = "";
+      Object.keys(MODE_TEXT).forEach((m) => {  // порядок — как в шапке; JSON с сервера ключи сортирует
+        const label = document.createElement("label");
+        label.className = "choice";
+        label.innerHTML = `<input type="radio" name="mode" value="${m}" ${m === state.mode ? "checked" : ""}><span>${MODE_TEXT[m].label}</span>`;
+        label.querySelector("input").addEventListener("change", () => { setMode(m); renderSheet(); });
+        modes.appendChild(label);
+      });
       const d = currentDay();
       $("[data-summary]").textContent =
-        `${data.modes[state.mode]} · ${d.label}, ${d.short} · ` +
+        `${d.label}, ${d.short} · ` +
         cart().map((c) => c.opt.title + (c.qty > 1 ? ` × ${c.qty}` : "")).join(", ");
       $("[data-slot-legend]").textContent = text().legend;
       $("[data-pay]").textContent = text().pay;
