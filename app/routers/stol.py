@@ -143,6 +143,8 @@ async def create_booking(
                 "statusLabel": same.status_label,
                 "phone": mask_phone(same.phone),
                 "canReplace": bk.can_edit(same.status, same.day, same.time, now),
+                "items": [{"title": i.name, "qty": i.qty} for i in same.items],
+                "total": same.total,
                 "token": same.token if mine else "",
             }
             return JSONResponse({"duplicate": dup}, status_code=409)

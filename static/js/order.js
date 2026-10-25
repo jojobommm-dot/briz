@@ -148,6 +148,7 @@
     // Плашка «уже есть заказ»: текст и кнопки [подпись, главная ли, действие]
     function renderDup(text, actions) {
       $("[data-dup-text]").textContent = text;
+      $("[data-dup-more]").hidden = true;
       const box = $("[data-dup-actions]");
       box.innerHTML = "";
       actions.forEach(([label, primary, act]) => {
@@ -160,6 +161,19 @@
       });
       $("[data-dup]").hidden = false;
       $("[data-dup]").scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+
+
+    // «Открыть» прежний заказ: свой — на его странице, с другого браузера — состав в плашке
+    function openAction(d, word) {
+      if (d.token) return ["Открыть", false, () => { location.href = `/zakaz/${d.token}`; }];
+      return ["Открыть", false, (e) => {
+        const more = $("[data-dup-more]");
+        const list = d.items.map((i) => i.title + (i.qty > 1 ? ` × ${i.qty}` : "")).join(", ");
+        more.textContent = list ? `${word}: ${list} · ${rub(d.total)}` : `${word}: нет`;
+        more.hidden = !more.hidden;
+        e.target.textContent = more.hidden ? "Открыть" : "Скрыть";
+      }];
     }
 
     // Сервер нашёл незавершённый заказ на этот номер и день — спрашиваем, что делать.
@@ -178,9 +192,8 @@
         }]);
       } else if (d.canReplace) {
         actions.push(["Заменить его этим заказом", true, () => send({ replace: d.number })]);
-      } else if (d.token) {
-        actions.push(["Открыть его", true, () => { location.href = `/zakaz/${d.token}`; }]);
       }
+      actions.push(openAction(d, "Состав"));
       actions.push(["Это другой заказ — оформить ещё один", false, () => send({ duplicate: "new" })]);
       renderDup(text, actions);
     }
@@ -206,7 +219,7 @@
       if (dup) {
         renderDup(`На ${d.label.toLowerCase()} у вас уже есть заказ №${dup.number}: ` +
           dup.items.map((i) => i.title + (i.qty > 1 ? ` × ${i.qty}` : "")).join(", ") + ".",
-          [["Изменить его", true, () => { sheet.close(); startEdit(dup); }]]);
+          [["Изменить его", true, () => { sheet.close(); startEdit(dup); }], openAction(dup, "Состав")]);
       }
       $("[data-summary]").textContent =
         `${d.label}, ${d.short} · ` +
@@ -324,7 +337,8 @@
           <a href="/zakaz/${o.token}"><b>№${o.number} · ${o.dayLabel}, ${o.slot}</b>
             <span></span></a>
           <span class="mine__status mine__status--${o.status}">${o.statusLabel}</span>
-          ${o.canEdit ? `<button type="button" class="opt__add" data-edit>Изменить</button>` : ""}`;
+          ${o.canEdit ? `<button type="button" class="opt__add" data-edit>Изменить</button>` : ""}
+          <a class="linklike mine__open" href="/zakaz/${o.token}">Открыть</a>`;
         li.querySelector("a span").textContent =
           `${o.modeLabel} · ${o.items.map((i) => i.title + (i.qty > 1 ? " × " + i.qty : "")).join(", ")} · ${rub(o.total)}`;
         const b = li.querySelector("[data-edit]");

@@ -111,7 +111,8 @@ async def _remember(session, customer, draft, now) -> None:
 
 def _duplicate_json(o: Order, mine: bool, now: datetime) -> dict:
     """Что сказать про незавершённый заказ на тот же номер и день. Чужому браузеру —
-    без имени, адреса и состава: номер телефона ещё не доказывает, что заказ его."""
+    состав и сумма (решить, заменять ли), но без имени, адреса и ссылки: номер телефона
+    ещё не доказывает, что заказ его."""
     return {
         "number": o.id,
         "dayLabel": f"{lo.WEEKDAYS[o.day.weekday()]}, {o.day.day} {lo.MONTHS[o.day.month - 1]}",
@@ -120,6 +121,8 @@ def _duplicate_json(o: Order, mine: bool, now: datetime) -> dict:
         "statusLabel": o.status_label,
         "phone": mask_phone(o.phone),
         "canReplace": can_edit(o, now),
+        "items": [{"title": i.title, "qty": i.qty} for i in o.items],
+        "total": o.total,
         "token": o.token if mine else "",  # свой — можно открыть и изменить
     }
 

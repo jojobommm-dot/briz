@@ -171,6 +171,9 @@ def test_same_phone_other_browser_is_asked(client):
     assert dup["phone"] == "+7 (912) ***-**-33"
     assert dup["token"] == ""  # чужому браузеру — ни ссылки, ни имени, ни адреса
     assert "Ирина" not in r.text and "Кировоградская" not in r.text
+    # Состав и сумма — чтобы решить, заменять ли; телефон — только маской
+    assert dup["items"] == [{"title": "Полный комплекс", "qty": 2}] and dup["total"] == 780
+    assert "79121112233" not in r.text
 
 
 def test_same_browser_gets_link_to_edit(client):
