@@ -1,5 +1,5 @@
 // Кафе «Бриз»: мобильное меню, слайдер, меню недели, кнопка чата,
-// калькулятор банкета, разделы меню, стрелки у горизонтальных лент.
+// калькулятор банкета, разделы меню, прокрутка горизонтальных лент.
 "use strict";
 
 (function () {
@@ -220,37 +220,39 @@
     }
   }
 
-  // --- стрелки ‹ › у горизонтальных лент (дни, время, разделы меню) ---
-  // Пальцем ленту листают и так, а мышью без видимой полосы прокрутки — никак.
-  // Стрелка видна, только если в её сторону есть что прокрутить
+  // --- горизонтальные ленты (дни, время, разделы меню) ---
+  // Мышью: курсор у левого или правого края — лента едет туда, чем ближе к краю,
+  // тем быстрее. Пальцем листается сама. Край, за которым есть ещё, растворяется
+  const mouse = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const EDGE = 110;  // ширина зоны у края, px
+  const MAX_SPEED = 12;  // px за кадр у самого края
   document.querySelectorAll("[data-hscroll]").forEach((row) => {
-    const box = document.createElement("div");
-    box.className = "hs";
-    row.before(box);
-    box.append(row);
-    const arrow = (dir) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = `hs__btn hs__btn--${dir < 0 ? "prev" : "next"}`;
-      b.setAttribute("aria-label", dir < 0 ? "Прокрутить назад" : "Прокрутить вперёд");
-      b.textContent = dir < 0 ? "‹" : "›";
-      b.hidden = true;
-      b.addEventListener("click", () => row.scrollBy({ left: dir * row.clientWidth * 0.7, behavior: reducedMotion ? "auto" : "smooth" }));
-      box.append(b);
-      return b;
-    };
-    const prev = arrow(-1), next = arrow(1);
     const update = () => {
-      prev.hidden = row.scrollLeft <= 2;
-      next.hidden = row.scrollLeft + row.clientWidth >= row.scrollWidth - 2;
-      // По центру ленты по высоте, без её нижнего отступа
-      const mid = `${row.offsetTop + row.offsetHeight / 2}px`;
-      prev.style.top = next.style.top = mid;
+      row.classList.toggle("is-more-left", row.scrollLeft > 2);
+      row.classList.toggle("is-more-right", row.scrollLeft + row.clientWidth < row.scrollWidth - 2);
     };
     row.addEventListener("scroll", update, { passive: true });
     new ResizeObserver(update).observe(row);
     // Содержимое лент рисуют скрипты заказа и брони — пересчитываем после них
     new MutationObserver(update).observe(row, { childList: true });
     update();
+    if (!mouse) return;
+
+    let speed = 0, frame = 0;
+    const tick = () => {
+      const before = row.scrollLeft;
+      row.scrollLeft += speed;
+      frame = speed && row.scrollLeft !== before ? requestAnimationFrame(tick) : 0;
+    };
+    row.addEventListener("mousemove", (e) => {
+      const r = row.getBoundingClientRect();
+      const x = e.clientX - r.left;
+      const near = Math.min(EDGE, r.width / 4);
+      if (x < near) speed = -MAX_SPEED * (1 - x / near);
+      else if (x > r.width - near) speed = MAX_SPEED * (1 - (r.width - x) / near);
+      else speed = 0;
+      if (speed && !frame) frame = requestAnimationFrame(tick);
+    });
+    row.addEventListener("mouseleave", () => { speed = 0; });
   });
 })();
