@@ -130,9 +130,23 @@ def day_label(day: date, today: date) -> str:
 
 
 def order_days(now: datetime) -> list[dict]:
-    """Ближайшие рабочие дни для выбора, начиная с сегодняшнего (если он рабочий)."""
+    """Ближайшие рабочие дни для выбора. «Сегодня» — всегда первым: в выходной оно
+    видно неактивным с пояснением, иначе гость не понимает, куда делся сегодняшний день."""
     days, d = [], now.date()
-    while len(days) < DAYS_AHEAD:
+    if menu_for(d) is None:
+        days.append(
+            {
+                "date": d.isoformat(),
+                "label": "Сегодня",
+                "short": f"{WEEKDAYS[d.weekday()]}, {d.day} {MONTHS[d.month - 1]}",
+                "open": {m: False for m in MODES},
+                "slots": {m: [] for m in MODES},
+                "menu": None,
+                "image": None,
+            }
+        )
+        d += timedelta(days=1)
+    while sum(1 for x in days if x["menu"]) < DAYS_AHEAD:
         if menu_for(d) is not None:
             days.append(
                 {

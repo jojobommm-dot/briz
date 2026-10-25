@@ -49,6 +49,15 @@ def test_days_and_cutoff():
     assert lo.order_days(at(13, 31))[0]["open"] == closed
 
 
+def test_weekend_today_shown_closed():
+    sunday = date(2026, 10, 11)
+    days = lo.order_days(at(10, 0, day=sunday))
+    assert days[0]["label"] == "Сегодня" and days[0]["menu"] is None
+    assert not any(days[0]["open"].values())
+    assert days[1]["label"] == "Завтра" and days[1]["open"]["delivery"]
+    assert sum(1 for d in days if d["menu"]) == lo.DAYS_AHEAD
+
+
 def test_today_slots_need_lead_time():
     # Доставка — минимум за час: в 11:10 окно 12:00 уже не успеть, 12:30 — да
     assert lo.order_days(at(11, 10))[0]["slots"]["delivery"] == lo.SLOTS["delivery"][1:]

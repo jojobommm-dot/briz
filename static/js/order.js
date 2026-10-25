@@ -25,7 +25,14 @@
     const $ = (sel) => root.querySelector(sel);
     const state = { mode: "delivery", day: null, qty: {}, slot: null };
 
-    const firstOpenDay = (mode) => data.days.find((d) => d.open[mode]);
+    const firstOpenDay = (mode) => data.days.find((d) => d.open[mode]) || data.days.find((d) => d.menu);
+    // Что сегодня: обедов нет (выходной), приём закрыт или до скольки ещё можно
+    const todayNote = () => {
+      const t = data.days[0];
+      if (!t.menu) return "Сегодня выходной — комплексные обеды по будням, заказ на ближайший рабочий день.";
+      if (!t.open[state.mode]) return "На сегодня приём уже закрыт — выберите другой день.";
+      return `На сегодня — до ${data.cutoff[state.mode]}.`;
+    };
     const currentDay = () => data.days.find((d) => d.date === state.day);
     const priceOf = (opt) => opt.price[state.mode];
     const cart = () => data.options.filter((o) => state.qty[o.kind] > 0).map((o) => ({ opt: o, qty: state.qty[o.kind] }));
@@ -37,17 +44,17 @@
       delivery: {
         label: "Доставка", title: "с доставкой", legend: "Время доставки", pay: "Оплата курьеру — наличными или картой.",
         hint: "Позвонить на ресепшн, без лука…",
-        note: (c) => `Привезём к выбранному времени — закажите минимум за час. На сегодня — до ${c}.`,
+        about: "Привезём к выбранному времени — закажите минимум за час.",
       },
       pickup: {
         label: "Самовывоз", title: "с собой", legend: "Когда заберёте", pay: "Оплата при получении — наличными или картой.",
         hint: "Без лука, суп отдельно…",
-        note: (c) => `Заберите в кафе с собой: соберём к выбранному времени. На сегодня — до ${c}.`,
+        about: "Заберите в кафе с собой: соберём к выбранному времени, закажите минимум за полчаса.",
       },
       hall: {
         label: "В кафе<br>ко времени", title: "ко времени", legend: "Во сколько придёте", pay: "Оплата в кафе после обеда — наличными или картой.",
         hint: "Столик у окна, детский стул, без лука…",
-        note: (c) => `Придёте — а обед уже на столе. Закажите заранее, на сегодня — до ${c}, минимум за полчаса.`,
+        about: "Придёте — а обед уже на столе. Закажите минимум за полчаса.",
       },
     };
     const text = () => MODE_TEXT[state.mode];
@@ -55,9 +62,9 @@
 
     function renderMode() {
       root.querySelectorAll("[data-mode]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.mode === state.mode)));
-      $("[data-cutoff]").textContent = text().note(data.cutoff[state.mode]);
+      $("[data-cutoff]").textContent = `${text().about} ${todayNote()}`;
       $(".app__title span:last-child").textContent = text().title;
-      if (!currentDay() || !currentDay().open[state.mode]) state.day = (firstOpenDay(state.mode) || data.days[0]).date;
+      if (!currentDay() || !currentDay().open[state.mode]) state.day = firstOpenDay(state.mode).date;
     }
 
     function renderDays() {
@@ -69,7 +76,7 @@
         b.className = "day";
         b.disabled = !d.open[state.mode];
         b.setAttribute("aria-pressed", String(d.date === state.day));
-        b.innerHTML = `<b>${d.label}</b><span>${d.open[state.mode] ? d.short : "приём закрыт"}</span>`;
+        b.innerHTML = `<b>${d.label}</b><span>${d.open[state.mode] ? d.short : d.menu ? "приём закрыт" : "обедов нет"}</span>`;
         b.addEventListener("click", () => { state.day = d.date; render(); });
         nav.appendChild(b);
       });
@@ -263,7 +270,7 @@
     }
 
     let me = { loggedIn: false, addresses: [] };
-    state.day = (firstOpenDay(state.mode) || data.days[0]).date;
+    state.day = firstOpenDay(state.mode).date;
     render();
     renderMine();
     fetch("/api/me").then((r) => r.json()).then((d) => { me = d; }).catch(() => {});
