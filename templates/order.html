@@ -1,10 +1,10 @@
 {% extends "_base.html" %}
-{% block title %}Заказать обед — кафе «{{ cafe.name }}», {{ cafe.city }}{% endblock %}
-{% block description %}Закажите комплексный обед кафе «{{ cafe.name }}» с доставкой в офис, с собой или в кафе ко времени — придёте, а обед уже на столе. Меню на каждый день, доставка на сегодня — если заказать за час.{% endblock %}
+{% block title %}Комплексные обеды с доставкой — заказать онлайн, кафе «{{ cafe.name }}», {{ cafe.city }}{% endblock %}
+{% block description %}Комплексный обед за {{ lunch.price }} ₽ в Кировском районе Перми, с доставкой — {{ lunch.price_delivery }} ₽. Меню на неделю, заказ онлайн: доставка в офис, с собой или в кафе ко времени.{% endblock %}
 
 {% block content %}
 {# Экран заказа рисует static/js/order.js по данным ниже; без JS остаётся телефон #}
-<section class="app" data-order>
+<section class="app" id="zakaz" data-order>
   <div class="app__head">
     <div class="wrap">
       <h1 class="poster app__title"><span>Обед</span><span>с доставкой</span></h1>
@@ -117,6 +117,9 @@
 
   <script type="application/json" id="order-data">{{ data|tojson }}</script>
 </section>
+
+{# Меню недели и цены обычным текстом: виден без скриптов и поисковикам (бывшая /obedy) #}
+{% include "_lunch_info.html" %}
 {% endblock %}
 
 {% block scripts %}<script src="{{ asset('js/order.js') }}" defer></script>{% endblock %}

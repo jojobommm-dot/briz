@@ -38,7 +38,6 @@
       </a>
       <nav class="nav" id="nav" aria-label="Разделы">
         <a href="/menu" {% if nav == 'menu' %}aria-current="page"{% endif %}>Меню</a>
-        <a href="/obedy" {% if nav == 'obedy' %}aria-current="page"{% endif %}>Обеды</a>
         {% if not static_site %}<a href="/stol" {% if nav == 'stol' %}aria-current="page"{% endif %}>Стол</a>{% endif %}
         <a href="/banket" {% if nav == 'banket' %}aria-current="page"{% endif %}>Банкеты</a>
         <a href="/keytering" {% if nav == 'keytering' %}aria-current="page"{% endif %}>Кейтеринг</a>
@@ -68,7 +67,7 @@
           <ul class="footer__links">
             <li><a href="/" {% if nav == 'home' %}class="is-active"{% endif %}>Главная</a></li>
             <li><a href="/menu">Основное меню</a></li>
-            <li><a href="/obedy">Обеды на неделю</a></li>
+            <li><a href="{{ order_href }}">Обеды на неделю</a></li>
             <li><a href="/banket">Банкеты</a></li>
             <li><a href="/keytering">Выездной кейтеринг</a></li>
             <li><a href="/#galereya">Галерея</a></li>

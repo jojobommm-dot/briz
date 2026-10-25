@@ -1,0 +1,38 @@
+{# Меню недели, цены и условия обедов обычным текстом — для гостя и для поисковиков.
+   Подключается на /zakaz (под приложением) и в статичной копии на /obedy. #}
+{% from "_macros.html" import menu_item %}
+<section class="section lunch-info" id="menyu-nedeli">
+  <div class="wrap split split--top">
+    <div>
+      <p class="eyebrow">Меню недели</p>
+      <h2>Обеды на каждый день</h2>
+      <p>Салат, суп, второе и гарнир — комплекс за {{ lunch.price|rub }} в кафе и {{ lunch.price_delivery|rub }} с доставкой. Меню новое каждую неделю, свежее публикуем <a href="{{ cafe.vk }}" target="_blank" rel="noopener">во ВКонтакте</a>.</p>
+      {% for day, salad, soup, main, side in lunch.week %}
+      <div class="lunch-day">
+        <h3 class="lunch-day__name">{{ day }}</h3>
+        <p><b>Салат:</b> {{ salad }}</p>
+        <p><b>Суп:</b> {{ soup }}</p>
+        <p><b>Второе:</b> {{ main }}, {{ side|lower }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    <aside class="note-card">
+      <p class="eyebrow">Цены</p>
+      <h2>В кафе и с доставкой</h2>
+      {% for what, cafe_price, delivery_price in lunch.prices %}{{ menu_item(what, cafe_price, "", delivery_price, "с доставкой") }}{% endfor %}
+      <p class="mi__desc"><span class="price-color">●</span> в кафе &nbsp; ● с доставкой</p>
+      <ul class="plain">
+        <li>Доставка — закажите {{ lunch.order_lead }}, привезём к нужному времени</li>
+        <li>В кафе ждём на обед с {{ lunch.since }}, {{ cafe.address }}</li>
+        {% if not static_site %}<li>Закажите заранее ко времени — придёте, а обед уже на столе</li>{% endif %}
+      </ul>
+      {% if static_site %}
+      <a class="frame-btn" href="tel:{{ cafe.phone }}"><span>Заказать по телефону</span></a>
+      <p class="field__hint" style="margin-top: 22px">{{ cafe.phone|phone }} · или <a href="{{ cafe.vk }}" target="_blank" rel="noopener">во ВКонтакте</a></p>
+      {% else %}
+      <a class="frame-btn" href="#zakaz"><span>Выбрать обед</span></a>
+      <p class="field__hint" style="margin-top: 22px">Или по телефону: <a href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a></p>
+      {% endif %}
+    </aside>
+  </div>
+</section>

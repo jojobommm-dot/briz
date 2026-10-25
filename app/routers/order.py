@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .. import lunch_order as lo
 from ..auth import current_customer
+from ..content import LUNCH
 from ..database import get_session
 from ..guest import ensure_guest, guest_key
 from ..models import STATUSES, Booking, Customer, Order, OrderItem
@@ -83,7 +84,9 @@ async def _by_token(token: str, session: AsyncSession) -> Order:
 @router.get("/zakaz", response_class=HTMLResponse)
 async def order_page(request: Request):
     return templates.TemplateResponse(
-        request, "order.html", {"data": lo.page_data(lo.now_local()), "nav": "zakaz"}
+        request,
+        "order.html",
+        {"data": lo.page_data(lo.now_local()), "lunch": LUNCH, "nav": "zakaz"},
     )
 
 

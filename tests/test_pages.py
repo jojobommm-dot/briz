@@ -9,7 +9,7 @@ from app import banquet
 
 
 @pytest.mark.parametrize(
-    "path", ["/", "/menu", "/banket", "/obedy", "/kontakty", "/banket/spasibo"]
+    "path", ["/", "/menu", "/banket", "/zakaz", "/stol", "/kontakty", "/banket/spasibo"]
 )
 def test_pages_open(client, path):
     r = client.get(path)
@@ -104,10 +104,27 @@ def test_home_blocks(client):
         assert client.get(src).status_code == 200, src
 
 
-def test_lunch_real_prices(client):
-    r = client.get("/obedy")
+def test_lunch_on_order_page(client):
+    # Обеды — одна страница с заказом: меню недели и цены там обычным текстом, для поиска
+    r = client.get("/zakaz")
     assert "370 ₽" in r.text and "390 ₽" in r.text
     assert "закажите за час" in r.text
+    assert "Обеды на каждый день" in r.text and "Рассольник" in r.text
+    assert "Комплексные обеды с доставкой" in r.text  # заголовок страницы
+
+
+def test_old_lunch_page_redirects(client):
+    r = client.get("/obedy", follow_redirects=False)
+    assert r.status_code == 301 and r.headers["location"] == "/zakaz"
+    home = client.get("/").text
+    assert 'href="/obedy"' not in home
+
+
+def test_sitemap(client):
+    r = client.get("/sitemap.xml")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("application/xml")
+    assert "<loc>http://testserver/zakaz</loc>" in r.text and "/obedy" not in r.text
+    assert "/kabinet" not in r.text and "/manage" not in r.text
 
 
 def test_pwa_files(client):

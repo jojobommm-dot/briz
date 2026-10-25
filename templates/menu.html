@@ -47,7 +47,7 @@
         {% endfor %}
       </div>
       <p class="paper-menu__foot">Вес — порция / гарнир / соус. Цены в рублях. Меню и цены уточняйте по телефону <a href="tel:{{ cafe.phone }}">{{ cafe.phone|phone }}</a>.</p>
-      <div class="center paper-menu__cta">{{ frame_btn("/obedy", "Обеды на неделю", "frame-btn--dark") }}</div>
+      <div class="center paper-menu__cta">{{ frame_btn("/obedy" if static_site else "/zakaz", "Обеды на неделю", "frame-btn--dark") }}</div>
     </div>
   </section>
 </div>

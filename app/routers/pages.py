@@ -3,7 +3,7 @@
 import hashlib
 import logging
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -155,12 +155,31 @@ async def keytering_thanks(request: Request):
 
 @router.get("/obedy", response_class=HTMLResponse)
 async def lunch(request: Request):
+    """Обеды теперь на одной странице с заказом — /zakaz. Старый адрес ведёт туда
+    навсегда (301: поисковики переносят его вес). Страница осталась только в статичной
+    копии сайта, где онлайн-заказа нет (tools/freeze.py)."""
+    if not templates.env.globals.get("static_site"):
+        return RedirectResponse("/zakaz", status_code=301)
     return templates.TemplateResponse(request, "lunch.html", {"lunch": LUNCH, "nav": "obedy"})
 
 
 @router.get("/kontakty", response_class=HTMLResponse)
 async def contacts(request: Request):
     return templates.TemplateResponse(request, "contacts.html", {"nav": "kontakty"})
+
+
+# Страницы для поисковиков: кабинеты, статусы заказов и служебное — не нужны
+SITEMAP_PAGES = ["/", "/menu", "/zakaz", "/stol", "/banket", "/keytering", "/kontakty"]
+
+
+@router.get("/sitemap.xml")
+async def sitemap():
+    urls = "".join(f"<url><loc>{settings.base_url}{p}</loc></url>" for p in SITEMAP_PAGES)
+    body = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>'
+    )
+    return Response(body, media_type="application/xml")
 
 
 @router.get("/robots.txt", response_class=PlainTextResponse)
@@ -181,7 +200,7 @@ _SHELL_ASSETS = [
     "icons/icon-192.png",
     "img/logo/briz-mark.svg",
 ]
-_SHELL_PAGES = ["/", "/zakaz", "/menu", "/obedy", "/kontakty", "/offline"]
+_SHELL_PAGES = ["/", "/zakaz", "/menu", "/kontakty", "/offline"]
 
 
 def _sw_version() -> str:
