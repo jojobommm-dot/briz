@@ -12,7 +12,7 @@ from .. import lunch_order as lo
 from ..auth import current_customer
 from ..content import LUNCH
 from ..database import get_session
-from ..guest import ensure_guest, guest_key
+from ..guest import ensure_guest, guest_key, is_mine, known_tokens, mask_phone
 from ..models import STATUSES, Booking, Customer, Order, OrderItem
 from ..templating import templates
 
@@ -90,6 +90,40 @@ async def order_page(request: Request):
     )
 
 
+ACTIVE = ("new", "accepted", "cooking", "on_way", "ready", "served")  # ещё не выполнен
+
+
+def _apply(order: Order, draft: lo.OrderDraft, now: datetime) -> None:
+    """Записать в заказ всё из формы — при правке и при замене прежнего заказа."""
+    for field in ("mode", "day", "slot", "name", "phone", "address", "comment", "guests"):
+        setattr(order, field, getattr(draft, field))
+    order.items = _items(draft)
+    order.total = draft.total
+    order.edited_at = now
+
+
+async def _remember(session, customer, draft, now) -> None:
+    if customer is not None and draft.mode == "delivery":
+        from .cabinet import remember_address
+
+        await remember_address(session, customer, draft.address, now)
+
+
+def _duplicate_json(o: Order, mine: bool, now: datetime) -> dict:
+    """Что сказать про незавершённый заказ на тот же номер и день. Чужому браузеру —
+    без имени, адреса и состава: номер телефона ещё не доказывает, что заказ его."""
+    return {
+        "number": o.id,
+        "dayLabel": f"{lo.WEEKDAYS[o.day.weekday()]}, {o.day.day} {lo.MONTHS[o.day.month - 1]}",
+        "slot": o.slot,
+        "modeLabel": lo.MODES[o.mode],
+        "statusLabel": o.status_label,
+        "phone": mask_phone(o.phone),
+        "canReplace": can_edit(o, now),
+        "token": o.token if mine else "",  # свой — можно открыть и изменить
+    }
+
+
 @router.post("/api/orders")
 async def create_order(
     request: Request,
@@ -97,6 +131,8 @@ async def create_order(
     session: AsyncSession = Depends(get_session),
     customer: Customer | None = Depends(current_customer),
 ):
+    """Новый заказ. Если на этот номер и день уже есть незавершённый — сначала спросим:
+    изменить его, заменить этим (replace: номер) или всё же оформить ещё (duplicate: "new")."""
     payload = await _payload(request)
     if payload is None:
         return JSONResponse({"errors": {"form": "Пустой заказ"}}, status_code=422)
@@ -105,6 +141,32 @@ async def create_order(
     draft, errors = lo.validate(payload, now)
     if draft is None:
         return JSONResponse({"errors": errors}, status_code=422)
+
+    # Заменить прежний заказ этим: тот же номер телефона — и только пока его можно менять
+    replace = payload.get("replace")
+    if replace:
+        order = await session.get(Order, replace) if isinstance(replace, int) else None
+        if order is None or order.phone != draft.phone or not can_edit(order, now):
+            return JSONResponse(
+                {"errors": {"form": "Прежний заказ уже не заменить — позвоните в кафе"}},
+                status_code=409,
+            )
+        _apply(order, draft, now)
+        await _remember(session, customer, draft, now)
+        await session.commit()
+        log.info("Заказ обеда №%s заменён новым с того же номера", order.id)
+        return {"token": order.token, "url": f"/zakaz/{order.token}", "order": order_json(order)}
+
+    key = guest_key(request)
+    if payload.get("duplicate") != "new":
+        same = await session.scalar(
+            select(Order)
+            .where(Order.phone == draft.phone, Order.day == draft.day, Order.status.in_(ACTIVE))
+            .order_by(Order.id.desc())
+        )
+        if same is not None:
+            mine = is_mine(same, key, customer, known_tokens(payload))
+            return JSONResponse({"duplicate": _duplicate_json(same, mine, now)}, status_code=409)
 
     order = Order(
         token=lo.new_token(),
@@ -121,15 +183,10 @@ async def create_order(
         guests=draft.guests,
         # Метку ставим и вошедшим: выйдет из кабинета — заказы на этом телефоне останутся видны
         guest_key=ensure_guest(request, response),
+        customer_id=customer.id if customer else None,  # заказ — в историю кабинета
         items=_items(draft),
     )
-    if customer is not None:
-        # Заказ — в историю кабинета, адрес — в сохранённые
-        order.customer_id = customer.id
-        if draft.mode == "delivery":
-            from .cabinet import remember_address
-
-            await remember_address(session, customer, draft.address, now)
+    await _remember(session, customer, draft, now)
     session.add(order)
     await session.commit()
     log.info("Заказ обеда №%s: %s, %s, %s ₽", order.id, order.day, order.mode, order.total)
@@ -159,16 +216,9 @@ async def edit_order(
     if draft is None:
         return JSONResponse({"errors": errors}, status_code=422)
 
-    for field in ("mode", "day", "slot", "name", "phone", "address", "comment", "guests"):
-        setattr(order, field, getattr(draft, field))
-    order.items = _items(draft)
-    order.total = draft.total
-    order.edited_at = now
+    _apply(order, draft, now)
     order.guest_key = order.guest_key or ensure_guest(request, response)
-    if customer is not None and draft.mode == "delivery":
-        from .cabinet import remember_address
-
-        await remember_address(session, customer, draft.address, now)
+    await _remember(session, customer, draft, now)
     await session.commit()
     log.info("Заказ обеда №%s изменён: %s, %s, %s ₽", order.id, order.day, order.mode, order.total)
     return {"token": order.token, "url": f"/zakaz/{order.token}", "order": order_json(order)}

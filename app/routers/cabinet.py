@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .. import lunch_order as lo
 from ..auth import current_customer, login_customer, logout, require_customer
-from ..banquet import normalize_phone
+from ..banquet import PHONE_ERROR, normalize_phone
 from ..database import get_session
 from ..guest import claim, guest_key
 from ..models import Address, Booking, Customer, Order
@@ -126,7 +126,7 @@ async def register(
     if not 2 <= len(name) <= 80:
         errors["name"] = "Как к вам обращаться?"
     if norm is None:
-        errors["phone"] = "Нужен номер из 10–11 цифр, например 8 912 345-67-89"
+        errors["phone"] = PHONE_ERROR
     elif await session.scalar(select(Customer.id).where(Customer.phone == norm)):
         errors["phone"] = "Этот номер уже зарегистрирован — войдите"
     if len(password) < MIN_PASSWORD:

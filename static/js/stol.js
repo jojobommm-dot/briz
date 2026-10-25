@@ -151,18 +151,56 @@
         el.textContent = msg || "";
       });
     };
+
+    // Плашка «уже есть заказ»: текст и кнопки [подпись, главная ли, действие]
+    function renderDup(text, actions) {
+      $("[data-dup-text]").textContent = text;
+      const box = $("[data-dup-actions]");
+      box.innerHTML = "";
+      actions.forEach(([label, primary, act]) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = primary ? "opt__add" : "linklike";
+        b.textContent = label;
+        b.addEventListener("click", act);
+        box.appendChild(b);
+      });
+      $("[data-dup]").hidden = false;
+      $("[data-dup]").scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+
+    // Сервер нашёл незавершённую бронь на этот номер и день — спрашиваем, что делать
+    function showDuplicate(d) {
+      const what = `бронь №${d.number} на ${d.dayLabel}, ${d.time}, стол на ${people(d.guests)} — «${d.statusLabel}»`;
+      const text = (d.token ? `У вас уже есть ${what}.` : `На номер ${d.phone} уже есть ${what}.`) +
+        (d.canReplace ? "" : " Изменить её можно по телефону.");
+      const actions = [];
+      if (d.token && d.canReplace) {
+        actions.push(["Изменить её", true, async () => {
+          const b = await (await fetch(`/api/bookings/${d.token}`)).json();
+          sheet.close();
+          startEdit(b);
+        }]);
+      } else if (d.canReplace) {
+        actions.push(["Заменить её этой бронью", true, () => send({ replace: d.number })]);
+      } else if (d.token) {
+        actions.push(["Открыть её", true, () => { location.href = `/stol/${d.token}`; }]);
+      }
+      actions.push(["Это другая бронь — забронировать ещё стол", false, () => send({ duplicate: "new" })]);
+      renderDup(text, actions);
+    }
     let me = { loggedIn: false };
 
     function renderSheet() {
       const d = currentDay();
       const ed = state.editing;
       $("[data-sheet-title]").textContent = ed ? `Изменение брони №${ed.number}` : "Бронь стола";
-      // Уже есть бронь на этот день — предлагаем изменить её, а не бронировать второй стол
+      // Уже есть своя бронь на этот день — сразу предлагаем изменить её, а не бронировать второй стол
       const dup = !ed && mine.find((b) => b.day === state.day && b.canEdit);
-      $("[data-dup]").hidden = !dup;
+      $("[data-dup]").hidden = true;
       if (dup) {
-        $("[data-dup-text]").textContent = `На ${d.label.toLowerCase()} у вас уже есть бронь №${dup.number}: ${dup.time}, стол на ${people(dup.guests)}.`;
-        $("[data-dup-edit]").onclick = () => { sheet.close(); startEdit(dup); };
+        renderDup(`На ${d.label.toLowerCase()} у вас уже есть бронь №${dup.number}: ${dup.time}, стол на ${people(dup.guests)}.`,
+          [["Изменить её", true, () => { sheet.close(); startEdit(dup); }]]);
       }
       $("[data-summary]").textContent = `${d.label}, ${d.short}, ${state.time} · стол на ${people(state.guests)}`;
       const pre = $("[data-pre]");
@@ -195,12 +233,13 @@
     $("[data-close]").addEventListener("click", () => sheet.close());
     sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.close(); });
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+    async function send(extra = {}) {
       const btn = $("[data-submit]");
       btn.disabled = true;
       btn.textContent = "Отправляем…";
       const payload = {
+        ...extra,
+        known: store.get(BOOKINGS_KEY, []).map((m) => m.token).slice(0, 20),
         day: state.day, time: state.time, guests: state.guests,
         name: form.name.value, phone: form.phone.value, comment: form.comment.value,
         items: cart().map((c) => ({ key: c.key, qty: c.qty })),
@@ -211,6 +250,7 @@
           method: ed ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
         });
         const body = await res.json();
+        if (res.status === 409 && body.duplicate) { showErrors({}); showDuplicate(body.duplicate); return; }
         if (!res.ok) { showErrors(body.errors || { form: "Не получилось отправить — попробуйте ещё раз" }); return; }
         const prev = store.get(PROFILE_KEY, {});
         store.set(PROFILE_KEY, { ...prev, name: payload.name, phone: payload.phone });
@@ -223,7 +263,8 @@
         btn.disabled = false;
         btn.textContent = submitLabel();
       }
-    });
+    }
+    form.addEventListener("submit", (e) => { e.preventDefault(); send(); });
 
     // ---- ваши брони: активные — изменить вместо второй брони ----
     async function loadMine() {

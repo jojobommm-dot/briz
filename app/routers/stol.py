@@ -11,7 +11,7 @@ from .. import booking as bk
 from .. import lunch_order as lo
 from ..auth import current_customer
 from ..database import get_session
-from ..guest import ensure_guest
+from ..guest import ensure_guest, guest_key, is_mine, known_tokens, mask_phone
 from ..models import BOOKING_FLOW, BOOKING_STATUSES, Booking, BookingItem, Customer
 from ..templating import templates
 
@@ -51,6 +51,17 @@ def _items(draft: bk.BookingDraft) -> list[BookingItem]:
     ]
 
 
+def _apply(booking: Booking, draft: bk.BookingDraft, now) -> None:
+    """Записать в бронь всё из формы. Подтверждённая снова ждёт подтверждения:
+    время или число гостей могли измениться."""
+    for field in ("day", "time", "guests", "name", "phone", "comment"):
+        setattr(booking, field, getattr(draft, field))
+    booking.items = _items(draft)
+    booking.total = draft.total
+    booking.status = "new"
+    booking.edited_at = now
+
+
 async def _payload(request: Request) -> dict | None:
     try:
         payload = await request.json()
@@ -88,6 +99,53 @@ async def create_booking(
     draft, errors = bk.validate(payload, now)
     if draft is None:
         return JSONResponse({"errors": errors}, status_code=422)
+
+    # Заменить прежнюю бронь этой: тот же номер телефона — и только пока её можно менять
+    replace = payload.get("replace")
+    if replace:
+        booking = await session.get(Booking, replace) if isinstance(replace, int) else None
+        if (
+            booking is None
+            or booking.phone != draft.phone
+            or not bk.can_edit(booking.status, booking.day, booking.time, now)
+        ):
+            return JSONResponse(
+                {"errors": {"form": "Прежнюю бронь уже не заменить — позвоните в кафе"}},
+                status_code=409,
+            )
+        _apply(booking, draft, now)
+        await session.commit()
+        log.info("Бронь стола №%s заменена новой с того же номера", booking.id)
+        return {
+            "token": booking.token,
+            "url": f"/stol/{booking.token}",
+            "booking": booking_json(booking),
+        }
+
+    # Незавершённая бронь на этот номер и день — сначала спросим, а не бронируем второй стол
+    if payload.get("duplicate") != "new":
+        same = await session.scalar(
+            select(Booking)
+            .where(
+                Booking.phone == draft.phone,
+                Booking.day == draft.day,
+                Booking.status.in_(("new", "confirmed", "seated")),
+            )
+            .order_by(Booking.id.desc())
+        )
+        if same is not None:
+            mine = is_mine(same, guest_key(request), customer, known_tokens(payload))
+            dup = {
+                "number": same.id,
+                "dayLabel": f"{lo.WEEKDAYS[same.day.weekday()]}, {same.day.day} {lo.MONTHS[same.day.month - 1]}",
+                "time": same.time,
+                "guests": same.guests,
+                "statusLabel": same.status_label,
+                "phone": mask_phone(same.phone),
+                "canReplace": bk.can_edit(same.status, same.day, same.time, now),
+                "token": same.token if mine else "",
+            }
+            return JSONResponse({"duplicate": dup}, status_code=409)
 
     booking = Booking(
         token=lo.new_token(),
@@ -137,12 +195,7 @@ async def edit_booking(
     if draft is None:
         return JSONResponse({"errors": errors}, status_code=422)
 
-    for field in ("day", "time", "guests", "name", "phone", "comment"):
-        setattr(booking, field, getattr(draft, field))
-    booking.items = _items(draft)
-    booking.total = draft.total
-    booking.status = "new"
-    booking.edited_at = now
+    _apply(booking, draft, now)
     booking.guest_key = booking.guest_key or ensure_guest(request, response)
     await session.commit()
     log.info(

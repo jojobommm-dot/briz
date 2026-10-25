@@ -145,6 +145,46 @@
       });
     };
 
+    // Плашка «уже есть заказ»: текст и кнопки [подпись, главная ли, действие]
+    function renderDup(text, actions) {
+      $("[data-dup-text]").textContent = text;
+      const box = $("[data-dup-actions]");
+      box.innerHTML = "";
+      actions.forEach(([label, primary, act]) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = primary ? "opt__add" : "linklike";
+        b.textContent = label;
+        b.addEventListener("click", act);
+        box.appendChild(b);
+      });
+      $("[data-dup]").hidden = false;
+      $("[data-dup]").scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+
+    // Сервер нашёл незавершённый заказ на этот номер и день — спрашиваем, что делать.
+    // Свой (этот браузер, кабинет или ссылка) — можно открыть и изменить; чужой браузер
+    // видит только номер заказа и время — заменить его этим или оформить ещё один
+    function showDuplicate(d) {
+      const what = `заказ №${d.number} на ${d.dayLabel}, ${d.slot} — ${d.modeLabel.toLowerCase()}, «${d.statusLabel}»`;
+      const text = (d.token ? `У вас уже есть ${what}.` : `На номер ${d.phone} уже есть незавершённый ${what}.`) +
+        (d.canReplace ? "" : " Он уже в работе — изменить его можно по телефону.");
+      const actions = [];
+      if (d.token && d.canReplace) {
+        actions.push(["Изменить его", true, async () => {
+          const o = await (await fetch(`/api/orders/${d.token}`)).json();
+          sheet.close();
+          startEdit(o);
+        }]);
+      } else if (d.canReplace) {
+        actions.push(["Заменить его этим заказом", true, () => send({ replace: d.number })]);
+      } else if (d.token) {
+        actions.push(["Открыть его", true, () => { location.href = `/zakaz/${d.token}`; }]);
+      }
+      actions.push(["Это другой заказ — оформить ещё один", false, () => send({ duplicate: "new" })]);
+      renderDup(text, actions);
+    }
+
     function renderSheet() {
       // Способ получения — и здесь: шапку страницы легко проскроллить и не заметить
       const modes = $("[data-sheet-modes]");
@@ -159,13 +199,14 @@
       const d = currentDay();
       const ed = state.editing;
       $("[data-sheet-title]").textContent = ed ? `Изменение заказа №${ed.number}` : "Оформление";
-      // Уже есть заказ на этот день — предлагаем изменить его, а не делать второй
+      // Уже есть свой заказ на этот день — сразу предлагаем изменить его, а не делать второй.
+      // Заказ с этого номера из другого браузера найдёт сервер при отправке
       const dup = !ed && mine.find((o) => o.day === state.day && o.canEdit);
-      $("[data-dup]").hidden = !dup;
+      $("[data-dup]").hidden = true;
       if (dup) {
-        $("[data-dup-text]").textContent = `На ${d.label.toLowerCase()} у вас уже есть заказ №${dup.number}: ` +
-          dup.items.map((i) => i.title + (i.qty > 1 ? ` × ${i.qty}` : "")).join(", ") + ".";
-        $("[data-dup-edit]").onclick = () => { sheet.close(); startEdit(dup); };
+        renderDup(`На ${d.label.toLowerCase()} у вас уже есть заказ №${dup.number}: ` +
+          dup.items.map((i) => i.title + (i.qty > 1 ? ` × ${i.qty}` : "")).join(", ") + ".",
+          [["Изменить его", true, () => { sheet.close(); startEdit(dup); }]]);
       }
       $("[data-summary]").textContent =
         `${d.label}, ${d.short} · ` +
@@ -226,12 +267,15 @@
     $("[data-close]").addEventListener("click", () => sheet.close());
     sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.close(); });
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+    // extra: { replace: номер } — заменить прежний заказ с этого номера, { duplicate: "new" } —
+    // гость подтвердил, что это другой заказ
+    async function send(extra = {}) {
       const btn = $("[data-submit]");
       btn.disabled = true;
       btn.textContent = "Отправляем…";
       const payload = {
+        ...extra,
+        known: store.get(ORDERS_KEY, []).map((m) => m.token).slice(0, 20),
         mode: state.mode, day: state.day, slot: state.slot,
         name: form.name.value, phone: form.phone.value, address: form.address.value, comment: form.comment.value,
         guests: state.mode === "hall" ? Number(form.guests.value) : 0,
@@ -243,6 +287,7 @@
           method: ed ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
         });
         const body = await res.json();
+        if (res.status === 409 && body.duplicate) { showErrors({}); showDuplicate(body.duplicate); return; }
         if (!res.ok) { showErrors(body.errors || { form: "Не получилось отправить — попробуйте ещё раз" }); return; }
         store.set(PROFILE_KEY, { name: payload.name, phone: payload.phone, address: payload.address || store.get(PROFILE_KEY, {}).address });
         const known = store.get(ORDERS_KEY, []).filter((m) => m.token !== body.token);
@@ -254,7 +299,8 @@
         btn.disabled = false;
         btn.textContent = submitLabel();
       }
-    });
+    }
+    form.addEventListener("submit", (e) => { e.preventDefault(); send(); });
 
     // ---- ваши заказы: активные, на сегодня и вперёд — изменить вместо второго заказа ----
     // Сервер узнаёт гостя по кабинету или долгой куке; ссылки из localStorage — для

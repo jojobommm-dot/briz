@@ -57,6 +57,26 @@ def ensure_guest(request: Request, response: Response) -> str:
     return key
 
 
+def mask_phone(phone: str) -> str:
+    """+79123456789 → +7 (912) ***-**-89: видно, тот ли номер, но не весь."""
+    return f"+7 ({phone[2:5]}) ***-**-{phone[-2:]}"
+
+
+def is_mine(row, key: str, customer: Customer | None, tokens: Iterable[str]) -> bool:
+    """Заказ или бронь — этого гостя: тот же браузер, тот же кабинет или известна ссылка."""
+    return bool(
+        (key and row.guest_key == key)
+        or (customer is not None and row.customer_id == customer.id)
+        or row.token in tokens
+    )
+
+
+def known_tokens(payload: dict) -> list[str]:
+    """Ссылки на заказы, запомненные на телефоне гостя (присылает экран заказа)."""
+    raw = payload.get("known")
+    return [t for t in raw if isinstance(t, str)][:20] if isinstance(raw, list) else []
+
+
 async def claim(
     session: AsyncSession, customer: Customer, key: str, tokens: Iterable[str] = ()
 ) -> int:

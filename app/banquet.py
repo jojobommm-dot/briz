@@ -19,14 +19,35 @@ class BanquetRequest:
     comment: str
 
 
+PHONE_ERROR = "Проверьте номер: нужен российский, например 8 912 345-67-89"
+
+
 def normalize_phone(raw: str) -> str | None:
-    """8 912 345-67-89, +7(912)3456789, 9123456789 → +79123456789."""
+    """Российский номер в один вид: 8 912 345-67-89, +7(912)3456789, 9123456789 → +79123456789.
+
+    Строго, чтобы один номер, записанный по-разному, был одним номером (по нему ищем
+    незавершённые заказы гостя), а опечатки и выдуманные номера не проходили:
+    - только цифры, пробелы, скобки, дефисы, точки и один «+» в начале;
+    - код страны +7 (или 8 / 7 без плюса), дальше ровно 10 цифр;
+    - номер начинается с 3, 4, 8 или 9 — коды городов и мобильных в России;
+    - не «111-11-11»: семь последних цифр не одинаковые."""
+    raw = raw.strip()
+    if not raw or not re.fullmatch(r"\+?[\d\s().\-]+", raw):
+        return None
     digits = re.sub(r"\D", "", raw)
-    if len(digits) == 10:
+    if raw.startswith("+"):
+        if not digits.startswith("7") or len(digits) != 11:
+            return None
+    elif len(digits) == 11 and digits[0] in "78":
+        pass
+    elif len(digits) == 10:
         digits = "7" + digits
-    if len(digits) == 11 and digits[0] in "78":
-        return "+7" + digits[1:]
-    return None
+    else:
+        return None
+    national = digits[1:]
+    if national[0] not in "3489" or len(set(national[3:])) == 1:
+        return None
+    return "+7" + national
 
 
 def parse_date(raw: str) -> date | None:
@@ -47,7 +68,7 @@ def validate(form: dict[str, str], today: date | None = None) -> tuple[BanquetRe
 
     phone = normalize_phone(form.get("phone", ""))
     if phone is None:
-        errors["phone"] = "Нужен номер из 10–11 цифр, например 8 912 345-67-89"
+        errors["phone"] = PHONE_ERROR
 
     event_date = None
     try:

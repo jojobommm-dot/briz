@@ -929,6 +929,8 @@ body:has(.cartbar:not([hidden])) .chat, body:has(.cartbar:not([hidden])) .instal
 /* Свои заказы и брони: правка вместо второго заказа */
 .editing, .sheet__dup { margin: 0 0 18px; padding: 12px 16px; border-radius: 12px; background: var(--kraft-light); border-left: 4px solid var(--river); font-size: .95rem; }
 .sheet__dup { border-left-color: var(--price, #e8b15a); }
+.sheet__dup p { margin: 0; }
+.sheet__dup-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 12px; }
 .mine__item.is-editing { outline: 2px solid var(--river); outline-offset: 2px; }
 .status__edit { margin-left: 4px; }
 .editing .linklike, .sheet__dup .linklike, .status__edit { color: var(--river); text-decoration: underline; font-weight: 600; }

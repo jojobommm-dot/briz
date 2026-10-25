@@ -156,3 +156,79 @@ def test_login_pulls_guest_orders(client):
     made = client.post("/api/orders", json=order_payload()).json()  # вышел и заказал как гость
     client.post("/kabinet/vhod", data={"phone": "89121112233", "password": "secret12"})
     assert f"№{made['order']['number']}" in client.get("/kabinet").text
+
+
+# ---------- дубли по номеру телефона ----------
+
+
+def test_same_phone_other_browser_is_asked(client):
+    first = client.post("/api/orders", json=order_payload()).json()
+    client.cookies.clear()  # другой браузер, тот же номер — записан иначе
+    r = client.post("/api/orders", json=order_payload(phone="+7 (912) 111-22-33", name="Аня"))
+    assert r.status_code == 409
+    dup = r.json()["duplicate"]
+    assert dup["number"] == first["order"]["number"] and dup["canReplace"] is True
+    assert dup["phone"] == "+7 (912) ***-**-33"
+    assert dup["token"] == ""  # чужому браузеру — ни ссылки, ни имени, ни адреса
+    assert "Ирина" not in r.text and "Кировоградская" not in r.text
+
+
+def test_same_browser_gets_link_to_edit(client):
+    first = client.post("/api/orders", json=order_payload()).json()
+    r = client.post("/api/orders", json=order_payload(mode="pickup", slot="13:00", address=""))
+    assert r.status_code == 409 and r.json()["duplicate"]["token"] == first["token"]
+    # Ссылка, запомненная на телефоне, — тоже «свой»
+    client.cookies.clear()
+    r = client.post("/api/orders", json=order_payload(known=[first["token"]]))
+    assert r.json()["duplicate"]["token"] == first["token"]
+
+
+def test_replace_previous_order(client):
+    first = client.post("/api/orders", json=order_payload()).json()
+    client.cookies.clear()
+    r = client.post(
+        "/api/orders",
+        json=order_payload(
+            replace=first["order"]["number"], name="Аня", items=[{"kind": "soup", "qty": 1}]
+        ),
+    )
+    assert r.status_code == 200, r.text
+    o = r.json()["order"]
+    assert o["number"] == first["order"]["number"] and o["name"] == "Аня" and o["total"] == 130
+    assert client.get(f"/api/orders/{first['token']}").json()["name"] == "Аня"  # один заказ, не два
+
+
+def test_replace_needs_same_phone_and_open_order(client):
+    first = client.post("/api/orders", json=order_payload()).json()
+    number = first["order"]["number"]
+    r = client.post("/api/orders", json=order_payload(replace=number, phone="89121112244"))
+    assert r.status_code == 409  # чужой номер — чужой заказ
+    staff_login(client)
+    client.post(f"/manage/zakazy/{number}/status", data={"status": "accepted"})
+    client.cookies.clear()
+    r = client.post("/api/orders", json=order_payload())
+    assert r.status_code == 409 and r.json()["duplicate"]["canReplace"] is False
+    assert client.post("/api/orders", json=order_payload(replace=number)).status_code == 409
+
+
+def test_force_second_order_and_other_day(client):
+    client.post("/api/orders", json=order_payload())
+    r = client.post("/api/orders", json=order_payload(duplicate="new"))
+    assert r.status_code == 200  # гость подтвердил: это другой заказ
+    thursday = date(2026, 10, 8).isoformat()
+    assert client.post("/api/orders", json=order_payload(day=thursday)).status_code == 200
+    client.post(f"/api/orders/{r.json()['token']}/cancel")
+
+
+def test_booking_duplicate_by_phone(client):
+    first = client.post("/api/bookings", json=booking_payload()).json()
+    client.cookies.clear()
+    r = client.post("/api/bookings", json=booking_payload(phone="+79121112233", time="20:00"))
+    assert r.status_code == 409
+    dup = r.json()["duplicate"]
+    assert dup["number"] == first["booking"]["number"] and dup["token"] == ""
+    r = client.post(
+        "/api/bookings", json=booking_payload(replace=dup["number"], time="20:00", guests=2)
+    )
+    assert r.status_code == 200 and r.json()["booking"]["time"] == "20:00"
+    assert client.post("/api/bookings", json=booking_payload(duplicate="new")).status_code == 200

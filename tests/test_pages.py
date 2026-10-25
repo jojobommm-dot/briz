@@ -65,7 +65,7 @@ def test_banquet_request_saved(client):
 def test_banquet_request_errors_keep_input(client):
     r = client.post("/banket/zayavka", data=_good_form(phone="123", guests="99"))
     assert r.status_code == 422
-    assert "Нужен номер" in r.text
+    assert "Проверьте номер" in r.text
     assert "от 1 до 35 гостей" in r.text
     assert 'value="Ольга"' in r.text
     assert 'class="m-order m-lead' not in _leads_page(client)
@@ -77,8 +77,15 @@ def test_banquet_request_errors_keep_input(client):
         ("+7 912 345-67-89", "+79123456789"),
         ("89123456789", "+79123456789"),
         ("9123456789", "+79123456789"),
+        ("8 (342) 283-77-04", "+73422837704"),  # городской Перми
+        ("+7(912)345.67.89", "+79123456789"),
         ("12345", None),
         ("59123456789", None),
+        ("+8 912 345-67-89", None),  # с плюсом — только +7
+        ("8 712 345-67-89", None),  # не российский код
+        ("8 912 111-11-11", None),  # выдуманный
+        ("8 912 345-67-89 доб. 5", None),  # буквы
+        ("8912345678901", None),  # лишние цифры
     ],
 )
 def test_normalize_phone(raw, expected):

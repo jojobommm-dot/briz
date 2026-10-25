@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
-from .banquet import normalize_phone
+from .banquet import PHONE_ERROR, normalize_phone
 from .config import settings
 from .content import LUNCH, WEEK_IMAGES
 
@@ -230,7 +230,7 @@ def validate(payload: dict, now: datetime) -> tuple[OrderDraft | None, dict[str,
 
     phone = normalize_phone(str(payload.get("phone", "")))
     if phone is None:
-        errors["phone"] = "Нужен номер из 10–11 цифр, например 8 912 345-67-89"
+        errors["phone"] = PHONE_ERROR
 
     address = re.sub(r"\s+", " ", str(payload.get("address", ""))).strip()
     if mode == "delivery" and not 5 <= len(address) <= 200:

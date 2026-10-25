@@ -34,6 +34,7 @@ def payload(**over):
         "phone": "8 912 345-67-89",
         "comment": "У окна",
         "items": [{"key": SALAD, "qty": 2}, {"key": SOUP, "qty": 1}],
+        "duplicate": "new",  # несколько броней с одного номера — дубли в test_guest.py
     }
     p.update(over)
     return p

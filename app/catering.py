@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import date
 
-from .banquet import normalize_phone, parse_date
+from .banquet import PHONE_ERROR, normalize_phone, parse_date
 from .content import CATERING_FORMATS
 
 FORMAT_SLUGS = {f.slug for f in CATERING_FORMATS}
@@ -33,7 +33,7 @@ def validate(
 
     phone = normalize_phone(form.get("phone", ""))
     if phone is None:
-        errors["phone"] = "Нужен номер из 10–11 цифр, например 8 912 345-67-89"
+        errors["phone"] = PHONE_ERROR
 
     event_date = parse_date(form.get("event_date", ""))
     if event_date is None:

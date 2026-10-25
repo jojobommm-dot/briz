@@ -26,6 +26,8 @@ def order(client, **over):
         "phone": "8 912 111-22-33",
         "address": "ул. Кировоградская, 5, офис 12",
         "items": [{"kind": "full", "qty": 2}, {"kind": "soup", "qty": 1}],
+        # Здесь нарочно несколько заказов с одного номера — дубли проверяет test_guest.py
+        "duplicate": "new",
     }
     payload.update(over)
     r = client.post("/api/orders", json=payload)
@@ -84,7 +86,7 @@ def test_register_login_logout(client):
 def test_register_validation(client):
     r = register(client, phone="123", password="123", name="")
     assert r.status_code == 422
-    for msg in ("Как к вам обращаться", "10–11 цифр", "не короче 6"):
+    for msg in ("Как к вам обращаться", "нужен российский", "не короче 6"):
         assert msg in r.text
 
 
@@ -122,7 +124,7 @@ def test_order_goes_to_cabinet_and_address_saved(client):
 
 def test_claim_orders_made_before_login(client):
     before = order(client)  # без кабинета, с телефона 8 912 111-22-33
-    stranger = order(client, phone="89990000000")
+    stranger = order(client, phone="89990001122")
     register(client)
     # Заказ из этого же браузера с тем же телефоном переехал в кабинет сразу при регистрации,
     # заказ с чужим телефоном — нет, даже из того же браузера
@@ -278,7 +280,7 @@ def test_kitchen_hall_needs_no_packaging():
 
 def test_handout_sheet(client):
     order(client)
-    order(client, mode="pickup", slot="13:00", address="", phone="89990000000", name="Пётр")
+    order(client, mode="pickup", slot="13:00", address="", phone="89990001122", name="Пётр")
     order(client, mode="hall", slot="13:00", address="", guests=2, name="Анна",
           items=[{"kind": "full", "qty": 2}])  # fmt: skip
     staff_login(client)

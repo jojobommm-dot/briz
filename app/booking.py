@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 
 from . import lunch_order as lo
-from .banquet import normalize_phone
+from .banquet import PHONE_ERROR, normalize_phone
 from .content import MENU, Dish
 
 FIRST_TIME = time(12, 0)
@@ -151,7 +151,7 @@ def validate(payload: dict, now: datetime) -> tuple[BookingDraft | None, dict[st
 
     phone = normalize_phone(str(payload.get("phone", "")))
     if phone is None:
-        errors["phone"] = "Нужен номер из 10–11 цифр, например 8 912 345-67-89"
+        errors["phone"] = PHONE_ERROR
 
     items = []
     raw = payload.get("items")
