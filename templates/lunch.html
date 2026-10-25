@@ -1,11 +1,11 @@
 {% extends "_base.html" %}
 {% from "_macros.html" import page_banner, menu_item %}
 {% block title %}Комплексные обеды и доставка — кафе «{{ cafe.name }}», {{ cafe.city }}{% endblock %}
-{% block description %}Комплексный обед за {{ lunch.price }} ₽ в Кировском районе Перми, с доставкой — {{ lunch.price_delivery }} ₽. Меню на неделю, заказ на доставку до {{ lunch.order_until }}.{% endblock %}
+{% block description %}Комплексный обед за {{ lunch.price }} ₽ в Кировском районе Перми, с доставкой — {{ lunch.price_delivery }} ₽. Меню на неделю, доставка — закажите {{ lunch.order_lead }}.{% endblock %}
 
 {% block content %}
 {{ page_banner("briz/hero-obed.webp", "Обеды и доставка", "Комплексный обед за " ~ (lunch.price|rub),
-               "Салат, суп, второе и гарнир. Ждём на обед с " ~ lunch.since ~ ", заказы на доставку принимаем до " ~ lunch.order_until ~ ".") }}
+               "Салат, суп, второе и гарнир. Ждём на обед с " ~ lunch.since ~ ", доставку заказывайте " ~ lunch.order_lead ~ " — привезём к нужному времени.") }}
 
 <section class="section">
   <div class="wrap split split--top">
@@ -28,7 +28,7 @@
       {% for what, cafe_price, delivery_price in lunch.prices %}{{ menu_item(what, cafe_price, "", delivery_price, "с доставкой") }}{% endfor %}
       <p class="mi__desc"><span class="price-color">●</span> в кафе &nbsp; ● с доставкой</p>
       <ul class="plain">
-        <li>Заказ на доставку — до {{ lunch.order_until }}, привезём к обеду</li>
+        <li>Доставка — закажите {{ lunch.order_lead }}, привезём к нужному времени</li>
         <li>В кафе ждём на обед с {{ lunch.since }}</li>
         {% if not static_site %}<li>Закажите заранее ко времени — придёте, а обед уже на столе</li>{% endif %}
       </ul>

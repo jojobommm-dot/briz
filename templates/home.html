@@ -54,7 +54,7 @@
           <img class="menu3__photo" src="/static/img/briz/round-obed.webp" alt="Комплексный обед кафе «{{ cafe.name }}»" width="700" height="700" loading="lazy">
           {{ ring_text("Обед дня • Салат • Суп • Второе • Гарнир • " ~ (lunch.price|rub) ~ " •", "obed") }}
         </div>
-        <p class="menu3__note">Меню обедов новое каждый день. В кафе ждём с {{ lunch.since }}, заказы на доставку принимаем до {{ lunch.order_until }}.</p>
+        <p class="menu3__note">Меню обедов новое каждый день. В кафе ждём с {{ lunch.since }}, доставку заказывайте {{ lunch.order_lead }} — привезём к нужному времени.</p>
       </div>
       <div class="menu3__col">
         <details class="cat" open>

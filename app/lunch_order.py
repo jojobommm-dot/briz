@@ -5,10 +5,11 @@
 - самовывоз — забирают в кафе с собой;
 - в кафе ко времени — гость заказывает заранее, к его приходу обед уже на столе.
 
-Цены и «заказ на доставку до 11:00» — с афиш кафе (см. content.LUNCH); самовывоз
-и обед в зале — по цене кафе. Сознательные допущения, которые надо сверить с кафе:
-- самовывоз и зал принимаем на сегодня до 13:30, и не позже чем за 30 минут
-  до выбранного времени (MIN_LEAD) — кухне нужно успеть;
+Цены — с афиш кафе (см. content.LUNCH); самовывоз и обед в зале — по цене кафе.
+Сознательные допущения, которые надо сверить с кафе:
+- на сегодня принимаем не позже чем за час до начала окна доставки и за полчаса
+  до самовывоза или прихода в зал (MIN_LEAD) — кухне и курьеру нужно успеть;
+  отсюда последний заказ на сегодня: доставка до 12:30, самовывоз и зал до 13:30;
 - слоты — по полчаса с 12:00 до 14:00;
 - оплата при получении (онлайн-оплата — следующим шагом).
 Всё это — константы ниже, меняются в одном месте.
@@ -44,13 +45,17 @@ OPTIONS = [
 OPTIONS_BY_KIND = {o.kind: o for o in OPTIONS}
 
 MODES = {"delivery": "Доставка", "pickup": "Самовывоз", "hall": "В кафе ко времени"}
-CUTOFF = {"delivery": time(11, 0), "pickup": time(13, 30), "hall": time(13, 30)}
 SLOTS = {
     "delivery": ["12:00–12:30", "12:30–13:00", "13:00–13:30", "13:30–14:00"],
     "pickup": ["12:00", "12:30", "13:00", "13:30", "14:00"],
     "hall": ["12:00", "12:30", "13:00", "13:30", "14:00"],
 }
-MIN_LEAD = timedelta(minutes=30)  # на сегодня — не ближе, чем за полчаса до времени
+# На сегодня — не ближе, чем за столько до выбранного времени
+MIN_LEAD = {
+    "delivery": timedelta(hours=1),
+    "pickup": timedelta(minutes=30),
+    "hall": timedelta(minutes=30),
+}
 MAX_GUESTS = 30  # столик в зале; больше — это банкет
 DAYS_AHEAD = 5  # рабочих дней в выборе
 MAX_QTY = 50  # одной позиции; больше — это уже кейтеринг
@@ -98,14 +103,18 @@ def slot_start(slot: str) -> time:
 
 
 def open_slots(day: date, mode: str, now: datetime) -> list[str]:
-    """Какое время ещё можно выбрать: на сегодня — до CUTOFF и не ближе MIN_LEAD."""
+    """Какое время ещё можно выбрать: на сегодня — не ближе MIN_LEAD."""
     if menu_for(day) is None or day < now.date():
         return []
     if day > now.date():
         return list(SLOTS[mode])
-    if now.time() >= CUTOFF[mode]:
-        return []
-    return [s for s in SLOTS[mode] if datetime.combine(day, slot_start(s)) - now >= MIN_LEAD]
+    return [s for s in SLOTS[mode] if datetime.combine(day, slot_start(s)) - now >= MIN_LEAD[mode]]
+
+
+def cutoff(mode: str) -> time:
+    """До скольки принимаем заказ на сегодня: последнее время минус MIN_LEAD."""
+    last = datetime.combine(date.min, slot_start(SLOTS[mode][-1]))
+    return (last - MIN_LEAD[mode]).time()
 
 
 def is_open(day: date, mode: str, now: datetime) -> bool:
@@ -155,7 +164,7 @@ def page_data(now: datetime) -> dict:
         ],
         "modes": MODES,
         "slots": SLOTS,
-        "cutoff": {m: CUTOFF[m].strftime("%H:%M") for m in MODES},
+        "cutoff": {m: cutoff(m).strftime("%H:%M") for m in MODES},
         "maxQty": MAX_QTY,
         "maxGuests": MAX_GUESTS,
     }
@@ -192,13 +201,14 @@ def validate(payload: dict, now: datetime) -> tuple[OrderDraft | None, dict[str,
     if day is None or menu_for(day) is None:
         errors["day"] = "Выберите рабочий день"
     elif not is_open(day, mode, now):
-        errors["day"] = f"На этот день заказ уже закрыт — принимаем до {CUTOFF[mode]:%H:%M}"
+        errors["day"] = f"На сегодня уже не успеем — принимаем до {cutoff(mode):%H:%M}"
 
     slot = str(payload.get("slot", ""))
     if slot not in SLOTS[mode]:
         errors["slot"] = "Выберите время"
     elif day is not None and "day" not in errors and slot not in open_slots(day, mode, now):
-        errors["slot"] = f"На {slot} уже не успеем — выберите время попозже"
+        lead = int(MIN_LEAD[mode].total_seconds() // 60)
+        errors["slot"] = f"На {slot} уже не успеем — нужно минимум {lead} минут, выберите попозже"
 
     name = str(payload.get("name", "")).strip()
     if not 2 <= len(name) <= 80:

@@ -42,14 +42,17 @@ def test_days_and_cutoff():
     assert all(date.fromisoformat(d["date"]).weekday() < 5 for d in days)  # без выходных
     assert len(days) == lo.DAYS_AHEAD
 
-    after = lo.order_days(at(11, 0))[0]["open"]
-    assert after == {"delivery": False, "pickup": True, "hall": True}  # доставка до 11:00
+    after = lo.order_days(at(12, 31))[0]["open"]
+    assert after == {"delivery": False, "pickup": True, "hall": True}  # доставка — за час
+    assert lo.cutoff("delivery").strftime("%H:%M") == "12:30"
     closed = {"delivery": False, "pickup": False, "hall": False}
-    assert lo.order_days(at(13, 30))[0]["open"] == closed
+    assert lo.order_days(at(13, 31))[0]["open"] == closed
 
 
-def test_today_slots_need_half_an_hour():
-    # В 12:40 к 13:00 кухня не успеет, к 13:30 — да; завтра — всё время
+def test_today_slots_need_lead_time():
+    # Доставка — минимум за час: в 11:10 окно 12:00 уже не успеть, 12:30 — да
+    assert lo.order_days(at(11, 10))[0]["slots"]["delivery"] == lo.SLOTS["delivery"][1:]
+    # Зал и самовывоз — за полчаса: в 12:40 к 13:00 не успеть, к 13:30 — да; завтра — всё время
     today = lo.order_days(at(12, 40))[0]
     assert today["slots"]["hall"] == ["13:30", "14:00"]
     assert today["slots"]["pickup"] == ["13:30", "14:00"]
@@ -162,10 +165,14 @@ def test_validation(client, morning, over, field):
     assert field in r.json()["errors"]
 
 
-def test_delivery_closed_after_eleven(client, monkeypatch):
-    monkeypatch.setattr(lo, "now_local", lambda: at(11, 5))
-    r = client.post("/api/orders", json=order_payload())
-    assert r.status_code == 422 and "до 11:00" in r.json()["errors"]["day"]
+def test_delivery_today_needs_an_hour(client, monkeypatch):
+    monkeypatch.setattr(lo, "now_local", lambda: at(11, 45))
+    r = client.post("/api/orders", json=order_payload())  # окно 12:30–13:00
+    assert r.status_code == 422 and "минимум 60 минут" in r.json()["errors"]["slot"]
+    assert client.post("/api/orders", json=order_payload(slot="13:00–13:30")).status_code == 200
+    monkeypatch.setattr(lo, "now_local", lambda: at(12, 45))
+    r = client.post("/api/orders", json=order_payload(slot="13:30–14:00"))
+    assert r.status_code == 422 and "до 12:30" in r.json()["errors"]["day"]
     # На завтра — можно
     tomorrow = (WEDNESDAY + timedelta(days=1)).isoformat()
     assert client.post("/api/orders", json=order_payload(day=tomorrow)).status_code == 200

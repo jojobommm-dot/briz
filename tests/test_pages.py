@@ -107,7 +107,7 @@ def test_home_blocks(client):
 def test_lunch_real_prices(client):
     r = client.get("/obedy")
     assert "370 ₽" in r.text and "390 ₽" in r.text
-    assert "до 11:00" in r.text
+    assert "закажите за час" in r.text
 
 
 def test_pwa_files(client):
