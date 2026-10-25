@@ -110,7 +110,11 @@ venv\Scripts\python -m pytest -q
 Бэкапы — в `/opt/backups/briz-*.sql.gz`. Логи: `journalctl -u briz -f`.
 Пароль менеджера — `PROD_MANAGE_PASSWORD` в локальном `.env`.
 
-## Выкладка: Render + Neon (запасная)
+## Выкладка: Render + Neon (приостановлено)
+
+С 25.10.2026 сервис `briz` на Render **приостановлен** (suspend через API, не удалён):
+https://briz-7exj.onrender.com отвечает 503, push в `main` туда не выкладывается. Вернуть —
+Resume в панели Render или `POST /v1/services/srv-dba5l9qjnfac73ef7mpg/resume`.
 
 Прежний адрес: https://briz-7exj.onrender.com — бесплатный тариф, засыпает без посетителей
 (первый заход до минуты), база на Neon во Франкфурте. Для настоящих гостей не годится: долго
