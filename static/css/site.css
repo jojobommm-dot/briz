@@ -940,6 +940,10 @@ body:has(.cartbar:not([hidden])) .chat, body:has(.cartbar:not([hidden])) .instal
   mask-image: linear-gradient(to right, transparent, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent); }
 [data-hscroll].is-more-left { --fade-l: 56px; }
 [data-hscroll].is-more-right { --fade-r: 56px; }
+/* Мышью ленту тащат: рука вместо стрелки, во время перетаскивания — сжатая */
+[data-hscroll].is-draggable { cursor: grab; user-select: none; -webkit-user-select: none; }
+[data-hscroll].is-draggable * { cursor: inherit; }
+[data-hscroll].is-dragging { cursor: grabbing; }
 
 /* Стол ко времени (/stol): время, гости, разделы меню, предзаказ в листе */
 [data-booking] .subhead { margin: 34px 0 14px; }

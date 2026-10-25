@@ -221,11 +221,11 @@
   }
 
   // --- горизонтальные ленты (дни, время, разделы меню) ---
-  // Мышью: курсор у левого или правого края — лента едет туда, чем ближе к краю,
-  // тем быстрее. Пальцем листается сама. Край, за которым есть ещё, растворяется
+  // Мышью: зажал и тащишь — лента едет за курсором, отпустил — докатывается по инерции.
+  // Простой клик по дню или времени работает как обычно. Пальцем листается сама.
+  // Край, за которым есть ещё, растворяется
   const mouse = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-  const EDGE = 110;  // ширина зоны у края, px
-  const MAX_SPEED = 0.7;  // px в мс у самого края — от частоты кадров не зависит
+  const DRAG_FROM = 5;  // px: меньше — это клик, а не перетаскивание
   document.querySelectorAll("[data-hscroll]").forEach((row) => {
     const update = () => {
       row.classList.toggle("is-more-left", row.scrollLeft > 2);
@@ -238,27 +238,53 @@
     update();
     if (!mouse) return;
 
-    let speed = 0, frame = 0, last = 0, pos = 0;
-    const tick = (now) => {
-      const dt = last ? Math.min(now - last, 50) : 16;
-      last = now;
-      // Позицию копим с дробной частью (scrollLeft округляется) и держим в пределах ленты
-      const end = row.scrollWidth - row.clientWidth;
-      pos = Math.max(0, Math.min(end, pos + speed * dt));
-      row.scrollLeft = pos;
-      const atEdge = (speed < 0 && pos <= 0) || (speed > 0 && pos >= end);
-      frame = speed && !atEdge ? requestAnimationFrame(tick) : 0;
-      if (!frame) last = 0;
-    };
-    row.addEventListener("mousemove", (e) => {
-      const r = row.getBoundingClientRect();
-      const x = e.clientX - r.left;
-      const near = Math.min(EDGE, r.width / 4);
-      if (x < near) speed = -MAX_SPEED * (1 - x / near);
-      else if (x > r.width - near) speed = MAX_SPEED * (1 - (r.width - x) / near);
-      else speed = 0;
-      if (speed && !frame) { pos = row.scrollLeft; frame = requestAnimationFrame(tick); }
+    row.classList.add("is-draggable");
+    let down = null, dragged = false, glide = 0;
+    row.addEventListener("pointerdown", (e) => {
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      cancelAnimationFrame(glide);
+      down = { x: e.clientX, left: row.scrollLeft, id: e.pointerId, lastX: e.clientX, lastT: e.timeStamp, v: 0 };
+      dragged = false;
     });
-    row.addEventListener("mouseleave", () => { speed = 0; });
+    row.addEventListener("pointermove", (e) => {
+      if (!down || e.pointerId !== down.id) return;
+      const dx = e.clientX - down.x;
+      if (!dragged && Math.abs(dx) < DRAG_FROM) return;
+      if (!dragged) {
+        dragged = true;
+        // Захват — только когда это точно перетаскивание: иначе клик ушёл бы ленте, а не кнопке
+        row.setPointerCapture(e.pointerId);
+        row.classList.add("is-dragging");
+      }
+      row.scrollLeft = down.left - dx;
+      const dt = e.timeStamp - down.lastT;
+      if (dt > 0) down.v = (e.clientX - down.lastX) / dt;  // px в мс — для инерции
+      down.lastX = e.clientX;
+      down.lastT = e.timeStamp;
+    });
+    const release = (e) => {
+      if (!down || e.pointerId !== down.id) return;
+      const v = e.timeStamp - down.lastT < 80 ? down.v : 0;  // остановился перед отпусканием — без инерции
+      down = null;
+      row.classList.remove("is-dragging");
+      if (!dragged || reducedMotion) return;
+      let speed = -v, last = 0;
+      const step = (now) => {
+        const dt = last ? Math.min(now - last, 50) : 16;
+        last = now;
+        row.scrollLeft += speed * dt;
+        speed *= Math.pow(0.94, dt / 16);
+        if (Math.abs(speed) > 0.02) glide = requestAnimationFrame(step);
+      };
+      glide = requestAnimationFrame(step);
+    };
+    row.addEventListener("pointerup", release);
+    row.addEventListener("pointercancel", release);
+    // После перетаскивания клик не должен выбрать день или время, на котором отпустили
+    row.addEventListener("click", (e) => {
+      if (dragged) { e.preventDefault(); e.stopPropagation(); dragged = false; }
+    }, true);
+    // Браузер не должен тащить картинку или выделять текст вместо ленты
+    row.addEventListener("dragstart", (e) => e.preventDefault());
   });
 })();
