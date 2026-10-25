@@ -153,9 +153,12 @@ input, select, textarea, button { font: inherit; color: inherit; }
 }
 
 /* --- 1. первый экран --- */
-.hero { position: relative; height: max(560px, 100svh); margin-top: calc(-1 * var(--header-h)); background: var(--darker); overflow: hidden; color: var(--white); }
+/* Слайды лежат стопкой в одной ячейке сетки: на невысоком экране первый экран
+   вытягивается под текст, а не загоняет плашки под чёрточки */
+.hero { position: relative; display: grid; min-height: max(560px, 100svh); margin-top: calc(-1 * var(--header-h)); background: var(--darker); overflow: hidden; color: var(--white);
+  --dots-bottom: min(14vh, 120px); }
 .hero__slide {
-  position: absolute; inset: 0; display: flex; align-items: center;
+  grid-area: 1 / 1; display: flex; align-items: center; padding-bottom: calc(var(--dots-bottom) + 44px);
   background: linear-gradient(90deg, rgba(4,24,34,.92) 0%, rgba(4,24,34,.7) 40%, rgba(4,24,34,.15) 100%), var(--bg) center / cover no-repeat;
   opacity: 0; visibility: hidden; transition: opacity 1s ease, visibility 1s;
 }
@@ -170,7 +173,7 @@ input, select, textarea, button { font: inherit; color: inherit; }
 .hero__slide.is-active .hero__text { animation-delay: .2s; }
 .hero__slide.is-active .frame-btn { animation-delay: .3s; }
 @keyframes rise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
-.hero__dots { position: absolute; left: 0; right: 0; bottom: 14vh; display: flex; justify-content: center; gap: 10px; }
+.hero__dots { position: absolute; left: 0; right: 0; bottom: var(--dots-bottom); display: flex; justify-content: center; gap: 10px; }
 .hero__dot { width: 20px; height: 12px; border: 0; padding: 5px 0; background: none; cursor: pointer; }
 .hero__dot::before { content: ""; display: block; height: 2px; background: rgba(255,255,255,.55); transition: background .3s; }
 .hero__dot.is-active { width: 40px; }
