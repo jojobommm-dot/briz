@@ -30,7 +30,7 @@ venv\Scripts\python -m pytest -q
 | --- | --- |
 | `app/content.py` | Блюда, пакеты, обеды, контакты — до базы и админки (что настоящее, а что заглушка — в начале файла) |
 | `tools/photos.py` | Кадрирование и сжатие фото в WebP: исходники в `data/photos_src`, результат в `static/img/briz` |
-| `tools/icons.py` | Иконки PWA (Android, iPhone, ярлыки) из фирменного знака |
+| `tools/icons.py` | Логотип во всех видах и иконки PWA из исходника `art/briz-logo.png` |
 | `templates/sw.js` | Service worker: офлайн-кеш оболочки и страниц, отдаётся с `/sw.js` |
 | `app/lunch_order.py` | Заказ обедов: варианты, цены, дни, время приёма, проверка |
 | `app/routers/order.py`, `manage.py` | API заказа и статуса; панель менеджера |

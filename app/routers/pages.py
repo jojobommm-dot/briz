@@ -198,7 +198,7 @@ _SHELL_ASSETS = [
     "js/site.js",
     "icons/sprite.svg",
     "icons/icon-192.png",
-    "img/logo/briz-mark.svg",
+    "img/logo/briz-mark.webp",
 ]
 _SHELL_PAGES = ["/", "/zakaz", "/menu", "/kontakty", "/offline"]
 

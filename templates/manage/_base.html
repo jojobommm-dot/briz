@@ -6,13 +6,13 @@
   <title>{% block title %}Менеджер{% endblock %} — «{{ cafe.name }}»</title>
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#082f40">
-  <link rel="icon" href="{{ asset('icons/icon.svg') }}" type="image/svg+xml">
+  <link rel="icon" href="{{ asset('icons/favicon-32.png') }}" sizes="32x32" type="image/png">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Raleway:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="{{ asset('css/manage.css') }}">
 </head>
 <body data-max-id="{{ max_id or 0 }}" data-max-lead="{{ max_lead or 0 }}" data-max-booking="{{ max_booking or 0 }}" data-last-edit="{{ last_edit or '' }}">
   <header class="m-head">
-    <div class="m-head__title"><img src="/static/img/logo/briz-mark.svg" alt="" width="34" height="34"> БРИЗ · менеджер</div>
+    <div class="m-head__title"><img src="/static/img/logo/briz-mark.webp" alt="" width="34" height="34"> БРИЗ · менеджер</div>
     <nav class="m-tabs" aria-label="Разделы">
       <a href="/manage/zakazy?day={{ day.isoformat() }}" {% if tab == 'zakazy' %}aria-current="page"{% endif %}>Заказы</a>
       <a href="/manage/kuhnya?day={{ day.isoformat() }}" {% if tab == 'kuhnya' %}aria-current="page"{% endif %}>Кухня</a>

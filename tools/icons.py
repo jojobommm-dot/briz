@@ -1,85 +1,87 @@
-"""Иконки PWA из логотипа.
+"""Логотип «Бриза» во всех видах — из одного исходника art/briz-logo.png.
 
-- Иконки приложения (180–512 px) — настоящий знак static/img/logo/briz-mark.svg.
-  Pillow не умеет SVG, поэтому знак отрисовывает установленный Chrome
-  (headless, прозрачный фон), а Pillow уменьшает и кладёт на фон.
-- Мелкие (вкладка браузера, 32 px) — упрощённый знак static/icons/icon.svg:
-  в листе бренда прямо сказано, что на 32 px сцена логотипа сливается в пятно.
+Исходник — круглый знак 1000×1000 с прозрачными углами и свечением по краю
+(октябрь 2026: девушка в белом платье и на белых каблуках у столика на берегу
+Камы, луна, свеча). Из него собираются:
+- static/img/logo/briz-mark.webp — знак для страниц: шапка, пластинка, входы;
+- static/img/logo/*.svg — фирменные файлы: знак и надпись «БРИЗ / кафе на берегу
+  Камы», вертикально и горизонтально, для тёмного и светлого фона. Надпись —
+  прежние кривые Cormorant Garamond, знак вложен картинкой в base64: SVG через
+  <img> внешние файлы не подгружает;
+- static/icons/*.png — иконки PWA, iPhone, вкладки браузера и ярлыков.
 
-Запуск:  venv\\Scripts\\python tools/icons.py
+Новый логотип — заменить art/briz-logo.png и запустить:
+    venv\\Scripts\\python tools/icons.py
 """
 
-import subprocess
-import tempfile
+import base64
+import io
+import re
 from pathlib import Path
 
 from PIL import Image
 
 BASE = Path(__file__).resolve().parent.parent
-OUT = BASE / "static" / "icons"
-MARK = BASE / "static" / "img" / "logo" / "briz-mark.svg"
-SIMPLE = OUT / "icon.svg"
-CHROME = Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe")
+SRC = BASE / "art" / "briz-logo.png"
+LOGO = BASE / "static" / "img" / "logo"
+ICONS = BASE / "static" / "icons"
 
 NIGHT = (8, 47, 64, 255)  # --dark сайта: фон под знаком, где нужен сплошной
 
+# В фирменных SVG знак занимает квадрат 400×400 в начале координат, а надпись —
+# кривые со сдвигом (transform); их и корневой тег с viewBox сохраняем как были
+WORDMARK = re.compile(r'<path transform="translate\([^"]+\)"[^>]*/>')
+SVG_TAG = re.compile(r"<svg\b[^>]*>")
 
-def render_svg(svg: Path, size: int = 1024) -> Image.Image:
-    """SVG → PNG нужного размера через headless Chrome.
 
-    Окно меньше ~500 px Chrome не делает, поэтому рисуем крупно и уменьшаем."""
-    with tempfile.TemporaryDirectory() as tmp:
-        page = Path(tmp) / "page.html"
-        page.write_text(
-            f'<html><body style="margin:0;background:transparent">'
-            f'<img src="{svg.as_uri()}" style="width:{size}px;height:{size}px;display:block">'
-            f"</body></html>",
-            encoding="utf-8",
-        )
-        shot = Path(tmp) / "shot.png"
-        subprocess.run(
-            [
-                str(CHROME),
-                "--headless=new",
-                "--disable-gpu",
-                "--hide-scrollbars",
-                f"--user-data-dir={Path(tmp) / 'profile'}",
-                "--default-background-color=00000000",
-                f"--window-size={size},{size}",
-                f"--screenshot={shot}",
-                page.as_uri(),
-            ],
-            check=True,
-            capture_output=True,
-            timeout=60,
-        )
-        return Image.open(shot).convert("RGBA").crop((0, 0, size, size))
+def scaled(img: Image.Image, size: int) -> Image.Image:
+    return img.resize((size, size), Image.Resampling.LANCZOS)
 
 
 def on_background(mark: Image.Image, size: int, scale: float) -> Image.Image:
     """Знак на сплошном ночном фоне: для maskable и iPhone (они не любят прозрачность)."""
     bg = Image.new("RGBA", (size, size), NIGHT)
     inner = round(size * scale)
-    m = mark.resize((inner, inner), Image.Resampling.LANCZOS)
-    bg.alpha_composite(m, ((size - inner) // 2, (size - inner) // 2))
+    bg.alpha_composite(scaled(mark, inner), ((size - inner) // 2,) * 2)
     return bg
 
 
-def build() -> None:
-    OUT.mkdir(parents=True, exist_ok=True)
-    mark = render_svg(MARK)
-    simple = render_svg(SIMPLE)
+def webp(mark: Image.Image, size: int, quality: int = 90) -> bytes:
+    buf = io.BytesIO()
+    scaled(mark, size).save(buf, "WEBP", quality=quality, method=6)
+    return buf.getvalue()
 
-    mark.resize((512, 512), Image.Resampling.LANCZOS).save(OUT / "icon-512.png")
-    mark.resize((192, 192), Image.Resampling.LANCZOS).save(OUT / "icon-192.png")
+
+def brand_svgs(mark: Image.Image) -> None:
+    data = base64.b64encode(webp(mark, 480, 88)).decode()
+    image = (
+        f'  <image href="data:image/webp;base64,{data}" x="0" y="0" width="400" height="400"/>\n'
+    )
+    for f in sorted(LOGO.glob("*.svg")):
+        s = f.read_text(encoding="utf-8")
+        words = "".join(f"  {w}\n" for w in WORDMARK.findall(s))
+        f.write_text(
+            f"{SVG_TAG.search(s).group(0)}\n{image}{words}</svg>\n", encoding="utf-8", newline="\n"
+        )
+
+
+def build() -> None:
+    mark = Image.open(SRC).convert("RGBA")
+    (LOGO / "briz-mark.webp").write_bytes(webp(mark, 640))
+    brand_svgs(mark)
+
+    ICONS.mkdir(parents=True, exist_ok=True)
+    scaled(mark, 512).save(ICONS / "icon-512.png")
+    scaled(mark, 192).save(ICONS / "icon-192.png")
     # Android сам обрежет кругом или «каплей»: знак в безопасной зоне 80%
-    on_background(mark, 512, 0.86).save(OUT / "icon-maskable-512.png")
+    on_background(mark, 512, 0.86).save(ICONS / "icon-maskable-512.png")
     # iOS сам скругляет углы, прозрачность заливает чёрным — даём свой фон
-    on_background(mark, 180, 0.92).convert("RGB").save(OUT / "apple-touch-icon.png")
-    simple.resize((32, 32), Image.Resampling.LANCZOS).save(OUT / "favicon-32.png")
+    on_background(mark, 180, 0.92).convert("RGB").save(ICONS / "apple-touch-icon.png")
+    scaled(mark, 32).save(ICONS / "favicon-32.png")
     for name in ("banket", "obedy", "menu"):
-        on_background(simple, 96, 0.86).save(OUT / f"shortcut-{name}.png")
-    print("Иконки готовы:", ", ".join(sorted(p.name for p in OUT.glob("*.png"))))
+        on_background(mark, 96, 0.86).save(ICONS / f"shortcut-{name}.png")
+    files = [*LOGO.iterdir(), *ICONS.glob("*.png")]
+    print("Логотип и иконки готовы:", ", ".join(sorted(p.name for p in files)))
 
 
 if __name__ == "__main__":
