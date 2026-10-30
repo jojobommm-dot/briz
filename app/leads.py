@@ -51,3 +51,24 @@ async def board(session: AsyncSession) -> tuple[list[Lead], list[Lead]]:
         )
     ).all()
     return sorted(open_, key=lambda x: (x.status != "new", x.event_date, x.id)), list(closed)
+
+
+def actions(lead: Lead) -> list[dict]:
+    """Кнопки менеджера у заявки — одни и те же на сайте и в приложении: новой —
+    «перезвонил», открытой — чем закончилось, закрытой — вернуть в работу."""
+    if lead.status not in LEAD_OPEN:
+        return [{"status": "in_work", "label": "Вернуть в работу", "ghost": True}]
+    called = [{"status": "in_work", "label": "Перезвонил → в работу", "ghost": False}]
+    return (called if lead.status == "new" else []) + [
+        {"status": "done", "label": "Договорились", "ghost": False},
+        {"status": "declined", "label": "Отказ", "ghost": True},
+    ]
+
+
+def guests_label(n: int) -> str:
+    """21 гость, 3 гостя, 12 гостей."""
+    if n % 10 == 1 and n % 100 != 11:
+        return f"{n} гость"
+    if n % 10 in (2, 3, 4) and n % 100 not in (12, 13, 14):
+        return f"{n} гостя"
+    return f"{n} гостей"

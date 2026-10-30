@@ -34,6 +34,7 @@ venv\Scripts\python -m pytest -q
 | `templates/sw.js` | Service worker: офлайн-кеш оболочки и страниц, отдаётся с `/sw.js` |
 | `app/lunch_order.py` | Заказ обедов: варианты, цены, дни, время приёма, проверка |
 | `app/routers/order.py`, `manage.py` | API заказа и статуса; панель менеджера |
+| `app/routers/mobile.py`, `mobile_staff.py` | JSON для Android-приложения: витрина и экран заказа; вход сотрудника и рабочие вкладки (`/api/app/staff/...`) |
 | `app/routers/cabinet.py`, `app/auth.py`, `app/security.py` | Кабинет гостя, вход, пароли (scrypt), подписанные куки, защита от перебора |
 | `app/kitchen.py` | Лист для кухни: порции, выход, слоты, упаковка |
 | `app/models.py`, `database.py` | Таблицы заказов; SQLite локально, PostgreSQL на сервере |

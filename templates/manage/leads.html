@@ -12,7 +12,7 @@
   </div>
   <div class="m-lead__what">
     <b>{{ weekdays[l.event_date.weekday()] }}, {{ l.event_date.strftime('%d.%m.%Y') }}</b>
-    · {{ l.guests }} гост{{ 'ь' if l.guests % 10 == 1 and l.guests % 100 != 11 else ('я' if l.guests % 10 in (2, 3, 4) and l.guests % 100 not in (12, 13, 14) else 'ей') }}
+    · {{ guests_label(l.guests) }}
     · {{ option_titles.get((l.kind, l.option), l.option) }}
   </div>
   <div class="m-order__who">
@@ -21,13 +21,7 @@
     {% if l.comment %}<div class="m-order__comment">💬 {{ l.comment }}</div>{% endif %}
   </div>
   <div class="m-order__bottom">
-    {% if l.status == 'new' %}{{ status_btn(l, 'in_work', 'Перезвонил → в работу') }}{% endif %}
-    {% if l.status in ('new', 'in_work') %}
-      {{ status_btn(l, 'done', 'Договорились') }}
-      {{ status_btn(l, 'declined', 'Отказ', ghost=true) }}
-    {% else %}
-      {{ status_btn(l, 'in_work', 'Вернуть в работу', ghost=true) }}
-    {% endif %}
+    {% for a in lead_actions(l) %}{{ status_btn(l, a.status, a.label, ghost=a.ghost) }}{% endfor %}
   </div>
 </li>
 {% endmacro %}
